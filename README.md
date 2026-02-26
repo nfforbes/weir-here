@@ -128,3 +128,17 @@ src/
   middleware.ts           # Auth0 middleware
 mobile/                   # React Native / Expo app
 ```
+
+## Troubleshooting
+
+### 400 Bad Request (only in the browser you used to log in)
+
+If the site loads in other browsers or in a private window but returns **400 Bad Request** in the browser where you previously logged in, the session cookie for this site is too large and the server rejects the request before the app runs.
+
+**Fix:** Clear cookies for this site in that browser, then reload.
+
+- **Chrome / Edge:** Address bar → lock or info icon → Site settings → Cookies and site data → **Clear data** (or “See all site data” → find `weir-here.netlify.app` → Remove).
+- **Firefox:** Address bar → lock icon → Clear Cookies and Site Data (or Settings → Privacy → Cookies and Site Data → Manage Data → search for `netlify` → Remove).
+- **Safari:** Safari → Settings → Privacy → Manage Website Data → search for `netlify` → Remove.
+
+After clearing, reload the site and log in again. New sessions use a smaller cookie and the 400 should not return.
