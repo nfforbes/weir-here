@@ -21,6 +21,7 @@ export async function getAppUser(): Promise<AppUser | null> {
 
   const { sub, email, name, email_verified } = session.user;
 
+  const emailStr = (email ?? '') as string;
   const displayName = (name || email || 'User') as string;
   const verified = (email_verified ?? false) as boolean;
 
@@ -30,7 +31,7 @@ export async function getAppUser(): Promise<AppUser | null> {
       { auth0Id: sub },
       {
         $set: {
-          email,
+          email: emailStr,
           name: displayName,
           emailVerified: verified,
           updatedAt: new Date(),
@@ -42,7 +43,7 @@ export async function getAppUser(): Promise<AppUser | null> {
     if (err && typeof err === 'object' && 'code' in err && err.code === 11000) {
       dbUser = await User.findOne({ auth0Id: sub });
       if (dbUser) {
-        dbUser.email = email;
+        dbUser.email = emailStr;
         dbUser.name = displayName;
         dbUser.emailVerified = verified;
         await dbUser.save();
