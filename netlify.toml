@@ -4,11 +4,4 @@
 
 [build.environment]
   NODE_VERSION = "20.19.0"
-  # Run Next.js middleware at origin (serverless) instead of Edge to avoid AbortError/timeouts
-  NEXT_DISABLE_NETLIFY_EDGE = "true"
-
-[[redirects]]
-  from = "https://lukariagroup.com/*"
-  to   = "https://www.lukariagroup.com/:splat"
-  status = 301
-  force = true
+ 
