@@ -1,5 +1,5 @@
 import { Auth0Client } from '@auth0/nextjs-auth0/server';
-import type { SessionData } from '@auth0/nextjs-auth0';
+import type { SessionData } from '@auth0/nextjs-auth0/types';
 
 /**
  * Trim session for cookie size (avoid "Request Header Or Cookie Too Large").
