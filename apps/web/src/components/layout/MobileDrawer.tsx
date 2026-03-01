@@ -20,6 +20,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { useState } from 'react';
 import { DEEP_NAVY, ELECTRIC_BLUE } from '@/theme/theme';
 import { getMenuIcon } from '@/components/layout/menuIcons';
+import type { IMenuItem } from '@weir-here/shared';
 
 interface MobileDrawerProps {
   open: boolean;
