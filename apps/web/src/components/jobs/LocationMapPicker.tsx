@@ -87,7 +87,7 @@ export default function LocationMapPicker({ open, onClose, onSelect }: LocationM
           background: 'white',
           borderRadius: 8,
           overflow: 'hidden',
-          boxShadow: 24,
+          boxShadow: '0 11px 15px -7px rgba(0,0,0,.2), 0 24px 38px 3px rgba(0,0,0,.14), 0 9px 46px 8px rgba(0,0,0,.12)',
           width: '100%',
           maxWidth: 800,
           height: 520,
