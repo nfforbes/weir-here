@@ -14,43 +14,25 @@ const directors = [
 export default function AboutPage() {
   return (
     <Container maxWidth="md" sx={{ py: 8 }}>
-      <Typography variant="h3" fontWeight={700} gutterBottom>
-        About Us
-      </Typography>
+     
 
-      <Paper elevation={2} sx={{ p: 4, mb: 4 }}>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          Who We Are
+      <Paper elevation={2} sx={{ p: 4, mb: 4, bgcolor: '#4a4a4a', color: '#cfaf5b' }}>
+       <Typography variant="h4" fontWeight={500} gutterBottom>
+        About Us - Weir Here Staffing
         </Typography>
+        <Divider sx={{ mb: 3, borderColor: 'black' }} />
         <Typography variant="body1" paragraph>
-          Weir Here Staffing is a full-service staffing and workforce solutions agency
-          dedicated to bridging the gap between exceptional talent and the companies that
-          need them. Founded with a people-first philosophy, we believe that the right
-          match transforms businesses and careers alike.
-        </Typography>
-        <Typography variant="body1" paragraph>
-          From temporary placements to permanent hires, contract-to-hire arrangements to
-          executive search, our team brings decades of combined recruitment experience
-          across IT, Healthcare, Finance, Manufacturing, and more. We pride ourselves on
-          taking the time to understand each client&apos;s culture and each
-          candidate&apos;s aspirations so every placement is a lasting success.
-        </Typography>
+        At Weir Here Staffing, we believe that exceptional care begins with exceptional people. We are committed to strengthening communities by connecting qualified, compassionate healthcare professionals with the facilities, families, and organizations that need them most.
+
+        We are more than a staffing agency, we are a dedicated partner built on integrity and personalized service. Whether supporting a hospital, long-term care facility, private home, or childcare environment, Weir Here Staffing ensures every placement contributes to safer care, smoother operations, and better outcomes. *When you need us, Weir Here.*
+
+        </Typography>       
       </Paper>
 
-      <Paper elevation={2} sx={{ p: 4, mb: 4 }}>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          Our Mission
-        </Typography>
-        <Typography variant="body1" paragraph>
-          To empower organizations with the talent they need to thrive and to help
-          professionals find careers where they can make a real impact. We are committed
-          to integrity, transparency, and delivering measurable results for every
-          engagement.
-        </Typography>
-      </Paper>
+      
 
       <Paper elevation={2} sx={{ p: 4 }}>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
+        <Typography variant="h5" fontWeight={300} gutterBottom>
           Leadership
         </Typography>
         <Divider sx={{ mb: 3 }} />

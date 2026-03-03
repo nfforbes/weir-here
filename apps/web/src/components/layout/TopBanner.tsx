@@ -23,7 +23,6 @@ import {
 } from '@weir-here/shared';
 import { filterMenuForUser } from '@/lib/rbac';
 import { useAppSelector } from '@/store';
-import { DEEP_NAVY, ELECTRIC_BLUE } from '@/theme/theme';
 import { getMenuIcon } from '@/components/layout/menuIcons';
 import MobileDrawer from '@/components/layout/MobileDrawer';
 
@@ -57,11 +56,11 @@ export default function TopBanner() {
 
   return (
     <>
-      {/* Deep Navy Info Bar */}
+      {/* Gold Info Bar */}
       <Box
         sx={{
-          bgcolor: DEEP_NAVY,
-          color: 'white',
+          bgcolor: '#cfaf5b',
+          color: 'black',
           py: 0.5,
           px: 3,
           display: 'flex',
@@ -69,17 +68,17 @@ export default function TopBanner() {
           alignItems: 'center',
         }}
       >
-        <Typography variant="caption" sx={{ opacity: 0.85 }}>
+        <Typography variant="caption" sx={{ opacity: 0.9 }}>
           info@weirhere.com &nbsp;|&nbsp; (555) 123-4567
         </Typography>
       </Box>
 
-      {/* Electric Blue Main Banner */}
+      {/* Main nav bar */}
       <Box
         component="nav"
         sx={{
-          bgcolor: ELECTRIC_BLUE,
-          color: 'white',
+          bgcolor: '#000000',
+          color: '#cfaf5b',
           px: 3,
           py: 1.5,
           display: 'flex',
@@ -176,9 +175,9 @@ export default function TopBanner() {
                   variant="outlined"
                   size="small"
                   sx={{
-                    color: 'white',
-                    borderColor: 'rgba(255,255,255,0.6)',
-                    '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' },
+                    color: '#cfaf5b',
+                    borderColor: 'rgba(207,175,91,0.6)',
+                    '&:hover': { borderColor: '#cfaf5b', bgcolor: 'rgba(207,175,91,0.1)' },
                   }}
                 >
                   Logout
@@ -192,9 +191,9 @@ export default function TopBanner() {
                 size="small"
                 sx={{
                   ml: 2,
-                  color: 'white',
-                  borderColor: 'rgba(255,255,255,0.6)',
-                  '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' },
+                  color: '#cfaf5b',
+                  borderColor: 'rgba(207,175,91,0.6)',
+                  '&:hover': { borderColor: '#cfaf5b', bgcolor: 'rgba(207,175,91,0.1)' },
                 }}
               >
                 Login

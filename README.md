@@ -1,6 +1,6 @@
 # Weir Here Staffing Platform
 
-A full-stack staffing agency platform built with Next.js 15, MongoDB, Auth0, Material UI, Redux-Saga, and Expo React Native.
+A full-stack staffing agency platform built with Next.js 15, MongoDB, Auth0, Material UI, Redux-Saga, and a .NET MAUI mobile app.
 
 ## Architecture
 
@@ -8,7 +8,8 @@ A full-stack staffing agency platform built with Next.js 15, MongoDB, Auth0, Mat
 weir-here-v2/
 ├── apps/
 │   ├── web/          # Next.js 15 web application
-│   └── mobile/       # Expo React Native mobile app
+│   ├── mobile/       # (Legacy) Expo React Native mobile app
+│   └── maui/         # .NET MAUI mobile app (current)
 ├── packages/
 │   └── shared/       # Shared types, constants, and utilities
 ├── package.json      # Root workspace config
@@ -20,13 +21,13 @@ weir-here-v2/
 | Layer       | Technology                                    |
 | ----------- | --------------------------------------------- |
 | Web         | Next.js 15 (App Router), React 19             |
-| Mobile      | Expo, React Native, React Native Paper        |
-| UI          | Material UI 6, Emotion                        |
-| State       | Redux Toolkit + Redux-Saga                    |
-| Auth        | Auth0 (nextjs-auth0 for web, expo-auth-session for mobile) |
+| Mobile      | .NET MAUI (.NET 8); legacy Expo/React Native in `apps/mobile` |
+| UI          | Material UI 6, Emotion (web); MAUI XAML (mobile) |
+| State       | Redux Toolkit + Redux-Saga (web); MVVM (mobile) |
+| Auth        | Auth0 (nextjs-auth0 for web; WebAuthenticator for MAUI) |
 | Database    | MongoDB via Mongoose                          |
 | Storage     | Microsoft 365 SharePoint (Graph API)          |
-| Language    | TypeScript                                    |
+| Language    | TypeScript (web, shared); C# (MAUI)            |
 
 ## Personas
 
@@ -80,9 +81,11 @@ npm install
 # Start the web development server
 npm run dev
 
-# Or start the mobile app
+# Or start the mobile app (Expo – legacy)
 npm run dev:mobile
 ```
+
+To run the **.NET MAUI mobile app**, see `apps/maui/README.md` (requires .NET 8 and MAUI workload).
 
 ### MS365 / SharePoint Configuration
 
@@ -145,8 +148,10 @@ Theme can be customized in `apps/web/src/theme/theme.ts`.
 # Run web app in development
 npm run dev
 
-# Run mobile app
+# Run mobile app (Expo – legacy)
 npm run dev:mobile
+
+# MAUI mobile: see apps/maui/README.md (dotnet build -t:Run)
 
 # Lint
 npm run lint

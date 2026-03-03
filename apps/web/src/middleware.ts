@@ -2,7 +2,15 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
 
+function hasValidAuth0Secret(): boolean {
+  const secret = process.env.AUTH0_SECRET;
+  return typeof secret === 'string' && secret.length >= 32;
+}
+
 export async function middleware(request: NextRequest) {
+  if (!hasValidAuth0Secret()) {
+    return NextResponse.next();
+  }
   try {
     return await auth0.middleware(request);
   } catch (err) {

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WeirHere.Maui.ViewModels"
+             x:Class="WeirHere.Maui.Views.JobDetailPage"
+             x:DataType="vm:JobDetailViewModel"
+             Title="Job">
+    <Grid RowDefinitions="Auto,*">
+        <VerticalStackLayout Grid.Row="0" Padding="16" Spacing="4" IsVisible="{Binding Job, Converter={StaticResource NullToBoolConverter}}">
+            <Label Text="{Binding Job.Title}" FontSize="22" FontAttributes="Bold" />
+            <Label Text="{Binding Job.Location}" />
+            <Label Text="{Binding Job.EmploymentType}" />
+        </VerticalStackLayout>
+        <ScrollView Grid.Row="1" Padding="16">
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding Job, Converter={StaticResource NullToBoolConverter}}">
+                <Label Text="Description" FontAttributes="Bold" />
+                <Label Text="{Binding Job.Description}" />
+                <Label Text="Requirements" FontAttributes="Bold" />
+                <Label Text="{Binding Job.Requirements}" />
+                <Label Text="How to apply" FontAttributes="Bold" />
+                <Label Text="{Binding Job.HowToApply}" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <Label Grid.Row="0" Grid.RowSpan="2" Text="{Binding StatusText}" VerticalOptions="Center" HorizontalOptions="Center" IsVisible="{Binding IsBusy}" />
+        <ActivityIndicator Grid.Row="0" Grid.RowSpan="2" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>
