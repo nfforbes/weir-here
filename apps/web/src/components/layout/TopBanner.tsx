@@ -91,7 +91,7 @@ export default function TopBanner() {
           {!logoError ? (
             <Box
               component="img"
-              src="/weir-here-logo.png"
+              src="/weir-here-logo-transparent.png"
               alt="Weir Here"
               onError={() => setLogoError(true)}
               sx={{ height: 64, width: 'auto', maxWidth: 220, objectFit: 'contain' }}

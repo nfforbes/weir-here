@@ -7,8 +7,13 @@ export const PUBLIC_MENU: IMenuItem[] = [
     path: '/solutions',
     icon: 'Lightbulb',
     children: [
-      { label: 'For Employers', path: '/solutions/employers', icon: 'Business' },
-      { label: 'For Job Seekers', path: '/solutions/job-seekers', icon: 'PersonSearch' },
+      { label: 'Nursing Staff', path: '/solutions/nursing-staff', icon: 'LocalHospital' },
+      { label: 'Physicians & Advanced Practice Providers', path: '/solutions/physicians-advanced-practice', icon: 'MedicalServices' },
+      { label: 'Allied Health Professionals', path: '/solutions/allied-health', icon: 'HealthAndSafety' },
+      { label: 'Support Staff', path: '/solutions/support-staff', icon: 'People' },
+      { label: 'Travel and Temporary Staffing', path: '/solutions/travel-temporary-staffing', icon: 'TravelExplore' },
+      { label: 'Domestic Care', path: '/solutions/domestic-care', icon: 'HomeWork' },
+      { label: 'Permanent Placement', path: '/solutions/permanent-placement', icon: 'Work' },
     ],
   },
   {
@@ -21,7 +26,6 @@ export const PUBLIC_MENU: IMenuItem[] = [
       { label: 'Job Board', path: '/jobs', icon: 'WorkOutline', requiresAuth: true },
     ],
   },
-  { label: 'Industries', path: '/industries', icon: 'Factory' },
   { label: 'About Us', path: '/about', icon: 'Info' },
   { label: 'Contact Us', path: '/contact', icon: 'ContactMail' },
 ];
