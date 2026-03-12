@@ -7,9 +7,9 @@ export const PUBLIC_MENU: IMenuItem[] = [
     path: '/solutions',
     icon: 'Lightbulb',
     children: [
-      { label: 'Nursing Staff', path: '/solutions/nursing-staff', icon: 'LocalHospital' },
+      { label: 'Medical Professionals', path: '/solutions/medical-professionals', icon: 'LocalHospital' },
       { label: 'Physicians & Advanced Practice Providers', path: '/solutions/physicians-advanced-practice', icon: 'MedicalServices' },
-      { label: 'Allied Health Professionals', path: '/solutions/allied-health', icon: 'HealthAndSafety' },
+      { label: 'Licensed practical nurses, geriatric nurses, certified babysitter & registered nurses', path: '/solutions/nursing-staff', icon: 'HealthAndSafety' },
       { label: 'Support Staff', path: '/solutions/support-staff', icon: 'People' },
       { label: 'Travel and Temporary Staffing', path: '/solutions/travel-temporary-staffing', icon: 'TravelExplore' },
       { label: 'Domestic Care', path: '/solutions/domestic-care', icon: 'HomeWork' },

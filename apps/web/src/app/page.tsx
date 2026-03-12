@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const GOLD = '#cfaf5b';
+const TEAL = '#00838f';
 
 const CAROUSEL_INTERVAL_MS = 15000;
 
@@ -37,6 +38,17 @@ export default function HomePage() {
     return () => clearInterval(id);
   }, []);
 
+  // Enable snap scrolling on desktop
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 900px)');
+    if (mq.matches) {
+      document.body.classList.add('home-snap-scroll');
+    }
+    return () => {
+      document.body.classList.remove('home-snap-scroll');
+    };
+  }, []);
+
   const handleTalent = () => {
     if (user) {
       router.push('/dashboard/post-job');
@@ -50,11 +62,13 @@ export default function HomePage() {
   };
 
   return (
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
     <Box
+      className="snap-section"
       sx={{
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        minHeight: 'calc(100vh - 180px)',
+        minHeight: { xs: 'auto', md: '100vh' },
         overflow: 'hidden',
       }}
     >
@@ -62,7 +76,7 @@ export default function HomePage() {
       <Box
         sx={{
           flex: { md: '1 1 48%' },
-          maxWidth: { md: 560 },
+          maxWidth: { md: 465 },
           bgcolor: '#fff',
           py: { xs: 4, md: 6 },
           px: { xs: 3, md: 6 },
@@ -130,34 +144,7 @@ export default function HomePage() {
 
         {/* CTAs */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 4 }}>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={handleTalent}
-            sx={{
-              bgcolor: '#000',
-              color: GOLD,
-              px: 3,
-              py: 1.5,
-              '&:hover': { bgcolor: '#222', color: GOLD },
-            }}
-          >
-            I need talent
-          </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            onClick={handleCareer}
-            sx={{
-              borderColor: GOLD,
-              color: GOLD,
-              px: 3,
-              py: 1.5,
-              '&:hover': { borderColor: GOLD, bgcolor: 'rgba(207,175,91,0.08)' },
-            }}
-          >
-            I need a career
-          </Button>
+         
         </Box>
 
         <Typography variant="body2" sx={{ color: '#666', mt: 2 }}>
@@ -224,6 +211,122 @@ export default function HomePage() {
               />
             ))}
           </Box>
+        </Box>
+      </Box>
+    </Box>
+
+      {/* Second section: Teal with triangle of images */}
+      <Box
+        className="snap-section"
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: TEAL,
+          py: { xs: 6, md: 8 },
+          px: { xs: 3, md: 6 },
+          gap: { xs: 4, md: 6 },
+          minHeight: { xs: 'auto', md: '100vh' },
+        }}
+      >
+        {/* Left: Triangle of circular images with connecting lines */}
+        <Box
+          sx={{
+            position: 'relative',
+            width: { xs: 336, md: 432 },
+            height: { xs: 312, md: 408 },
+            flexShrink: 0,
+          }}
+        >
+          {/* SVG lines connecting the circles (triangle) */}
+          <svg
+            viewBox="0 0 432 408"
+            preserveAspectRatio="xMidYMid meet"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+            }}
+          >
+            <line x1="216" y1="78" x2="78" y2="330" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+            <line x1="216" y1="78" x2="354" y2="330" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+            <line x1="78" y1="330" x2="354" y2="330" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+          </svg>
+          {/* Top circle */}
+          <Box
+            component="img"
+            src="/Black_doctor_seeing_patient_ee388b378f.jpeg"
+            alt="Doctor with patient"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: { xs: 120, md: 156 },
+              height: { xs: 120, md: 156 },
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '3px solid rgba(255,255,255,0.6)',
+            }}
+          />
+          {/* Bottom left circle */}
+          <Box
+            component="img"
+            src="/Black_nurse_babysitting_child_4e246048c5.jpeg"
+            alt="Nurse with child"
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              width: { xs: 120, md: 156 },
+              height: { xs: 120, md: 156 },
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '3px solid rgba(255,255,255,0.6)',
+            }}
+          />
+          {/* Bottom right circle */}
+          <Box
+            component="img"
+            src="/Black_orderly_pushing_gurney_12839cff65.jpeg"
+            alt="Orderly with gurney"
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: { xs: 120, md: 156 },
+              height: { xs: 120, md: 156 },
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '3px solid rgba(255,255,255,0.6)',
+            }}
+          />
+        </Box>
+
+        {/* Right: Title and text */}
+        <Box
+          sx={{
+            flex: 1,
+            maxWidth: 520,
+            color: '#cfaf5b',
+          }}
+        >
+          <Typography variant="h4" fontWeight={700} sx={{ mb: 2, letterSpacing: 0.5 }}>
+            Weir Heir is About
+          </Typography>
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+            A Company Built on Vision, Integrity & Innovation
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.8 }}>
+            With leadership grounded in real‑world experience across Jamaica and the U.S., and supported by strong financial and operational systems, Weir Here Staffing Solutions is designed to meet the evolving needs of the healthcare industry.
+          </Typography>
+          <Typography variant="body1" sx={{ lineHeight: 1.8 }}>
+            We&apos;re not just filling roles — we&apos;re elevating the standard of workforce partnerships.
+          </Typography>
         </Box>
       </Box>
     </Box>
