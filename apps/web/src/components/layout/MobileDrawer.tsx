@@ -18,9 +18,10 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useState } from 'react';
-import { DEEP_NAVY, ELECTRIC_BLUE } from '@/theme/theme';
 import { getMenuIcon } from '@/components/layout/menuIcons';
 import type { IMenuItem } from '@weir-here/shared';
+
+const GOLD = '#cfaf5b';
 
 interface MobileDrawerProps {
   open: boolean;
@@ -52,39 +53,55 @@ export default function MobileDrawer({
   return (
     <Drawer anchor="left" open={open} onClose={onClose}>
       <Box
-        sx={{ width: 280, display: 'flex', flexDirection: 'column', height: '100%' }}
+        sx={{
+          width: 280,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          bgcolor: '#000000',
+        }}
         role="navigation"
       >
-        {/* Header */}
-        <Box sx={{ bgcolor: ELECTRIC_BLUE, color: 'white', px: 3, py: 2 }}>
-          <Link href="/" onClick={onClose} style={{ textDecoration: 'none', color: 'inherit' }}>
+        {/* Header with logo */}
+        <Box
+          sx={{
+            bgcolor: '#000000',
+            color: GOLD,
+            px: 3,
+            py: 2.5,
+            borderBottom: `2px solid ${GOLD}`,
+          }}
+        >
+          <Link href="/" onClick={onClose} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 1.5 }}>
             {!logoError ? (
               <Box
                 component="img"
-                src="/weir-here-logo.png"
+                src="/weir-here-logo-transparent.png"
                 alt="Weir Here"
                 onError={() => setLogoError(true)}
-                sx={{ height: 64, width: 'auto', maxWidth: 200, objectFit: 'contain' }}
+                sx={{ height: 48, width: 'auto', objectFit: 'contain' }}
               />
-            ) : (
-              <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 2 }}>
-                WEIR HERE
-              </Typography>
-            )}
+            ) : null}
+            <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 1.5, color: GOLD }}>
+              Weir-Here
+            </Typography>
           </Link>
         </Box>
 
         {/* Menu Items */}
-        <List sx={{ flex: 1, pt: 1 }}>
+        <List sx={{ flex: 1, pt: 1, bgcolor: '#000000' }}>
           {menuItems.map((item) =>
             item.children && item.children.length > 0 ? (
               <Box key={item.label}>
-                <ListItemButton onClick={() => toggleExpand(item.label)}>
-                  <ListItemIcon sx={{ minWidth: 36 }}>
+                <ListItemButton
+                  onClick={() => toggleExpand(item.label)}
+                  sx={{ color: GOLD, '&:hover': { bgcolor: 'rgba(207,175,91,0.15)' } }}
+                >
+                  <ListItemIcon sx={{ minWidth: 36, color: GOLD }}>
                     {getMenuIcon(item.icon)}
                   </ListItemIcon>
                   <ListItemText primary={item.label} />
-                  {expandedLabels.has(item.label) ? <ExpandLess /> : <ExpandMore />}
+                  {expandedLabels.has(item.label) ? <ExpandLess sx={{ color: GOLD }} /> : <ExpandMore sx={{ color: GOLD }} />}
                 </ListItemButton>
                 <Collapse in={expandedLabels.has(item.label)} timeout="auto" unmountOnExit>
                   <List disablePadding>
@@ -94,9 +111,9 @@ export default function MobileDrawer({
                         component={Link}
                         href={child.path}
                         onClick={onClose}
-                        sx={{ pl: 5 }}
+                        sx={{ pl: 5, color: GOLD, '&:hover': { bgcolor: 'rgba(207,175,91,0.15)' } }}
                       >
-                        <ListItemIcon sx={{ minWidth: 36 }}>
+                        <ListItemIcon sx={{ minWidth: 36, color: GOLD }}>
                           {getMenuIcon(child.icon)}
                         </ListItemIcon>
                         <ListItemText primary={child.label} />
@@ -111,8 +128,9 @@ export default function MobileDrawer({
                 component={Link}
                 href={item.path}
                 onClick={onClose}
+                sx={{ color: GOLD, '&:hover': { bgcolor: 'rgba(207,175,91,0.15)' } }}
               >
-                <ListItemIcon sx={{ minWidth: 36 }}>
+                <ListItemIcon sx={{ minWidth: 36, color: GOLD }}>
                   {getMenuIcon(item.icon)}
                 </ListItemIcon>
                 <ListItemText primary={item.label} />
@@ -121,13 +139,13 @@ export default function MobileDrawer({
           )}
         </List>
 
-        <Divider />
+        <Divider sx={{ borderColor: GOLD, opacity: 0.5 }} />
 
         {/* Auth Section */}
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 2, bgcolor: '#000000' }}>
           {isAuthenticated ? (
             <>
-              <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
+              <Typography variant="body2" sx={{ mb: 1, color: GOLD, opacity: 0.9 }}>
                 Signed in as <strong>{userName}</strong>
               </Typography>
               <Button
@@ -136,7 +154,7 @@ export default function MobileDrawer({
                 fullWidth
                 variant="outlined"
                 startIcon={<LogoutIcon />}
-                sx={{ color: DEEP_NAVY, borderColor: DEEP_NAVY }}
+                sx={{ color: GOLD, borderColor: GOLD, '&:hover': { borderColor: GOLD, bgcolor: 'rgba(207,175,91,0.15)' } }}
               >
                 Logout
               </Button>
@@ -148,7 +166,7 @@ export default function MobileDrawer({
               fullWidth
               variant="contained"
               startIcon={<LoginIcon />}
-              sx={{ bgcolor: ELECTRIC_BLUE }}
+              sx={{ bgcolor: GOLD, color: '#1a1a1a', '&:hover': { bgcolor: '#d4b84d' } }}
             >
               Login
             </Button>
