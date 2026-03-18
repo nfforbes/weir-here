@@ -218,7 +218,7 @@ export default function AboutPage() {
                     }}
                   />
                   <Typography variant="h6" fontWeight={700} sx={{ color: TEXT_DARK, mt: 2 }}>
-                    Patsy
+                    Patsy Weir
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#666', letterSpacing: 1, textTransform: 'uppercase' }}>
                     Chief Financial Officer

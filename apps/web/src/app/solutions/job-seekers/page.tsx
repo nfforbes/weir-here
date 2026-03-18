@@ -1,16 +1,7 @@
-import {
-  Container,
-  Typography,
-  Paper,
-  Box,
-  Button,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-} from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { Button } from '@mui/material';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import Link from 'next/link';
+import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -28,36 +19,17 @@ const benefits = [
 
 export default function JobSeekersPage() {
   return (
-    <Container maxWidth="md" sx={{ py: 8 }}>
-      <Typography variant="h3" fontWeight={700} gutterBottom>
-        Find Your Next Opportunity
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 700 }}>
-        Your next career move starts here. Weir Here Staffing connects talented
-        professionals like you with employers who value your skills and experience.
-      </Typography>
-
-      <Paper elevation={2} sx={{ p: 4, mb: 4 }}>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          What You Get
-        </Typography>
-        <List disablePadding>
-          {benefits.map((b) => (
-            <ListItem key={b} disableGutters sx={{ py: 0.5 }}>
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                <CheckCircleOutlineIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText primary={b} />
-            </ListItem>
-          ))}
-        </List>
-      </Paper>
-
-      <Box sx={{ textAlign: 'center' }}>
-        <Button variant="contained" size="large" component={Link} href="/jobs">
-          Browse Open Positions
-        </Button>
-      </Box>
-    </Container>
+    <SolutionHeroTemplate
+      title="Find Your Next Opportunity"
+      description="Your next career move starts here. Weir Here Staffing connects talented professionals like you with employers who value your skills and experience."
+      benefits={benefits}
+      imageSrc="/Black_nurse_babysitting_child_4e246048c5.jpeg"
+      solutionName="For Job Seekers"
+      IconComponent={PersonSearchIcon}
+    >
+      <Button variant="contained" size="large" component={Link} href="/jobs" sx={{ mt: 3 }}>
+        Browse Open Positions
+      </Button>
+    </SolutionHeroTemplate>
   );
 }

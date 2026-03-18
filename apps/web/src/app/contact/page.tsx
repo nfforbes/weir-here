@@ -51,8 +51,8 @@ export default function ContactPage() {
                 Email
               </Typography>
             </Box>
-            <Link href="mailto:info@weirhere.com" underline="hover">
-              info@weirhere.com
+            <Link href="mailto:info@weirheresolutions.com" underline="hover">
+              info@weirheresolutions.com
             </Link>
           </Paper>
         </Grid>

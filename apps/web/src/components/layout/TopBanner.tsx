@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import WhatsApp from '@mui/icons-material/WhatsApp';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import {
   IMenuItem,
@@ -57,7 +58,9 @@ export default function TopBanner() {
   return (
     <>
       {/* Gold Info Bar */}
+      
       <Box
+      
         sx={{
           bgcolor: '#cfaf5b',
           color: 'black',
@@ -69,9 +72,29 @@ export default function TopBanner() {
         }}
       >
         <Typography variant="caption" sx={{ opacity: 0.9 }}>
-          info@weirhere.com &nbsp;|&nbsp; (555) 123-4567
+          info@weirheresolutions.com &nbsp;  |
+        </Typography>
+        <Box
+       component="a"
+       href="https://wa.me/18761234567"
+       target="_blank"
+       rel="noopener noreferrer" 
+        sx={{
+          bgcolor: '#cfaf5b',
+          color: 'black',
+          py: 0.5,
+          px: 3,
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="caption" sx={{ opacity: 0.9 }}>
+          (555) 123-4567
         </Typography>
       </Box>
+      </Box>
+      
 
       {/* Main nav bar */}
       <Box

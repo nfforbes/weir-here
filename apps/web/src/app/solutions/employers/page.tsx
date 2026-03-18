@@ -1,19 +1,10 @@
 'use client';
 
-import {
-  Container,
-  Typography,
-  Paper,
-  Box,
-  Button,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-} from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { Button } from '@mui/material';
+import BusinessIcon from '@mui/icons-material/Business';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useRouter } from 'next/navigation';
+import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 
 const benefits = [
   'Access a vetted pool of qualified candidates across industries',
@@ -37,37 +28,17 @@ export default function EmployersPage() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 8 }}>
-      <Typography variant="h3" fontWeight={700} gutterBottom>
-        Staffing Solutions for Employers
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 700 }}>
-        Finding the right talent shouldn&apos;t slow your business down. Weir Here
-        Staffing partners with companies of all sizes to deliver workforce solutions that
-        scale with your needs.
-      </Typography>
-
-      <Paper elevation={2} sx={{ p: 4, mb: 4 }}>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          Why Partner With Us
-        </Typography>
-        <List disablePadding>
-          {benefits.map((b) => (
-            <ListItem key={b} disableGutters sx={{ py: 0.5 }}>
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                <CheckCircleOutlineIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText primary={b} />
-            </ListItem>
-          ))}
-        </List>
-      </Paper>
-
-      <Box sx={{ textAlign: 'center' }}>
-        <Button variant="contained" size="large" onClick={handlePostJob}>
-          Post a Job
-        </Button>
-      </Box>
-    </Container>
+    <SolutionHeroTemplate
+      title="Staffing Solutions for Employers"
+      description="Finding the right talent shouldn't slow your business down. Weir Here Staffing partners with companies of all sizes to deliver workforce solutions that scale with your needs."
+      benefits={benefits}
+      imageSrc="/Black_doctor_seeing_patient_ee388b378f.jpeg"
+      solutionName="Staffing Solutions for Employers"
+      IconComponent={BusinessIcon}
+    >
+      <Button variant="contained" size="large" onClick={handlePostJob} sx={{ mt: 3 }}>
+        Post a Job
+      </Button>
+    </SolutionHeroTemplate>
   );
 }

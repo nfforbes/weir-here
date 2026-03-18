@@ -6,7 +6,7 @@ import type { Metadata } from 'next';
 import LinkNext from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Patsy | Weir Here Staffing',
+  title: 'Patsy Weir | Weir Here Staffing',
 };
 
 const BG_LIGHT = '#f8f7f4';
@@ -59,7 +59,7 @@ export default function PatsyProfilePage() {
                 }}
               />
               <Typography variant="h5" fontWeight={700} sx={{ color: TEXT_DARK, mt: 2, textAlign: 'center' }}>
-                Patsy
+                Patsy Weir
               </Typography>
               <Typography variant="subtitle1" sx={{ color: '#666', textAlign: 'center', mb: 2 }}>
                 Chief Financial Officer
