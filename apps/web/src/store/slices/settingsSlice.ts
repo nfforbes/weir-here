@@ -7,7 +7,14 @@ export type SettingKey =
   | 'MS365_SHAREPOINT_SITE_ID'
   | 'MS365_RESUME_FOLDER_PATH'
   | 'MS365_LOGO_FOLDER_PATH'
-  | 'MS365_JOB_ATTACHMENT_PATH';
+  | 'MS365_JOB_ATTACHMENT_PATH'
+  | 'SMTP_USER'
+  | 'SMTP_PASS'
+  | 'SMTP_HOST'
+  | 'SMTP_PORT'
+  | 'SMTP_SECURE'
+  | 'SMTP_CIPHERS'
+  | 'SMTP_FROM';
 
 interface SettingsState {
   settings: Record<string, string>;

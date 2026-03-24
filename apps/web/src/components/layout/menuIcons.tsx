@@ -19,6 +19,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import HomeWorkIcon from '@mui/icons-material/HomeWork';
 import WorkIcon from '@mui/icons-material/Work';
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
+import SchoolIcon from '@mui/icons-material/School';
 
 const iconMap: Record<string, ReactElement> = {
   Home: <HomeIcon fontSize="small" />,
@@ -39,6 +41,8 @@ const iconMap: Record<string, ReactElement> = {
   TravelExplore: <TravelExploreIcon fontSize="small" />,
   HomeWork: <HomeWorkIcon fontSize="small" />,
   Work: <WorkIcon fontSize="small" />,
+  CleaningServices: <CleaningServicesIcon fontSize="small" />,
+  School: <SchoolIcon fontSize="small" />,
 };
 
 export function getMenuIcon(name: string): ReactElement | null {

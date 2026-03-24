@@ -16,6 +16,8 @@ export const PUBLIC_MENU: IMenuItem[] = [
       { label: 'Support Staff', path: '/solutions/support-staff', icon: 'People' },
       { label: 'Travel and Temporary Staffing', path: '/solutions/travel-temporary-staffing', icon: 'TravelExplore' },
       { label: 'Domestic Care', path: '/solutions/domestic-care', icon: 'HomeWork' },
+      { label: 'Housekeeping', path: '/solutions/housekeeping', icon: 'CleaningServices' },
+      { label: 'Tutoring', path: '/solutions/tutoring', icon: 'School' },
     ],
   },
   {

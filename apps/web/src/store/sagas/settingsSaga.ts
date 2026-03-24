@@ -12,7 +12,8 @@ import {
 async function getSettings(): Promise<Record<string, string>> {
   const res = await fetch('/api/admin/settings');
   if (!res.ok) throw new Error('Failed to fetch settings');
-  return res.json();
+  const data = await res.json();
+  return data.settings || {};
 }
 
 async function putSettings(
@@ -21,10 +22,11 @@ async function putSettings(
   const res = await fetch('/api/admin/settings', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(settings),
+    body: JSON.stringify({ settings }),
   });
   if (!res.ok) throw new Error('Failed to save settings');
-  return res.json();
+  const data = await res.json();
+  return data.settings || settings;
 }
 
 function* handleFetchSettings() {

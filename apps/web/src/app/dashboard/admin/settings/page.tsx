@@ -2,10 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Container, Typography, Box, CircularProgress } from '@mui/material';
+import { Container, Typography, Box, CircularProgress, Stack } from '@mui/material';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useAppSelector } from '@/store';
 import MS365SettingsForm from '@/components/admin/MS365SettingsForm';
+import SMTPSettingsForm from '@/components/admin/SMTPSettingsForm';
 
 export default function AdminSettingsPage() {
   const { user, isLoading: authLoading } = useUser();
@@ -42,9 +43,12 @@ export default function AdminSettingsPage() {
         Admin Settings
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Configure Microsoft 365 integration and other system settings.
+        Configure Microsoft 365 integration, SMTP email settings, and other system settings.
       </Typography>
-      <MS365SettingsForm />
+      <Stack spacing={4}>
+        <MS365SettingsForm />
+        <SMTPSettingsForm />
+      </Stack>
     </Container>
   );
 }

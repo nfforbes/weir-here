@@ -4,7 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import SystemSetting from '@/models/SystemSetting';
 
-const MASKED_KEYS = ['MS365_CLIENT_SECRET'];
+const MASKED_KEYS = ['MS365_CLIENT_SECRET', 'SMTP_PASS'];
 const MASK_VALUE = '********';
 
 async function requireAdmin(sub: string) {
