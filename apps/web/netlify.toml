@@ -1,5 +1,12 @@
 [build]
   command = "npm run build"
+  # Monorepo: set this in Netlify UI to apps/web if builds run from repo root
+  # base = "apps/web"
 
 [build.environment]
   NODE_VERSION = "20"
+
+# Smaller / more reliable function bundles for Mongoose on serverless (Next SSR)
+[functions]
+  node_bundler = "nft"
+  external_node_modules = ["mongoose", "mongodb", "bson"]
