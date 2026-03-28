@@ -1,17 +1,38 @@
 import type { NextConfig } from 'next';
+import path from 'path';
+import { loadEnvConfig } from '@next/env';
+
+// Monorepo: Next.js only loads `.env*` from `apps/web` by default. If you keep
+// `.env.local` at the repo root, load it here so Auth0 and `next.config` `env`
+// see the same values.
+const repoRoot = path.resolve(__dirname, '../..');
+loadEnvConfig(repoRoot);
+loadEnvConfig(__dirname);
+
+// `next.config` `env` is bundled into the browser; never put secrets there.
+// `compiler.defineServer` inlines into Node server and Edge (middleware) only,
+// which fixes Auth0 in middleware — plain `env` + DefinePlugin was not replacing
+// `process.env.*` inside the middleware bundle (secret stayed empty → skipped auth → 404 on /auth/login).
+const auth0ServerEnv: Record<string, string> = {
+  AUTH0_SECRET: process.env.AUTH0_SECRET ?? '',
+  AUTH0_DOMAIN: process.env.AUTH0_DOMAIN ?? '',
+  AUTH0_CLIENT_ID: process.env.AUTH0_CLIENT_ID ?? '',
+  AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET ?? '',
+  APP_BASE_URL: process.env.APP_BASE_URL ?? '',
+  VERCEL_URL: process.env.VERCEL_URL ?? '',
+};
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@weir-here/shared'],
-  // Explicitly expose these to the Edge runtime (middleware).
-  // Next.js only inlines env vars it can statically detect in *your* code;
-  // vars read inside third-party SDK bundles (Auth0) are invisible to the
-  // analyser and therefore undefined at Edge runtime without this.
-  env: {
-    AUTH0_DOMAIN: process.env.AUTH0_DOMAIN,
-    AUTH0_CLIENT_ID: process.env.AUTH0_CLIENT_ID,
-    AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET,
-    AUTH0_SECRET: process.env.AUTH0_SECRET,
-    APP_BASE_URL: process.env.APP_BASE_URL,
+  compiler: {
+    defineServer: Object.fromEntries(
+      Object.entries(auth0ServerEnv).map(([key, value]) => [`process.env.${key}`, value]),
+    ),
+  },
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 450],
   },
   experimental: {
     serverActions: {

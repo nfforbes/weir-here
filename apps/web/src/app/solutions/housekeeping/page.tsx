@@ -3,7 +3,9 @@ import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Housekeeping | Weir Here Staffing',
+    title: 'Housekeeping Staff in Jamaica | Weir Here Staffing',
+    description:
+        'Professional, vetted housekeeping and cleaning staff available in Jamaica. Weir Here Staffing Solutions places reliable housekeepers for homes, hotels, and businesses in Kingston.',
 };
 
 const benefits = [

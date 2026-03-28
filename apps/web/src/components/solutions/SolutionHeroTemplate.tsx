@@ -1,4 +1,5 @@
 import { Box, Typography, Container } from '@mui/material';
+import Image from 'next/image';
 import Link from 'next/link';
 import ConsultationForm from './ConsultationForm';
 
@@ -9,6 +10,8 @@ interface SolutionHeroTemplateProps {
   description: string;
   benefits: string[];
   imageSrc: string;
+  /** Accessible label for the hero image (defaults from title). */
+  imageAlt?: string;
   solutionName: string;
   IconComponent: React.ComponentType<{ sx?: object }>;
   children?: React.ReactNode;
@@ -19,10 +22,13 @@ export default function SolutionHeroTemplate({
   description,
   benefits,
   imageSrc,
+  imageAlt,
   solutionName,
   IconComponent,
   children,
 }: SolutionHeroTemplateProps) {
+  const heroAlt = imageAlt ?? `${title} — Weir Here Staffing`;
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       {/* Hero section - same as homepage page 1 */}
@@ -147,15 +153,14 @@ export default function SolutionHeroTemplate({
                 bgcolor: '#1a1a1a',
               }}
             >
-              <Box
-                component="img"
+              <Image
                 src={imageSrc}
-                alt=""
-                sx={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
+                alt={heroAlt}
+                fill
+                sizes="(max-width: 599px) 300px, (max-width: 899px) 370px, 430px"
+                priority
+                unoptimized={imageSrc.endsWith('.gif')}
+                style={{ objectFit: 'cover' }}
               />
             </Box>
           </Box>

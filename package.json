@@ -6,7 +6,9 @@
     "apps/*"
   ],
   "scripts": {
+    "clean:web": "npm run clean --workspace=apps/web",
     "dev": "npm run dev --workspace=apps/web",
+    "dev:https": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/web",
     "start": "npm run start --workspace=apps/web",
     "dev:mobile": "npm run start --workspace=apps/mobile",

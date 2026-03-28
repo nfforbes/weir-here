@@ -12,8 +12,13 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import type { Metadata } from 'next';
 
+const ADDRESS_MAPS_URL =
+  'https://www.google.com/maps/search/?api=1&query=RoseDale+Drive%2C+Kingston%2C+Jamaica';
+
 export const metadata: Metadata = {
-  title: 'Contact Us | Weir Here Staffing',
+  title: 'Contact Us | Weir Here Staffing Solutions, Kingston Jamaica',
+  description:
+    'Get in touch with Weir Here Staffing Solutions. Located on RoseDale Drive, Kingston, Jamaica. Call (876) 287-9632 or email info@weirheresolutions.com.',
 };
 
 export default function ContactPage() {
@@ -35,10 +40,17 @@ export default function ContactPage() {
                 Address
               </Typography>
             </Box>
-            <Typography variant="body1">
-              123 Staffing Lane, Suite 400
+            <Typography
+              component={Link}
+              href={ADDRESS_MAPS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="body1"
+              underline="hover"
+            >
+              RoseDale Drive
               <br />
-              Charlotte, NC 28202
+              Kingston, Jamaica
             </Typography>
           </Paper>
         </Grid>

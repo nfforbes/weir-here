@@ -13,6 +13,7 @@ import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useAppSelector } from '@/store';
+import { hasPermission, PERMISSIONS } from '@weir-here/shared';
 import { ELECTRIC_BLUE } from '@/theme/theme';
 
 const CARD_SX = {
@@ -33,11 +34,18 @@ export default function CareersPage() {
   const authUser = useAppSelector((state) => state.auth.user);
   const router = useRouter();
 
+  const canPostJob =
+    authUser != null && hasPermission(authUser.personas, PERMISSIONS.POST_JOB);
+
   const handlePostJob = () => {
-    if (user) {
+    if (!user) {
+      router.push('/auth/login?returnTo=/dashboard/post-job');
+      return;
+    }
+    if (canPostJob) {
       router.push('/dashboard/post-job');
     } else {
-      router.push('/auth/login?returnTo=/dashboard/post-job');
+      router.push('/contact');
     }
   };
 
@@ -45,7 +53,7 @@ export default function CareersPage() {
     router.push('/jobs');
   };
 
-  if (isLoading) {
+  if (isLoading || (user && !authUser)) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 12 }}>
         <CircularProgress />
@@ -68,7 +76,9 @@ export default function CareersPage() {
         {user && authUser?.name ? `Welcome, ${authUser.name}!` : 'Careers'}
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 6 }}>
-        {user ? 'What would you like to do today?' : 'Explore opportunities or post a job.'}
+        {user
+          ? 'What would you like to do today?'
+          : 'Explore opportunities or get in touch to hire through Weir Here.'}
       </Typography>
 
       <Box
@@ -97,7 +107,11 @@ export default function CareersPage() {
                 I Need Talent
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Post a new job listing
+                {!user
+                  ? 'Sign in to post a job (administrators only) or contact us to hire.'
+                  : canPostJob
+                    ? 'Post a new job listing'
+                    : 'Contact us to staff your team—only administrators can post jobs.'}
               </Typography>
             </CardContent>
           </CardActionArea>

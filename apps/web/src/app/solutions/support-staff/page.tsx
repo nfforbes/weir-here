@@ -3,7 +3,9 @@ import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Support Staff | Weir Here Staffing',
+  title: 'Support Staff in Jamaica | Weir Here Staffing',
+  description:
+    'Administrative, clerical, and front-office support staff available in Jamaica. Weir Here Staffing Solutions provides reliable support staff to businesses in Kingston.',
 };
 
 const benefits = [

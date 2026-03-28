@@ -21,6 +21,14 @@ import HomeWorkIcon from '@mui/icons-material/HomeWork';
 import WorkIcon from '@mui/icons-material/Work';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import SchoolIcon from '@mui/icons-material/School';
+import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import HealingIcon from '@mui/icons-material/Healing';
+import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
+import ChildCareIcon from '@mui/icons-material/ChildCare';
+import TuneIcon from '@mui/icons-material/Tune';
+import GroupIcon from '@mui/icons-material/Group';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const iconMap: Record<string, ReactElement> = {
   Home: <HomeIcon fontSize="small" />,
@@ -43,6 +51,14 @@ const iconMap: Record<string, ReactElement> = {
   Work: <WorkIcon fontSize="small" />,
   CleaningServices: <CleaningServicesIcon fontSize="small" />,
   School: <SchoolIcon fontSize="small" />,
+  FormatQuote: <FormatQuoteIcon fontSize="small" />,
+  AssignmentInd: <AssignmentIndIcon fontSize="small" />,
+  Healing: <HealingIcon fontSize="small" />,
+  AccessibilityNew: <AccessibilityNewIcon fontSize="small" />,
+  ChildCare: <ChildCareIcon fontSize="small" />,
+  Tune: <TuneIcon fontSize="small" />,
+  Group: <GroupIcon fontSize="small" />,
+  Settings: <SettingsIcon fontSize="small" />,
 };
 
 export function getMenuIcon(name: string): ReactElement | null {

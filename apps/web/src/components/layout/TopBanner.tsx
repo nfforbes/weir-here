@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Box,
   Typography,
@@ -43,17 +44,22 @@ export default function TopBanner() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [dropdownAnchor, setDropdownAnchor] = useState<null | HTMLElement>(null);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  /** Parent path is stable (e.g. `/solutions`) and avoids duplicate-label edge cases when resolving open items. */
+  const [activeDropdownPath, setActiveDropdownPath] = useState<string | null>(null);
 
-  const handleDropdownOpen = (event: React.MouseEvent<HTMLElement>, label: string) => {
+  const handleDropdownOpen = (event: React.MouseEvent<HTMLElement>, path: string) => {
     setDropdownAnchor(event.currentTarget);
-    setActiveDropdown(label);
+    setActiveDropdownPath(path);
   };
 
   const handleDropdownClose = () => {
     setDropdownAnchor(null);
-    setActiveDropdown(null);
+    setActiveDropdownPath(null);
   };
+
+  const activeDropdownItem = menuItems.find(
+    (i) => i.path === activeDropdownPath && i.children && i.children.length > 0,
+  );
 
   return (
     <>
@@ -76,7 +82,7 @@ export default function TopBanner() {
         </Typography>
         <Box
        component="a"
-       href="https://wa.me/18761234567"
+       href="https://wa.me/18762879632"
        target="_blank"
        rel="noopener noreferrer" 
         sx={{
@@ -90,16 +96,19 @@ export default function TopBanner() {
         }}
       >
         <Typography variant="caption" sx={{ opacity: 0.9 }}>
-          (555) 123-4567
+          (876) 287-9632
         </Typography>
       </Box>
       </Box>
       
 
-      {/* Main nav bar */}
+      {/* Main nav bar — sticky so anchored menus stay aligned; z-index below MUI modal layer (menu popover). */}
       <Box
         component="nav"
         sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: theme.zIndex.appBar,
           bgcolor: '#000000',
           color: '#cfaf5b',
           px: 3,
@@ -112,12 +121,15 @@ export default function TopBanner() {
         {/* Logo */}
         <Link href="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
           {!logoError ? (
-            <Box
-              component="img"
+            <Image
               src="/weir-here-logo-transparent.png"
               alt="Weir Here"
+              width={220}
+              height={64}
+              priority
+              sizes="220px"
               onError={() => setLogoError(true)}
-              sx={{ height: 64, width: 'auto', maxWidth: 220, objectFit: 'contain' }}
+              style={{ height: 64, width: 'auto', maxWidth: 220, objectFit: 'contain' }}
             />
           ) : (
             <Typography
@@ -143,36 +155,17 @@ export default function TopBanner() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {menuItems.map((item) =>
               item.children && item.children.length > 0 ? (
-                <Box key={item.label}>
-                  <Button
-                    color="inherit"
-                    endIcon={<ArrowDropDownIcon />}
-                    onClick={(e) => handleDropdownOpen(e, item.label)}
-                    sx={{ textTransform: 'none', fontWeight: 500 }}
-                  >
-                    {item.label}
-                  </Button>
-                  <Menu
-                    anchorEl={dropdownAnchor}
-                    open={activeDropdown === item.label}
-                    onClose={handleDropdownClose}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                    transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  >
-                    {item.children.map((child) => (
-                      <MenuItem
-                        key={child.path}
-                        onClick={handleDropdownClose}
-                        component={Link}
-                        href={child.path}
-                        sx={{ gap: 1 }}
-                      >
-                        {getMenuIcon(child.icon)}
-                        {child.label}
-                      </MenuItem>
-                    ))}
-                  </Menu>
-                </Box>
+                <Button
+                  key={item.label}
+                  color="inherit"
+                  endIcon={<ArrowDropDownIcon />}
+                  aria-haspopup="true"
+                  aria-expanded={activeDropdownPath === item.path ? 'true' : 'false'}
+                  onClick={(e) => handleDropdownOpen(e, item.path)}
+                  sx={{ textTransform: 'none', fontWeight: 500 }}
+                >
+                  {item.label}
+                </Button>
               ) : (
                 <Button
                   key={item.path}
@@ -185,6 +178,37 @@ export default function TopBanner() {
                 </Button>
               )
             )}
+            <Menu
+              key={activeDropdownPath ?? 'nav-menu'}
+              anchorEl={dropdownAnchor}
+              open={Boolean(dropdownAnchor && activeDropdownItem)}
+              onClose={handleDropdownClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+              disableScrollLock
+              slotProps={{
+                paper: {
+                  sx: {
+                    minWidth: dropdownAnchor?.offsetWidth ?? 0,
+                    maxHeight: 'min(480px, 70vh)',
+                    overflowY: 'auto',
+                  },
+                },
+              }}
+            >
+              {(activeDropdownItem?.children ?? []).map((child) => (
+                <MenuItem
+                  key={child.path}
+                  onClick={handleDropdownClose}
+                  component={Link}
+                  href={child.path}
+                  sx={{ gap: 1, py: 1 }}
+                >
+                  {getMenuIcon(child.icon)}
+                  {child.label}
+                </MenuItem>
+              ))}
+            </Menu>
 
             {/* Auth Button */}
             {isAuthenticated ? (

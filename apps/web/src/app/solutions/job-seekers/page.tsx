@@ -5,7 +5,9 @@ import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'For Job Seekers | Weir Here Staffing',
+  title: 'For Job Seekers in Jamaica | Weir Here Staffing',
+  description:
+    'Find your next healthcare or domestic career opportunity in Jamaica. Free job matching, resume support, and interview coaching from Weir Here Staffing Solutions, Kingston.',
 };
 
 const benefits = [

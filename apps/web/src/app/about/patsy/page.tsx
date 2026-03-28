@@ -4,9 +4,12 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import type { Metadata } from 'next';
 import LinkNext from 'next/link';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'Patsy Weir | Weir Here Staffing',
+  title: 'Patsy Weir — CFO | Weir Here Staffing',
+  description:
+    'Meet Patsy Weir, Chief Financial Officer of Weir Here Staffing Solutions. Expertise in financial planning, compliance, and strategic scaling for staffing operations.',
 };
 
 const BG_LIGHT = '#f8f7f4';
@@ -48,16 +51,23 @@ export default function PatsyProfilePage() {
             {/* Left: Circular image */}
             <Box sx={{ flexShrink: 0 }}>
               <Box
-                component="img"
-                src="/patsy.jpg"
-                alt="Patsy"
                 sx={{
+                  position: 'relative',
                   width: 280,
                   height: 280,
                   borderRadius: '50%',
-                  objectFit: 'cover',
+                  overflow: 'hidden',
                 }}
-              />
+              >
+                <Image
+                  src="/patsy.jpg"
+                  alt="Patsy Weir"
+                  fill
+                  sizes="280px"
+                  loading="lazy"
+                  style={{ objectFit: 'cover' }}
+                />
+              </Box>
               <Typography variant="h5" fontWeight={700} sx={{ color: TEXT_DARK, mt: 2, textAlign: 'center' }}>
                 Patsy Weir
               </Typography>

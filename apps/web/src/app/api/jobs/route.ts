@@ -64,6 +64,11 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
+    const dbUser = await User.findOne({ auth0Id: session.user.sub });
+    if (!dbUser?.personas.includes('administrator')) {
+      return NextResponse.json({ error: 'Only administrators can create job postings.' }, { status: 403 });
+    }
+
     const body = await request.json();
     body.postedBy = session.user.sub;
 

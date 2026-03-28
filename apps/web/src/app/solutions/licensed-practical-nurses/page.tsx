@@ -1,9 +1,11 @@
-import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Licensed Practical Nurses | Weir Here Staffing',
+  title: 'Licensed Practical Nurses (LPNs) in Jamaica | Weir Here Staffing',
+  description:
+    'Hire credential-verified Licensed Practical Nurses (LPNs) in Jamaica for acute care, long-term care, rehab, and skilled nursing. Flexible shifts — Weir Here Staffing Solutions, Kingston.',
 };
 
 const benefits = [
@@ -21,7 +23,7 @@ export default function LicensedPracticalNursesPage() {
       benefits={benefits}
       imageSrc="/Black_nurse_babysitting_child_4e246048c5.jpeg"
       solutionName="Licensed Practical Nurses"
-      IconComponent={HealthAndSafetyIcon}
+      IconComponent={AssignmentIndIcon}
     />
   );
 }

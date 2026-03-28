@@ -1,4 +1,5 @@
 import { call, put, takeLatest } from 'redux-saga/effects';
+import type { IUser } from '@weir-here/shared';
 import {
   bootstrapUser,
   bootstrapUserSuccess,
@@ -6,31 +7,23 @@ import {
 } from '@/store/slices/authSlice';
 import type { AuthUser } from '@/store/slices/authSlice';
 
-async function fetchAuthMe(): Promise<{ email: string; name: string; sub: string; email_verified: boolean }> {
-  const res = await fetch('/api/auth/me');
-  if (!res.ok) throw new Error('Not authenticated');
-  return res.json();
-}
-
-async function postBootstrapUser(auth0Profile: {
-  email: string;
-  name: string;
-  sub: string;
-  email_verified: boolean;
-}): Promise<AuthUser> {
-  const res = await fetch('/api/users/bootstrap', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(auth0Profile),
-  });
+async function postBootstrapUser(): Promise<AuthUser> {
+  const res = await fetch('/api/users/bootstrap', { method: 'POST' });
   if (!res.ok) throw new Error('Failed to bootstrap user');
-  return res.json();
+  const data: { user: IUser } = await res.json();
+  const u = data.user;
+  return {
+    auth0Id: u.auth0Id,
+    email: u.email,
+    name: u.name,
+    personas: u.personas,
+    emailVerified: u.emailVerified,
+  };
 }
 
 function* handleBootstrapUser() {
   try {
-    const auth0Profile: Awaited<ReturnType<typeof fetchAuthMe>> = yield call(fetchAuthMe);
-    const user: AuthUser = yield call(postBootstrapUser, auth0Profile);
+    const user: AuthUser = yield call(postBootstrapUser);
     yield put(bootstrapUserSuccess(user));
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Bootstrap failed';

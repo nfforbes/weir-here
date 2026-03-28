@@ -1,9 +1,11 @@
-import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
+import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Geriatric Nurses | Weir Here Staffing',
+  title: 'Geriatric Nurses in Jamaica | Weir Here Staffing',
+  description:
+    'Specialized geriatric and long-term care nurses available in Jamaica. Weir Here Staffing Solutions places compassionate geriatric nurses for nursing homes and private care.',
 };
 
 const benefits = [
@@ -21,7 +23,7 @@ export default function GeriatricNursesPage() {
       benefits={benefits}
       imageSrc="/realistic-scene-with-elderly-care-senior-people.png"
       solutionName="Geriatric Nurses"
-      IconComponent={HealthAndSafetyIcon}
+      IconComponent={AccessibilityNewIcon}
     />
   );
 }

@@ -3,7 +3,9 @@ import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Travel and Temporary Staffing | Weir Here Staffing',
+  title: 'Travel & Temporary Staffing in Jamaica | Weir Here Staffing',
+  description:
+    'Travel nurses and allied health professionals for short-term and locum assignments in Jamaica and the Caribbean. Weir Here Staffing Solutions, Kingston.',
 };
 
 const benefits = [

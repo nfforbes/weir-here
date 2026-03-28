@@ -3,7 +3,9 @@ import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Physicians & Advanced Practice Providers | Weir Here Staffing',
+  title: 'Physicians & Advanced Practice Providers in Jamaica | Weir Here Staffing',
+  description:
+    'Board-certified physicians and advanced practice providers (APPs) for locum and permanent roles in Jamaica. Weir Here Staffing Solutions, Kingston.',
 };
 
 const benefits = [

@@ -1,9 +1,12 @@
 import { Box, Typography, Container } from '@mui/material';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'About Us | Weir Here Staffing',
+  title: 'About Weir Here Staffing Solutions | Kingston, Jamaica',
+  description:
+    'Learn about Weir Here Staffing Solutions — a Kingston, Jamaica staffing agency dedicated to connecting qualified healthcare professionals and domestic workers with employers and families. Meet our leadership.',
 };
 
 const BG_LIGHT = '#f8f7f4';
@@ -58,16 +61,24 @@ export default function AboutPage() {
 
             {/* Center: Large image */}
             <Box
-              component="img"
-              src="/realistic-scene-with-elderly-care-senior-people.png"
-              alt="Healthcare staffing"
               sx={{
+                position: 'relative',
                 width: '100%',
-                borderRadius: 2,
-                objectFit: 'cover',
+                aspectRatio: '4 / 3',
                 maxHeight: 360,
+                borderRadius: 2,
+                overflow: 'hidden',
               }}
-            />
+            >
+              <Image
+                src="/realistic-scene-with-elderly-care-senior-people.png"
+                alt="Healthcare staffing"
+                fill
+                sizes="(max-width: 900px) 92vw, 520px"
+                loading="lazy"
+                style={{ objectFit: 'cover' }}
+              />
+            </Box>
 
             {/* Right: Our Philosophy card */}
             <Box
@@ -84,17 +95,16 @@ export default function AboutPage() {
               <Typography variant="body1" sx={{ color: '#444', mb: 2, lineHeight: 1.7 }}>
                 At Weir Here Staffing, we believe in creating trusted, personalized partnerships that reflect our clients&apos; needs and our commitment to exceptional care. When you need us, Weir Here.
               </Typography>
-              <Box
-                component="img"
-                src="/Black_nurse_babysitting_child_4e246048c5.jpeg"
-                alt="Care"
-                sx={{
-                  width: '100%',
-                  borderRadius: 1,
-                  objectFit: 'cover',
-                  height: 140,
-                }}
-              />
+              <Box sx={{ position: 'relative', width: '100%', height: 140, borderRadius: 1, overflow: 'hidden' }}>
+                <Image
+                  src="/Black_nurse_babysitting_child_4e246048c5.jpeg"
+                  alt="Care"
+                  fill
+                  sizes="(max-width: 1200px) 90vw, 360px"
+                  loading="lazy"
+                  style={{ objectFit: 'cover' }}
+                />
+              </Box>
             </Box>
           </Box>
 
@@ -205,18 +215,16 @@ export default function AboutPage() {
                     },
                   }}
                 >
-                  <Box
-                    component="img"
-                    src="/patsy.jpg"
-                    alt="Patsy"
-                    sx={{
-                      width: '100%',
-                      maxWidth: 240,
-                      height: 280,
-                      objectFit: 'cover',
-                      borderRadius: 1,
-                    }}
-                  />
+                  <Box sx={{ position: 'relative', width: '100%', maxWidth: 240, height: 280, borderRadius: 1, overflow: 'hidden', mx: 'auto' }}>
+                    <Image
+                      src="/patsy.jpg"
+                      alt="Patsy Weir"
+                      fill
+                      sizes="240px"
+                      loading="lazy"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </Box>
                   <Typography variant="h6" fontWeight={700} sx={{ color: TEXT_DARK, mt: 2 }}>
                     Patsy Weir
                   </Typography>

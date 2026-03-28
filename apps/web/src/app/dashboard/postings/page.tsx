@@ -19,7 +19,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useUser } from '@auth0/nextjs-auth0/client';
-import { IJob } from '@weir-here/shared';
+import { useAppSelector } from '@/store';
+import { hasPermission, IJob, PERMISSIONS } from '@weir-here/shared';
 
 function jobStatus(expiresAt?: string): 'active' | 'expired' {
   if (!expiresAt) return 'active';
@@ -36,6 +37,9 @@ const employmentTypeLabels: Record<string, string> = {
 
 export default function PostingsPage() {
   const { user, isLoading: authLoading } = useUser();
+  const authUser = useAppSelector((state) => state.auth.user);
+  const canPostJob =
+    authUser != null && hasPermission(authUser.personas, PERMISSIONS.POST_JOB);
   const router = useRouter();
   const [jobs, setJobs] = useState<IJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +78,7 @@ export default function PostingsPage() {
     };
   }, [user, authLoading, router]);
 
-  if (authLoading || !user) {
+  if (authLoading || !user || (user && !authUser)) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 12 }}>
         <CircularProgress />
@@ -119,19 +123,23 @@ export default function PostingsPage() {
         <Card variant="outlined" sx={{ py: 6 }}>
           <CardContent>
             <Typography color="text.secondary" align="center" gutterBottom>
-              You don&apos;t have any job postings yet.
+              {canPostJob
+                ? "You don't have any job postings yet."
+                : 'Only administrators can create job postings. Contact your admin if you need a role posted.'}
             </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <Button
-                component={Link}
-                href="/dashboard/post-job"
-                variant="contained"
-                startIcon={<AddIcon />}
-                sx={{ textTransform: 'none' }}
-              >
-                Post your first job
-              </Button>
-            </Box>
+            {canPostJob && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Button
+                  component={Link}
+                  href="/dashboard/post-job"
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Post your first job
+                </Button>
+              </Box>
+            )}
           </CardContent>
         </Card>
       )}

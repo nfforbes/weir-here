@@ -3,7 +3,9 @@ import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Tutoring | Weir Here Staffing',
+    title: 'Tutoring Services in Jamaica | Weir Here Staffing',
+    description:
+        'Qualified tutors for Math, Science, English, and more in Jamaica. Weir Here Staffing Solutions connects students with experienced tutors across Kingston and beyond.',
 };
 
 const benefits = [

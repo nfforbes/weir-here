@@ -9,16 +9,18 @@ function hasValidAuth0Secret(): boolean {
 
 export async function middleware(request: NextRequest) {
   if (!hasValidAuth0Secret()) {
+    if (request.nextUrl.pathname.startsWith('/auth/')) {
+      return new NextResponse(
+        'Auth0 is not configured: AUTH0_SECRET must be set (32+ characters) and available to middleware. Restart `next dev` after env or next.config changes.',
+        { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } },
+      );
+    }
     return NextResponse.next();
   }
   try {
     return await auth0.middleware(request);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Invalid URL';
-    if (message.includes('Invalid URL') || message.includes('URL')) {
-      console.error('[Auth0 middleware]', message);
-      return NextResponse.next();
-    }
+    console.error('[Auth0 middleware]', err);
     throw err;
   }
 }

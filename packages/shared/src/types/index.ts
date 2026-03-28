@@ -11,6 +11,19 @@ export interface IUser {
   updatedAt: Date;
 }
 
+export interface ITestimonial {
+  _id?: string;
+  quote: string;
+  authorName: string;
+  authorTitle: string;
+  context: string;
+  avatarUrl: string;
+  published: boolean;
+  sortOrder: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export type EmploymentType =
   | 'full-time'
   | 'part-time'

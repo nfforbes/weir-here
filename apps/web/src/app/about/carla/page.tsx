@@ -4,9 +4,12 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import type { Metadata } from 'next';
 import LinkNext from 'next/link';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'Carla Brannon | Weir Here Staffing',
+  title: 'Carla Brannon — CEO | Weir Here Staffing',
+  description:
+    'Meet Carla Brannon, Chief Executive Officer of Weir Here Staffing Solutions. 20+ years of healthcare operations and workforce leadership experience.',
 };
 
 const BG_LIGHT = '#f8f7f4';
@@ -48,16 +51,23 @@ export default function CarlaProfilePage() {
             {/* Left: Circular image */}
             <Box sx={{ flexShrink: 0 }}>
               <Box
-                component="img"
-                src="/carla.jpg"
-                alt="Carla Brannon"
                 sx={{
+                  position: 'relative',
                   width: 280,
                   height: 280,
                   borderRadius: '50%',
-                  objectFit: 'cover',
+                  overflow: 'hidden',
                 }}
-              />
+              >
+                <Image
+                  src="/carla.jpg"
+                  alt="Carla Brannon"
+                  fill
+                  sizes="280px"
+                  loading="lazy"
+                  style={{ objectFit: 'cover' }}
+                />
+              </Box>
               <Typography variant="h5" fontWeight={700} sx={{ color: TEXT_DARK, mt: 2, textAlign: 'center' }}>
                 Carla Brannon
               </Typography>

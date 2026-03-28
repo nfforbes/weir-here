@@ -17,7 +17,9 @@ import type { Metadata } from 'next';
 import type { SvgIconComponent } from '@mui/icons-material';
 
 export const metadata: Metadata = {
-  title: 'Industries | Weir Here Staffing',
+  title: 'Industries We Serve | Weir Here Staffing Jamaica',
+  description:
+    'Weir Here Staffing Solutions serves healthcare, education, finance, technology, manufacturing, retail, logistics, and more in Jamaica. Find staffing solutions tailored to your industry.',
 };
 
 interface Industry {

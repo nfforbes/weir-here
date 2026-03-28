@@ -1,10 +1,16 @@
-'use client';
-
+import type { Metadata } from 'next';
+import Image from 'next/image';
 import { Box, Typography } from '@mui/material';
 import BoltIcon from '@mui/icons-material/Bolt';
 import BusinessIcon from '@mui/icons-material/Business';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Staffing Solutions in Jamaica | Weir Here Staffing',
+  description:
+    'Explore healthcare and domestic staffing solutions in Jamaica — for employers looking to hire and job seekers building their careers. Weir Here Staffing Solutions, Kingston.',
+};
 
 const GOLD = '#cfaf5b';
 
@@ -177,15 +183,13 @@ export default function SolutionsPage() {
               bgcolor: '#1a1a1a',
             }}
           >
-            <Box
-              component="img"
+            <Image
               src="/Black_nurse_babysitting_child_4e246048c5.jpeg"
               alt="Healthcare staffing"
-              sx={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-              }}
+              fill
+              sizes="(max-width: 599px) 300px, (max-width: 899px) 370px, 430px"
+              priority
+              style={{ objectFit: 'cover' }}
             />
           </Box>
         </Box>

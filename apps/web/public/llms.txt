@@ -1,0 +1,76 @@
+# Weir Here Staffing Solutions
+
+Weir Here Staffing Solutions is a healthcare and domestic staffing agency headquartered in Kingston, Jamaica, serving local and international clients.
+
+## Company Overview
+
+- **Founded:** 2024
+- **Headquarters:** RoseDale Drive, Kingston, Jamaica
+- **Phone:** +1 (876) 287-9632
+- **Email:** info@weirheresolutions.com
+- **Website:** https://weirheresolutions.com
+- **WhatsApp:** +1 (876) 287-9632
+
+## Mission
+
+To connect qualified, compassionate healthcare professionals and domestic workers with the facilities, families, and organizations that need them most — built on integrity, innovation, and personalized service. *When you need us, Weir Here.*
+
+## Leadership
+
+- **Carla Brannon** — Chief Executive Officer: 20+ years of leadership experience in healthcare operations, workforce management, and organizational transformation. BA in Law and Society from Penn State University; graduate studies in Law and Business Management.
+- **Patsy Weir** — Chief Financial Officer: Expertise in financial planning, compliance, multi-company financial management, and strategic scaling.
+
+## Services
+
+### Healthcare Staffing
+- Registered Nurses (RNs) — all specialties, flexible shifts
+- Licensed Practical Nurses (LPNs) — acute care, long-term care, clinics
+- Geriatric Nurses — specialized long-term and elder care
+- Physicians & Advanced Practice Providers — board-certified, locum & permanent
+- Medical Professionals — general clinical and allied health
+
+### Domestic & Care Staffing
+- Domestic Care Aides — in-home support for seniors and individuals with special needs
+- Certified Babysitters — pediatric-trained caregivers
+- Housekeeping — professional vetted cleaning staff
+- Tutoring — qualified tutors in Math, Science, English, and more
+
+### Business Solutions
+- Employer Hiring Solutions — temporary, contract-to-hire, permanent placements
+- Job Seeker Placement — free career matching service
+- Travel & Temporary Staffing — short-term and locum assignments
+- Support Staff — administrative, clerical, and front-office roles
+
+## Geographic Coverage
+
+Primarily serves Kingston, Jamaica and surrounding parishes. Also facilitates international travel staffing and placements for the Jamaican diaspora.
+
+## Site Map
+
+| Path | Description |
+|------|-------------|
+| / | Homepage |
+| /about | About the company, philosophy, and leadership |
+| /about/carla | CEO profile: Carla Brannon |
+| /about/patsy | CFO profile: Patsy Weir |
+| /solutions | Overview of all staffing solutions |
+| /solutions/employers | Staffing solutions for employers |
+| /solutions/job-seekers | Career placement for job seekers |
+| /solutions/registered-nurses | RN staffing |
+| /solutions/licensed-practical-nurses | LPN staffing |
+| /solutions/geriatric-nurses | Geriatric nurse staffing |
+| /solutions/physicians-advanced-practice | Physician and APP staffing |
+| /solutions/medical-professionals | General medical staffing |
+| /solutions/domestic-care | Domestic care aide placement |
+| /solutions/certified-babysitter | Babysitter placement |
+| /solutions/housekeeping | Housekeeping staff |
+| /solutions/tutoring | Tutoring services |
+| /solutions/support-staff | Administrative support staff |
+| /solutions/travel-temporary-staffing | Travel and temporary staffing |
+| /contact | Contact information and office location |
+| /jobs | Live job board — browse open positions |
+| /testimonials | Client and candidate testimonials |
+| /industries | Industries served |
+| /privacy | Privacy Policy (Jamaica Data Protection Act 2020) |
+| /terms | Terms of Use (governed by Jamaican law) |
+| /security | Security practices and data protection |

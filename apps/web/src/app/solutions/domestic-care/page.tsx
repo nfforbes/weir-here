@@ -3,7 +3,9 @@ import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Domestic Care | Weir Here Staffing',
+  title: 'Domestic Care Services in Jamaica | Weir Here Staffing',
+  description:
+    'In-home care aides and companions for seniors and individuals with special needs in Jamaica. Weir Here Staffing Solutions provides vetted domestic caregivers in Kingston.',
 };
 
 const benefits = [
@@ -19,7 +21,7 @@ export default function DomesticCarePage() {
       title="Domestic Care"
       description="We provide qualified domestic care workers for in-home support. Our caregivers assist with activities of daily living, companionship, and household tasks, helping individuals remain safe and comfortable in their own homes."
       benefits={benefits}
-      imageSrc="/realistic-scene-with-elderly-care-senior-people.png"
+      imageSrc="/Black_worker_walking_202603280201.jpeg"
       solutionName="Domestic Care"
       IconComponent={HomeWorkIcon}
     />

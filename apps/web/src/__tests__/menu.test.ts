@@ -62,9 +62,13 @@ describe('Menu definitions', () => {
   });
 
   it('admin menu items require administrator persona', () => {
-    for (const item of ADMIN_MENU) {
-      expect(item.requiresAuth).toBe(true);
-      expect(item.requiredPersonas).toContain('administrator');
-    }
+    const checkAdmin = (items: typeof ADMIN_MENU) => {
+      for (const item of items) {
+        expect(item.requiresAuth).toBe(true);
+        expect(item.requiredPersonas).toContain('administrator');
+        if (item.children) checkAdmin(item.children as typeof ADMIN_MENU);
+      }
+    };
+    checkAdmin(ADMIN_MENU);
   });
 });

@@ -3,7 +3,9 @@ import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Medical Professionals | Weir Here Staffing',
+  title: 'Medical Professionals Staffing in Jamaica | Weir Here Staffing',
+  description:
+    'Skilled medical staff for hospitals, clinics, and healthcare facilities in Jamaica. Weir Here Staffing Solutions places qualified medical professionals across Kingston and beyond.',
 };
 
 const benefits = [

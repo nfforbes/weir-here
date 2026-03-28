@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Drawer,
   Box,
@@ -74,12 +75,15 @@ export default function MobileDrawer({
         >
           <Link href="/" onClick={onClose} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 1.5 }}>
             {!logoError ? (
-              <Box
-                component="img"
+              <Image
                 src="/weir-here-logo-transparent.png"
                 alt="Weir Here"
+                width={180}
+                height={48}
+                sizes="180px"
+                loading="lazy"
                 onError={() => setLogoError(true)}
-                sx={{ height: 48, width: 'auto', objectFit: 'contain' }}
+                style={{ height: 48, width: 'auto', objectFit: 'contain' }}
               />
             ) : null}
             <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 1.5, color: GOLD }}>

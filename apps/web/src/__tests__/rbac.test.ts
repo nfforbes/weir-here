@@ -17,7 +17,7 @@ describe('RBAC - hasPermission', () => {
 
   it('grants regular users job-related permissions', () => {
     expect(hasPermission(['user'], PERMISSIONS.APPLY_JOB)).toBe(true);
-    expect(hasPermission(['user'], PERMISSIONS.POST_JOB)).toBe(true);
+    expect(hasPermission(['user'], PERMISSIONS.POST_JOB)).toBe(false);
     expect(hasPermission(['user'], PERMISSIONS.MANAGE_OWN_JOBS)).toBe(true);
     expect(hasPermission(['user'], PERMISSIONS.REVIEW_APPLICATIONS)).toBe(true);
   });
@@ -33,6 +33,11 @@ describe('RBAC - hasPermission', () => {
     for (const perm of allPerms) {
       expect(hasPermission(['administrator'], perm)).toBe(true);
     }
+  });
+
+  it('grants only administrators permission to post jobs', () => {
+    expect(hasPermission(['administrator'], PERMISSIONS.POST_JOB)).toBe(true);
+    expect(hasPermission(['user', 'administrator'], PERMISSIONS.POST_JOB)).toBe(true);
   });
 
   it('grants access if any persona has the permission', () => {
@@ -80,7 +85,8 @@ describe('RBAC - filterMenuForUser', () => {
   it('shows admin menu to administrators', () => {
     const filtered = filterMenuForUser(ADMIN_MENU, ['administrator'], true);
     expect(filtered).toHaveLength(1);
-    expect(filtered[0].label).toBe('Admin Settings');
+    expect(filtered[0].label).toBe('Configuration');
+    expect(filtered[0].children?.map((c) => c.label)).toEqual(['Users', 'Settings', 'Testimonials']);
   });
 
   it('removes parent items with no visible children', () => {
