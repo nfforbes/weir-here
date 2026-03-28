@@ -26,6 +26,7 @@ import { useAppDispatch, useAppSelector } from '@/store';
 import { createJob } from '@/store/slices/jobsSlice';
 import type { EmploymentType, IScreeningQuestion } from '@weir-here/shared';
 import LocationAutocomplete from '@/components/jobs/LocationAutocomplete';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 const EMPLOYMENT_TYPES: { value: EmploymentType; label: string }[] = [
   { value: 'full-time', label: 'Full-Time' },
@@ -201,7 +202,7 @@ export default function JobPostForm() {
       )}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+          {toUserErrorMessage(error, 'Failed to post job')}
         </Alert>
       )}
 

@@ -27,6 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchJob, clearCurrentJob } from '@/store/slices/jobsSlice';
 import { fetchApplications } from '@/store/slices/applicationsSlice';
 import ReviewPanel from '@/components/jobs/ReviewPanel';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 const statusColors: Record<string, 'default' | 'info' | 'success' | 'error'> = {
   submitted: 'info',
@@ -87,7 +88,7 @@ export default function MyJobDetailPage() {
   if (error) {
     return (
       <Container maxWidth="md" sx={{ py: 8 }}>
-        <Alert severity="error">{error}</Alert>
+        <Alert severity="error">{toUserErrorMessage(error, 'Failed to load job')}</Alert>
       </Container>
     );
   }

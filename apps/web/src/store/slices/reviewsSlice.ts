@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IReview } from '@weir-here/shared';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 interface SubmitReviewPayload {
   applicationId: string;
@@ -44,9 +45,9 @@ const reviewsSlice = createSlice({
       state.reviews.push(action.payload);
       state.loading = false;
     },
-    submitReviewFailure(state, action: PayloadAction<string>) {
+    submitReviewFailure(state, action: PayloadAction<unknown>) {
       state.loading = false;
-      state.error = action.payload;
+      state.error = toUserErrorMessage(action.payload, 'Failed to submit review');
     },
   },
 });

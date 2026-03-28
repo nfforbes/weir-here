@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IApplication, ApplicationStatus } from '@weir-here/shared';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 interface ApplicationsState {
   applications: IApplication[];
@@ -27,9 +28,9 @@ const applicationsSlice = createSlice({
       state.applications = action.payload;
       state.loading = false;
     },
-    fetchApplicationsFailure(state, action: PayloadAction<string>) {
+    fetchApplicationsFailure(state, action: PayloadAction<unknown>) {
       state.loading = false;
-      state.error = action.payload;
+      state.error = toUserErrorMessage(action.payload, 'Failed to fetch applications');
     },
     submitApplication(state, _action: PayloadAction<FormData>) {
       state.loading = true;
@@ -60,9 +61,9 @@ const applicationsSlice = createSlice({
       }
       state.loading = false;
     },
-    updateApplicationStatusFailure(state, action: PayloadAction<string>) {
+    updateApplicationStatusFailure(state, action: PayloadAction<unknown>) {
       state.loading = false;
-      state.error = action.payload;
+      state.error = toUserErrorMessage(action.payload, 'Failed to update application status');
     },
   },
 });

@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 export type SettingKey =
   | 'MS365_CLIENT_ID'
@@ -52,9 +53,9 @@ const settingsSlice = createSlice({
       state.settings = action.payload;
       state.loading = false;
     },
-    saveSettingsFailure(state, action: PayloadAction<string>) {
+    saveSettingsFailure(state, action: PayloadAction<unknown>) {
       state.loading = false;
-      state.error = action.payload;
+      state.error = toUserErrorMessage(action.payload, 'Failed to save settings');
     },
   },
 });

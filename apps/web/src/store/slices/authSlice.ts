@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { IUser, Persona } from '@weir-here/shared';
+import type { Persona } from '@weir-here/shared';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 interface AuthUser {
   auth0Id: string;
@@ -54,11 +55,11 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
-    bootstrapUserFailure(state, action: PayloadAction<string>) {
+    bootstrapUserFailure(state, action: PayloadAction<unknown>) {
       state.user = null;
       state.isAuthenticated = false;
       state.loading = false;
-      state.error = action.payload;
+      state.error = toUserErrorMessage(action.payload, 'Bootstrap failed');
     },
   },
 });

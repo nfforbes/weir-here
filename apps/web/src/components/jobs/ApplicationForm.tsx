@@ -19,6 +19,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { submitApplication } from '@/store/slices/applicationsSlice';
 import type { IJob, IScreeningAnswer } from '@weir-here/shared';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 interface ApplicationFormProps {
   job: IJob;
@@ -103,7 +104,7 @@ export default function ApplicationForm({ job }: ApplicationFormProps) {
       )}
       {(error || validationError) && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {validationError || error}
+          {validationError || toUserErrorMessage(error, 'Something went wrong')}
         </Alert>
       )}
 

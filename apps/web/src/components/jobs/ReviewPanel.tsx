@@ -28,6 +28,7 @@ import {
   submitReview,
 } from '@/store/slices/reviewsSlice';
 import type { IApplication, IReview } from '@weir-here/shared';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 interface ReviewPanelProps {
   jobId: string;
@@ -120,7 +121,9 @@ export default function ReviewPanel({ jobId }: ReviewPanelProps) {
   }
 
   if (appsError) {
-    return <Alert severity="error">{appsError}</Alert>;
+    return (
+      <Alert severity="error">{toUserErrorMessage(appsError, 'Failed to load applications')}</Alert>
+    );
   }
 
   if (applications.length === 0) {
@@ -226,7 +229,7 @@ export default function ReviewPanel({ jobId }: ReviewPanelProps) {
               )}
               {reviewsError && (
                 <Alert severity="error" sx={{ mb: 1 }}>
-                  {reviewsError}
+                  {toUserErrorMessage(reviewsError, 'Review failed')}
                 </Alert>
               )}
 

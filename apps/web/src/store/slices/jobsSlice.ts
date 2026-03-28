@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IJob } from '@weir-here/shared';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 interface SearchFilters {
   query: string;
@@ -45,9 +46,9 @@ const jobsSlice = createSlice({
       state.jobs = action.payload;
       state.loading = false;
     },
-    fetchJobsFailure(state, action: PayloadAction<string>) {
+    fetchJobsFailure(state, action: PayloadAction<unknown>) {
       state.loading = false;
-      state.error = action.payload;
+      state.error = toUserErrorMessage(action.payload, 'Failed to fetch jobs');
     },
     fetchJob(state, _action: PayloadAction<string>) {
       state.loading = true;
@@ -69,9 +70,9 @@ const jobsSlice = createSlice({
       state.jobs.push(action.payload);
       state.loading = false;
     },
-    createJobFailure(state, action: PayloadAction<string>) {
+    createJobFailure(state, action: PayloadAction<unknown>) {
       state.loading = false;
-      state.error = action.payload;
+      state.error = toUserErrorMessage(action.payload, 'Failed to create job');
     },
     updateJob(state, _action: PayloadAction<{ id: string; data: Partial<IJob> }>) {
       state.loading = true;
@@ -85,9 +86,9 @@ const jobsSlice = createSlice({
       }
       state.loading = false;
     },
-    updateJobFailure(state, action: PayloadAction<string>) {
+    updateJobFailure(state, action: PayloadAction<unknown>) {
       state.loading = false;
-      state.error = action.payload;
+      state.error = toUserErrorMessage(action.payload, 'Failed to update job');
     },
     setSearchFilters(state, action: PayloadAction<Partial<SearchFilters>>) {
       state.searchFilters = { ...state.searchFilters, ...action.payload };

@@ -11,6 +11,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 interface ConsultationFormProps {
   solutionName: string;
@@ -47,12 +48,16 @@ export default function ConsultationForm({ solutionName }: ConsultationFormProps
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to send consultation request');
+        const msg =
+          typeof data.error === 'string' ? data.error : 'Failed to send consultation request';
+        throw new Error(msg);
       }
 
       setSubmitted(true);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while sending your request.');
+    } catch (err: unknown) {
+      setError(
+        toUserErrorMessage(err, 'An error occurred while sending your request.'),
+      );
     } finally {
       setLoading(false);
     }

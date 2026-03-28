@@ -16,6 +16,7 @@ import {
 } from '@/store/slices/jobsSlice';
 import JobSearchBar from '@/components/jobs/JobSearchBar';
 import JobCard from '@/components/jobs/JobCard';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 export default function JobsPage() {
   const dispatch = useAppDispatch();
@@ -58,7 +59,7 @@ export default function JobsPage() {
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
+          {toUserErrorMessage(error, 'Failed to load jobs')}
         </Alert>
       )}
 

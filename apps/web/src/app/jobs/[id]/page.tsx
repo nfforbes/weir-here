@@ -25,6 +25,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchJob, clearCurrentJob } from '@/store/slices/jobsSlice';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,7 +60,7 @@ export default function JobDetailPage() {
   if (error) {
     return (
       <Container maxWidth="md" sx={{ py: 8 }}>
-        <Alert severity="error">{error}</Alert>
+        <Alert severity="error">{toUserErrorMessage(error, 'Failed to load job')}</Alert>
       </Container>
     );
   }

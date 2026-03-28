@@ -26,15 +26,21 @@ const employmentTypeLabels: Record<string, string> = {
 };
 
 function formatSalary(min: number, max: number, currency: string): string {
-  const fmt = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  });
-  return `${fmt.format(min)} – ${fmt.format(max)}`;
+  try {
+    const code = currency?.trim() || 'USD';
+    const fmt = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: code,
+      maximumFractionDigits: 0,
+    });
+    return `${fmt.format(min)} – ${fmt.format(max)}`;
+  } catch {
+    return `${min} – ${max} ${currency || ''}`.trim();
+  }
 }
 
 export default function JobCard({ job }: JobCardProps) {
+  const tags = job.tags ?? [];
   const truncatedDescription =
     job.description.length > 150
       ? `${job.description.slice(0, 150)}…`
@@ -98,9 +104,9 @@ export default function JobCard({ job }: JobCardProps) {
             )}
           </Stack>
 
-          {job.tags.length > 0 && (
+          {tags.length > 0 && (
             <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-              {job.tags.map((tag) => (
+              {tags.map((tag) => (
                 <Chip key={tag} label={tag} size="small" variant="outlined" />
               ))}
             </Stack>

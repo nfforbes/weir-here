@@ -16,6 +16,7 @@ import {
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchJobs } from '@/store/slices/jobsSlice';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 function jobStatus(expiresAt?: string): 'active' | 'expired' {
   if (!expiresAt) return 'active';
@@ -62,7 +63,7 @@ export default function MyJobsPage() {
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
+          {toUserErrorMessage(error, 'Failed to load jobs')}
         </Alert>
       )}
 

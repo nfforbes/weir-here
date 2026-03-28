@@ -19,6 +19,7 @@ import {
     fetchSettings,
     saveSettings,
 } from '@/store/slices/settingsSlice';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 interface FieldConfig {
     key: string;
@@ -86,7 +87,7 @@ export default function SMTPSettingsForm() {
             )}
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
+                    {toUserErrorMessage(error, 'Settings error')}
                 </Alert>
             )}
 

@@ -21,6 +21,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useAppSelector } from '@/store';
 import { hasPermission, IJob, PERMISSIONS } from '@weir-here/shared';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 
 function jobStatus(expiresAt?: string): 'active' | 'expired' {
   if (!expiresAt) return 'active';
@@ -65,9 +66,9 @@ export default function PostingsPage() {
           setJobs(Array.isArray(data?.jobs) ? data.jobs : []);
         }
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load postings');
+          setError(toUserErrorMessage(err, 'Failed to load postings'));
         }
       })
       .finally(() => {
@@ -115,7 +116,7 @@ export default function PostingsPage() {
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
+          {toUserErrorMessage(error, 'Failed to load postings')}
         </Alert>
       )}
 

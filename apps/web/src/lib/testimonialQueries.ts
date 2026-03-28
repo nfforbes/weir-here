@@ -11,16 +11,21 @@ export type PublicTestimonial = {
 };
 
 export async function getPublishedTestimonials(): Promise<PublicTestimonial[]> {
-  await connectDB();
-  const docs = await Testimonial.find({ published: true })
-    .sort({ sortOrder: 1, createdAt: -1 })
-    .lean();
-  return docs.map((d) => ({
-    id: String(d._id),
-    quote: d.quote,
-    authorName: d.authorName,
-    authorTitle: d.authorTitle ?? '',
-    context: d.context ?? '',
-    avatarUrl: d.avatarUrl ?? '',
-  }));
+  try {
+    await connectDB();
+    const docs = await Testimonial.find({ published: true })
+      .sort({ sortOrder: 1, createdAt: -1 })
+      .lean();
+    return docs.map((d) => ({
+      id: String(d._id),
+      quote: String(d.quote ?? ''),
+      authorName: String(d.authorName ?? ''),
+      authorTitle: String(d.authorTitle ?? ''),
+      context: String(d.context ?? ''),
+      avatarUrl: String(d.avatarUrl ?? ''),
+    }));
+  } catch (err) {
+    console.error('[getPublishedTestimonials]', err);
+    return [];
+  }
 }

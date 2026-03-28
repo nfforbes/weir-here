@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toUserErrorMessage } from '@/lib/errorMessage';
 import {
   Box,
   Button,
@@ -58,7 +59,10 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
     try {
       const res = await fetch('/api/admin/users');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load users');
+      if (!res.ok) {
+        const msg = typeof data.error === 'string' ? data.error : 'Failed to load users';
+        throw new Error(msg);
+      }
       setUsers(
         (data.users as AdminUserRow[]).map((u) => ({
           ...u,
@@ -66,8 +70,8 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
           updatedAt: typeof u.updatedAt === 'string' ? u.updatedAt : new Date(u.updatedAt).toISOString(),
         })),
       );
-    } catch (e) {
-      setSnack({ message: e instanceof Error ? e.message : 'Load failed', severity: 'error' });
+    } catch (e: unknown) {
+      setSnack({ message: toUserErrorMessage(e, 'Load failed'), severity: 'error' });
     } finally {
       setLoading(false);
     }
@@ -132,12 +136,15 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
     try {
       const res = await fetch(`/api/admin/users/${deleteRow.id}`, { method: 'DELETE' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Delete failed');
+      if (!res.ok) {
+        const msg = typeof data.error === 'string' ? data.error : 'Delete failed';
+        throw new Error(msg);
+      }
       setSnack({ message: 'User removed.', severity: 'success' });
       setDeleteRow(null);
       await loadUsers();
-    } catch (e) {
-      setSnack({ message: e instanceof Error ? e.message : 'Delete failed', severity: 'error' });
+    } catch (e: unknown) {
+      setSnack({ message: toUserErrorMessage(e, 'Delete failed'), severity: 'error' });
     } finally {
       setSaving(false);
     }
