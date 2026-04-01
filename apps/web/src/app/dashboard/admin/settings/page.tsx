@@ -6,7 +6,6 @@ import { Container, Typography, Box, CircularProgress, Stack } from '@mui/materi
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useAppSelector } from '@/store';
 import MS365SettingsForm from '@/components/admin/MS365SettingsForm';
-import SMTPSettingsForm from '@/components/admin/SMTPSettingsForm';
 
 export default function AdminSettingsPage() {
   const { user, isLoading: authLoading } = useUser();
@@ -43,11 +42,10 @@ export default function AdminSettingsPage() {
         Admin Settings
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Configure Microsoft 365 integration, SMTP email settings, and other system settings.
+        Configure Microsoft 365 (Microsoft Graph for email, SharePoint for uploads).
       </Typography>
       <Stack spacing={4}>
         <MS365SettingsForm />
-        <SMTPSettingsForm />
       </Stack>
     </Container>
   );

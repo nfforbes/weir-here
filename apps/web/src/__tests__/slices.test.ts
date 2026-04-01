@@ -104,6 +104,7 @@ describe('jobsSlice', () => {
     jobs: [] as any[],
     currentJob: null as any,
     loading: false,
+    deletingJobId: null as string | null,
     error: null as string | null,
     searchFilters: { query: '', category: '', location: '', tags: [] as string[], page: 1, limit: 10 },
   };

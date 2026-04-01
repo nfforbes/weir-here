@@ -65,6 +65,11 @@
         border: none;
         min-height: 7.6in;
       }
+      /* definite block height so split content can center vertically in the content box */
+      .print-page.split {
+        min-height: 7.6in;
+        height: 7.6in;
+      }
     }
 
     /* ——— Cover (landing) ——— */
@@ -156,47 +161,50 @@
       border-radius: 2px;
     }
 
-    /* ——— 70 / 30 splits ——— */
+    /* ——— 70 / 30 splits (grid: row fills content box so copy can justify-content:center) ——— */
     .split {
-      display: flex;
-      flex-direction: row;
-      align-items: stretch;
+      display: grid;
       gap: 0;
-      min-height: 6.4in;
+      align-content: center;
+      align-items: stretch;
+    }
+
+    /* one class overrides .split-only rules; keep full page height from .print-page */
+    .print-page.split {
+      min-height: 7.1in;
+    }
+
+    .split--img-right {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+    }
+
+    .split--img-left {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
     }
 
     .split--img-right .brochure-panel--copy {
-      flex: 0 0 70%;
-      max-width: 70%;
       padding-right: 0.55rem;
+      min-width: 0;
     }
 
     .split--img-right .brochure-panel--visual {
-      flex: 0 0 30%;
-      max-width: 30%;
+      min-width: 0;
     }
 
     .split--img-left .brochure-panel--visual {
-      flex: 0 0 30%;
-      max-width: 30%;
-      order: 0;
+      min-width: 0;
     }
 
     .split--img-left .brochure-panel--copy {
-      flex: 0 0 70%;
-      max-width: 70%;
-      order: 1;
       padding-left: 0.55rem;
+      min-width: 0;
     }
 
     .brochure-panel--copy {
       display: flex;
       flex-direction: column;
       justify-content: center;
-    }
-
-    .brochure-panel--copy--tall {
-      justify-content: flex-start;
+      min-height: 0;
     }
 
     .eyebrow {
@@ -319,8 +327,8 @@
     }
 
     .solution-web {
-      margin-top: auto;
-      padding-top: 0.55rem;
+      margin-top: 0.65rem;
+      padding-top: 0.35rem;
       font-size: 0.72rem;
       font-weight: 600;
       color: var(--gold);
@@ -408,7 +416,7 @@
   <!-- ——— One print page per solution (matches site Solutions menu) ——— -->
 
   <section class="print-page split split--img-right" aria-label="Medical Professionals">
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Medical Professionals</h2>
       <p class="lede">
@@ -433,7 +441,7 @@
         <img src="/Black_doctor_seeing_patient_ee388b378f.jpeg" alt="" width="320" height="320" />
       </div>
     </div>
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Physicians &amp; Advanced Practice Providers</h2>
       <p class="lede">
@@ -449,7 +457,7 @@
   </section>
 
   <section class="print-page split split--img-right" aria-label="Licensed Practical Nurses">
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Licensed Practical Nurses</h2>
       <p class="lede">
@@ -475,7 +483,7 @@
         <img src="/Nurse_carrying_water_to_patient_eb54b1fa50.jpeg" alt="" width="320" height="320" />
       </div>
     </div>
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Registered Nurses</h2>
       <p class="lede">
@@ -491,7 +499,7 @@
   </section>
 
   <section class="print-page split split--img-right" aria-label="Geriatric Nurses">
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Geriatric Nurses</h2>
       <p class="lede">
@@ -517,7 +525,7 @@
         <img src="/Black_nurse_babysitting_child_4e246048c5.jpeg" alt="" width="320" height="320" />
       </div>
     </div>
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Certified Babysitter</h2>
       <p class="lede">
@@ -533,7 +541,7 @@
   </section>
 
   <section class="print-page split split--img-right" aria-label="Support Staff">
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Support Staff</h2>
       <p class="lede">
@@ -559,7 +567,7 @@
         <img src="/Black_orderly_pushing_gurney_12839cff65.jpeg" alt="" width="320" height="320" />
       </div>
     </div>
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Travel and Temporary Staffing</h2>
       <p class="lede">
@@ -575,7 +583,7 @@
   </section>
 
   <section class="print-page split split--img-right" aria-label="Domestic Care">
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Domestic Care</h2>
       <p class="lede">
@@ -601,7 +609,7 @@
         <img src="/Black_housekeepers_cleaning_202603240210.jpeg" alt="" width="320" height="320" />
       </div>
     </div>
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Housekeeping</h2>
       <p class="lede">
@@ -617,7 +625,7 @@
   </section>
 
   <section class="print-page split split--img-right" aria-label="Tutoring">
-    <div class="brochure-panel brochure-panel--copy brochure-panel--copy--tall">
+    <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
       <h2>Tutoring</h2>
       <p class="lede">

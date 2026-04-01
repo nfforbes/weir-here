@@ -73,7 +73,7 @@ const LOCAL_BUSINESS_SCHEMA = {
   '@type': 'LocalBusiness',
   name: 'Weir Here Staffing Solutions',
   url: BASE_URL,
-  telephone: '+18762879632',
+  telephone: '+18765669428',
   email: 'info@weirheresolutions.com',
   image: `${BASE_URL}/weir-here-logo-transparent.png`,
   address: {

@@ -35,7 +35,30 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const body = await request.json();
+    const raw = (await request.json()) as Record<string, unknown>;
+    const allowed = [
+      'title',
+      'location',
+      'employmentType',
+      'description',
+      'responsibilities',
+      'requirements',
+      'howToApply',
+      'salaryRange',
+      'categories',
+      'tags',
+      'expiresAt',
+      'screeningQuestions',
+      'skills',
+      'benefits',
+      'reviewerEmails',
+      'attachmentPaths',
+    ] as const;
+    const body: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (key in raw && raw[key] !== undefined) body[key] = raw[key];
+    }
+
     const updated = await Job.findByIdAndUpdate(id, body, { new: true }).lean();
     return NextResponse.json({ job: updated });
   } catch (err: unknown) {

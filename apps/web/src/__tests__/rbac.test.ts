@@ -58,11 +58,11 @@ describe('RBAC - isAdmin', () => {
 });
 
 describe('RBAC - filterMenuForUser', () => {
-  it('returns all public menu items for visitors', () => {
+  it('returns public menu items for visitors (parents with only auth-only children are omitted)', () => {
     const filtered = filterMenuForUser(PUBLIC_MENU, [], false);
-    expect(filtered).toHaveLength(PUBLIC_MENU.length);
+    expect(filtered).toHaveLength(PUBLIC_MENU.length - 1);
     expect(filtered.map((i) => i.label)).toContain('Home');
-    expect(filtered.map((i) => i.label)).toContain('Careers');
+    expect(filtered.map((i) => i.label)).not.toContain('Careers');
     expect(filtered.map((i) => i.label)).toContain('About Us');
   });
 

@@ -5,17 +5,12 @@ export type SettingKey =
   | 'MS365_CLIENT_ID'
   | 'MS365_CLIENT_SECRET'
   | 'MS365_TENANT_ID'
+  | 'MS365_MAIL_FROM'
+  | 'MS365_MAIL_TO'
   | 'MS365_SHAREPOINT_SITE_ID'
   | 'MS365_RESUME_FOLDER_PATH'
   | 'MS365_LOGO_FOLDER_PATH'
-  | 'MS365_JOB_ATTACHMENT_PATH'
-  | 'SMTP_USER'
-  | 'SMTP_PASS'
-  | 'SMTP_HOST'
-  | 'SMTP_PORT'
-  | 'SMTP_SECURE'
-  | 'SMTP_CIPHERS'
-  | 'SMTP_FROM';
+  | 'MS365_JOB_ATTACHMENT_PATH';
 
 interface SettingsState {
   settings: Record<string, string>;

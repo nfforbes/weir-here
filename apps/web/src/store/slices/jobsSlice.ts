@@ -15,6 +15,8 @@ interface JobsState {
   jobs: IJob[];
   currentJob: IJob | null;
   loading: boolean;
+  /** When set, a DELETE is in flight for that job id (avoids toggling global loading on detail pages). */
+  deletingJobId: string | null;
   error: string | null;
   searchFilters: SearchFilters;
 }
@@ -23,6 +25,7 @@ const initialState: JobsState = {
   jobs: [],
   currentJob: null,
   loading: false,
+  deletingJobId: null,
   error: null,
   searchFilters: {
     query: '',
@@ -90,6 +93,20 @@ const jobsSlice = createSlice({
       state.loading = false;
       state.error = toUserErrorMessage(action.payload, 'Failed to update job');
     },
+    deleteJob(state, action: PayloadAction<string>) {
+      state.deletingJobId = action.payload;
+      state.error = null;
+    },
+    deleteJobSuccess(state, action: PayloadAction<string>) {
+      const deletedId = action.payload;
+      state.jobs = state.jobs.filter((j) => j._id !== deletedId);
+      if (state.currentJob?._id === deletedId) state.currentJob = null;
+      state.deletingJobId = null;
+    },
+    deleteJobFailure(state, action: PayloadAction<unknown>) {
+      state.deletingJobId = null;
+      state.error = toUserErrorMessage(action.payload, 'Failed to delete job');
+    },
     setSearchFilters(state, action: PayloadAction<Partial<SearchFilters>>) {
       state.searchFilters = { ...state.searchFilters, ...action.payload };
     },
@@ -112,6 +129,9 @@ export const {
   updateJob,
   updateJobSuccess,
   updateJobFailure,
+  deleteJob,
+  deleteJobSuccess,
+  deleteJobFailure,
   setSearchFilters,
   clearCurrentJob,
 } = jobsSlice.actions;

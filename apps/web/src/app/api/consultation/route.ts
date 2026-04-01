@@ -1,48 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTransporter } from '@/lib/nodemailer';
+import { connectDB } from '@/lib/mongodb';
+import SystemSetting from '@/models/SystemSetting';
+import { sendMailViaGraph } from '@/lib/ms365';
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function loadMailRouting(): Promise<{ sendAs: string; notifyInbox: string } | null> {
+  await connectDB();
+  const rows = await SystemSetting.find({
+    key: { $in: ['MS365_MAIL_FROM', 'MS365_MAIL_TO'] },
+  }).lean();
+  const map = new Map(rows.map((r) => [r.key, r.value]));
+  const sendAs = (map.get('MS365_MAIL_FROM') || '').trim();
+  if (!sendAs) return null;
+  const notifyInbox = (map.get('MS365_MAIL_TO') || '').trim() || sendAs;
+  return { sendAs, notifyInbox };
+}
 
 export async function POST(request: NextRequest) {
-    try {
-        const { name, email, phone, message, solutionName } = await request.json();
+  try {
+    const { name, email, phone, message, solutionName } = await request.json();
 
-        if (!name || !email || !message) {
-            return NextResponse.json({ error: 'Name, email and message are required' }, { status: 400 });
-        }
+    if (!name || !email || !message) {
+      return NextResponse.json(
+        { error: 'Name, email and message are required' },
+        { status: 400 },
+      );
+    }
 
-        const { transporter, from } = await getTransporter();
+    const routing = await loadMailRouting();
+    if (!routing) {
+      return NextResponse.json(
+        {
+          error:
+            'Email is not configured. An administrator must set Microsoft 365 mail settings (send-as address and app registration).',
+        },
+        { status: 503 },
+      );
+    }
 
-        const mailOptions = {
-            from,
-            to: from, // Send to yourself (the site administrator)
-            replyTo: email,
-            subject: `Consultation Request: ${solutionName || 'General Inquiry'}`,
-            text: `
-Name: ${name}
-Email: ${email}
-Phone: ${phone || 'N/A'}
-Solution: ${solutionName || 'General Inquiry'}
+    const safeName = escapeHtml(String(name));
+    const safeEmail = escapeHtml(String(email));
+    const safePhone = escapeHtml(String(phone ?? ''));
+    const safeSolution = escapeHtml(String(solutionName || 'General Inquiry'));
+    const safeMessage = escapeHtml(String(message)).replace(/\n/g, '<br/>');
 
-Message:
-${message}
-      `,
-            html: `
-        <h2>Consultation Request</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-        <p><strong>Solution:</strong> ${solutionName || 'General Inquiry'}</p>
+    const subject = `Consultation request: ${solutionName || 'General inquiry'}`;
+
+    const html = `
+        <h2>Consultation request</h2>
+        <p><strong>Name:</strong> ${safeName}</p>
+        <p><strong>Email:</strong> ${safeEmail}</p>
+        <p><strong>Phone:</strong> ${safePhone || 'N/A'}</p>
+        <p><strong>Solution:</strong> ${safeSolution}</p>
         <br/>
         <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, '<br/>')}</p>
-      `,
-        };
+        <p>${safeMessage}</p>
+      `;
 
-        await transporter.sendMail(mailOptions);
+    await sendMailViaGraph(routing.sendAs, {
+      to: routing.notifyInbox,
+      replyTo: email,
+      subject,
+      bodyHtml: html,
+    });
 
-        return NextResponse.json({ message: 'Consultation request sent successfully' });
-    } catch (err: unknown) {
-        console.error('SMTP Error:', err);
-        const message = err instanceof Error ? err.message : 'Failed to send consultation request';
-        return NextResponse.json({ error: message }, { status: 500 });
-    }
+    return NextResponse.json({ message: 'Consultation request sent successfully' });
+  } catch (err: unknown) {
+    console.error('Consultation mail (Microsoft Graph):', err);
+    const message = err instanceof Error ? err.message : 'Failed to send consultation request';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

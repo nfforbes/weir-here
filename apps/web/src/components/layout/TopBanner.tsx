@@ -78,27 +78,29 @@ export default function TopBanner() {
         }}
       >
         <Typography variant="caption" sx={{ opacity: 0.9 }}>
-          info@weirheresolutions.com &nbsp;  |
+          info@weirheresolutions.com &nbsp;|
         </Typography>
         <Box
-       component="a"
-       href="https://wa.me/18762879632"
-       target="_blank"
-       rel="noopener noreferrer" 
-        sx={{
-          bgcolor: '#cfaf5b',
-          color: 'black',
-          py: 0.5,
-          px: 3,
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-        }}
-      >
-        <Typography variant="caption" sx={{ opacity: 0.9 }}>
-          (876) 287-9632
-        </Typography>
-      </Box>
+          component="a"
+          href="https://wa.me/18765669428"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Chat on WhatsApp at (876) 566-9428"
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.5,
+            ml: 1,
+            color: 'inherit',
+            textDecoration: 'none',
+            '&:hover': { opacity: 0.85 },
+          }}
+        >
+          <Typography variant="caption" component="span" sx={{ opacity: 0.9 }}>
+            (876) 566-9428
+          </Typography>
+          <WhatsApp sx={{ fontSize: '1.1rem', opacity: 0.95 }} aria-hidden />
+        </Box>
       </Box>
       
 

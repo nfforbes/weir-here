@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Container,
@@ -10,8 +10,14 @@ import {
   Paper,
   CircularProgress,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
   Divider,
   Chip,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -20,11 +26,13 @@ import {
   TableRow,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { fetchJob, clearCurrentJob } from '@/store/slices/jobsSlice';
+import { fetchJob, clearCurrentJob, deleteJob } from '@/store/slices/jobsSlice';
 import { fetchApplications } from '@/store/slices/applicationsSlice';
 import ReviewPanel from '@/components/jobs/ReviewPanel';
 import { toUserErrorMessage } from '@/lib/errorMessage';
@@ -41,9 +49,29 @@ export default function MyJobDetailPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useUser();
   const dispatch = useAppDispatch();
-  const { currentJob: job, loading: jobLoading, error: jobError } = useAppSelector(
-    (state) => state.jobs,
-  );
+  const {
+    currentJob: job,
+    loading: jobLoading,
+    error: jobError,
+    deletingJobId,
+  } = useAppSelector((state) => state.jobs);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const deleteStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (deletingJobId === id) deleteStartedRef.current = true;
+  }, [deletingJobId, id]);
+
+  useEffect(() => {
+    if (!deleteStartedRef.current) return;
+    if (deletingJobId !== null) return;
+    if (jobError) {
+      deleteStartedRef.current = false;
+      return;
+    }
+    deleteStartedRef.current = false;
+    router.push('/dashboard/my-jobs');
+  }, [deletingJobId, jobError, router]);
   const {
     applications,
     loading: appsLoading,
@@ -85,7 +113,7 @@ export default function MyJobDetailPage() {
     );
   }
 
-  if (error) {
+  if (error && !job) {
     return (
       <Container maxWidth="md" sx={{ py: 8 }}>
         <Alert severity="error">{toUserErrorMessage(error, 'Failed to load job')}</Alert>
@@ -101,6 +129,9 @@ export default function MyJobDetailPage() {
     );
   }
 
+  const canManagePosting = user?.sub === job.postedBy;
+  const isDeletingThis = deletingJobId === id;
+
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
       <Button
@@ -111,10 +142,46 @@ export default function MyJobDetailPage() {
         Back to My Jobs
       </Button>
 
+      {(jobError || appsError) && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {toUserErrorMessage(jobError || appsError, 'Could not complete request')}
+        </Alert>
+      )}
+
       <Paper elevation={2} sx={{ p: 4, mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
-          {job.title}
-        </Typography>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'flex-start' }}
+          spacing={2}
+          sx={{ mb: 2 }}
+        >
+          <Typography variant="h4" fontWeight={700}>
+            {job.title}
+          </Typography>
+          {canManagePosting && (
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<EditIcon />}
+                onClick={() => router.push(`/dashboard/my-jobs/${id}/edit`)}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                startIcon={<DeleteOutlineIcon />}
+                disabled={isDeletingThis}
+                onClick={() => setDeleteOpen(true)}
+              >
+                {isDeletingThis ? 'Deleting…' : 'Delete'}
+              </Button>
+            </Stack>
+          )}
+        </Stack>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
           <Chip label={job.location} variant="outlined" size="small" />
           <Chip label={job.employmentType} variant="outlined" size="small" />
@@ -241,6 +308,31 @@ export default function MyJobDetailPage() {
           <ReviewPanel jobId={id ?? ''} />
         </>
       )}
+
+      <Dialog open={deleteOpen} onClose={() => !isDeletingThis && setDeleteOpen(false)} aria-labelledby="delete-job-title">
+        <DialogTitle id="delete-job-title">Delete this posting?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will remove the job listing. Applicants can no longer apply. This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)} disabled={isDeletingThis}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={isDeletingThis}
+            onClick={() => {
+              setDeleteOpen(false);
+              if (id) dispatch(deleteJob(id));
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

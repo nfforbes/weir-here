@@ -23,8 +23,8 @@ import {
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { createJob } from '@/store/slices/jobsSlice';
-import type { EmploymentType, IScreeningQuestion } from '@weir-here/shared';
+import { createJob, updateJob } from '@/store/slices/jobsSlice';
+import type { EmploymentType, IJob, IScreeningQuestion } from '@weir-here/shared';
 import LocationAutocomplete from '@/components/jobs/LocationAutocomplete';
 import { toUserErrorMessage } from '@/lib/errorMessage';
 
@@ -52,10 +52,16 @@ function emptyQuestion(): IScreeningQuestion {
   return { id: crypto.randomUUID(), question: '', type: 'text', required: false };
 }
 
-export default function JobPostForm() {
+export type JobPostFormProps = {
+  /** When provided with `_id`, the form updates the job instead of creating one. */
+  job?: IJob;
+};
+
+export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { loading, error } = useAppSelector((state) => state.jobs);
+  const isEdit = Boolean(existingJob?._id);
 
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
@@ -85,6 +91,38 @@ export default function JobPostForm() {
   useEffect(() => {
     if (isRemote) setLocation('Remote');
   }, [isRemote]);
+
+  useEffect(() => {
+    if (!existingJob?._id) return;
+    const j = existingJob;
+    setTitle(j.title);
+    const loc = j.location ?? '';
+    const remote = loc.trim().toLowerCase() === 'remote';
+    setIsRemote(remote);
+    setLocation(remote ? 'Remote' : loc);
+    setEmploymentType(j.employmentType);
+    setDescription(j.description ?? '');
+    setResponsibilities(j.responsibilities ?? '');
+    setRequirements(j.requirements ?? '');
+    setHowToApply(j.howToApply ?? '');
+    setSalaryMin(j.salaryRange?.min ?? '');
+    setSalaryMax(j.salaryRange?.max ?? '');
+    setCurrency(j.salaryRange?.currency ?? 'JMD');
+    setCategories(j.categories?.length ? [...j.categories] : []);
+    setTags(j.tags?.length ? [...j.tags] : []);
+    const exp = j.expiresAt ? new Date(j.expiresAt) : null;
+    setExpiresAt(exp && !Number.isNaN(exp.getTime()) ? exp.toISOString().slice(0, 10) : '');
+    setScreeningQuestions(
+      (j.screeningQuestions ?? []).map((q) =>
+        q.id ? q : { ...q, id: crypto.randomUUID() },
+      ),
+    );
+    setSkills(j.skills?.length ? [...j.skills] : []);
+    setBenefits(j.benefits?.length ? [...j.benefits] : []);
+    setReviewerEmails(j.reviewerEmails?.length ? [...j.reviewerEmails] : []);
+    setValidationErrors({});
+    setSuccess(false);
+  }, [existingJob]);
 
   const addChip = useCallback(
     (
@@ -154,55 +192,60 @@ export default function JobPostForm() {
       e.preventDefault();
       if (!validate()) return;
 
-      dispatch(
-        createJob({
-          title: title.trim(),
-          location: location.trim(),
-          employmentType,
-          description: description.trim(),
-          responsibilities: responsibilities.trim(),
-          requirements: requirements.trim(),
-          howToApply: howToApply.trim(),
-          salaryRange: {
-            min: Number(salaryMin),
-            max: Number(salaryMax),
-            currency,
-          },
-          categories,
-          tags,
-          expiresAt,
-          screeningQuestions,
-          skills,
-          benefits,
-          reviewerEmails,
-        }),
-      );
+      const payload = {
+        title: title.trim(),
+        location: location.trim(),
+        employmentType,
+        description: description.trim(),
+        responsibilities: responsibilities.trim(),
+        requirements: requirements.trim(),
+        howToApply: howToApply.trim(),
+        salaryRange: {
+          min: Number(salaryMin),
+          max: Number(salaryMax),
+          currency,
+        },
+        categories,
+        tags,
+        expiresAt,
+        screeningQuestions,
+        skills,
+        benefits,
+        reviewerEmails,
+      };
 
-      setSuccess(true);
-      setTimeout(() => router.push('/dashboard/my-jobs'), 1500);
+      if (isEdit && existingJob?._id) {
+        dispatch(updateJob({ id: existingJob._id, data: payload }));
+        setSuccess(true);
+        setTimeout(() => router.push(`/dashboard/my-jobs/${existingJob._id}`), 1500);
+      } else {
+        dispatch(createJob(payload));
+        setSuccess(true);
+        setTimeout(() => router.push('/dashboard/my-jobs'), 1500);
+      }
     },
     [
       validate, dispatch, title, location, employmentType, description,
       responsibilities, requirements, howToApply, salaryMin, salaryMax,
       currency, categories, tags, expiresAt, screeningQuestions, skills,
-      benefits, reviewerEmails, router,
+      benefits, reviewerEmails, router, isEdit, existingJob?._id,
     ],
   );
 
   return (
     <Paper sx={{ p: { xs: 2, md: 4 }, maxWidth: 900, mx: 'auto' }}>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
-        Post a New Job
+        {isEdit ? 'Edit job posting' : 'Post a New Job'}
       </Typography>
 
       {success && (
         <Alert severity="success" sx={{ mb: 2 }}>
-          Job created! Redirecting…
+          {isEdit ? 'Job updated! Redirecting…' : 'Job created! Redirecting…'}
         </Alert>
       )}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {toUserErrorMessage(error, 'Failed to post job')}
+          {toUserErrorMessage(error, isEdit ? 'Failed to update job' : 'Failed to post job')}
         </Alert>
       )}
 
@@ -571,7 +614,7 @@ export default function JobPostForm() {
           startIcon={loading ? <CircularProgress size={20} /> : undefined}
           sx={{ minWidth: 180 }}
         >
-          {loading ? 'Posting…' : 'Post Job'}
+          {loading ? (isEdit ? 'Saving…' : 'Posting…') : isEdit ? 'Save changes' : 'Post Job'}
         </Button>
       </Box>
     </Paper>

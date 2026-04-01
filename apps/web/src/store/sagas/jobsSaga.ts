@@ -14,6 +14,9 @@ import {
   updateJob,
   updateJobSuccess,
   updateJobFailure,
+  deleteJob,
+  deleteJobSuccess,
+  deleteJobFailure,
 } from '@/store/slices/jobsSlice';
 import type { SearchFilters } from '@/store/slices/jobsSlice';
 import type { RootState } from '@/store';
@@ -39,14 +42,23 @@ async function getJob(id: string): Promise<IJob> {
   return data?.job ?? data;
 }
 
+async function parseJobResponse(res: Response): Promise<IJob> {
+  const data = (await res.json()) as { job?: IJob; error?: string };
+  if (data?.job) return data.job;
+  throw new Error(typeof data?.error === 'string' ? data.error : 'Request failed');
+}
+
 async function postJob(data: Partial<IJob>): Promise<IJob> {
   const res = await fetch('/api/jobs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Failed to create job');
-  return res.json();
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(typeof err.error === 'string' ? err.error : 'Failed to create job');
+  }
+  return parseJobResponse(res);
 }
 
 async function putJob(id: string, data: Partial<IJob>): Promise<IJob> {
@@ -55,8 +67,19 @@ async function putJob(id: string, data: Partial<IJob>): Promise<IJob> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Failed to update job');
-  return res.json();
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(typeof err.error === 'string' ? err.error : 'Failed to update job');
+  }
+  return parseJobResponse(res);
+}
+
+async function apiDeleteJob(id: string): Promise<void> {
+  const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(typeof err.error === 'string' ? err.error : 'Failed to delete job');
+  }
 }
 
 function* handleFetchJobs() {
@@ -103,9 +126,19 @@ function* handleUpdateJob(action: PayloadAction<{ id: string; data: Partial<IJob
   }
 }
 
+function* handleDeleteJob(action: PayloadAction<string>) {
+  try {
+    yield call(apiDeleteJob, action.payload);
+    yield put(deleteJobSuccess(action.payload));
+  } catch (err: unknown) {
+    yield put(deleteJobFailure(err));
+  }
+}
+
 export default function* jobsSaga() {
   yield takeLatest(fetchJobs.type, handleFetchJobs);
   yield takeLatest(fetchJob.type, handleFetchJob);
   yield takeLatest(createJob.type, handleCreateJob);
   yield takeLatest(updateJob.type, handleUpdateJob);
+  yield takeLatest(deleteJob.type, handleDeleteJob);
 }

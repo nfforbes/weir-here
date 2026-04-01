@@ -23,9 +23,9 @@ export function filterMenuForUser(
 
     const filtered: IMenuItem = { ...item };
     if (item.children) {
+      const hadChildren = item.children.length > 0;
       filtered.children = filterMenuForUser(item.children, personas, isAuthenticated);
-      if (filtered.children.length === 0) {
-        acc.push({ ...filtered, children: [] });
+      if (hadChildren && filtered.children.length === 0) {
         return acc;
       }
     }

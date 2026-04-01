@@ -10,13 +10,15 @@ import type { AuthUser } from '@/store/slices/authSlice';
 async function postBootstrapUser(): Promise<AuthUser> {
   const res = await fetch('/api/users/bootstrap', { method: 'POST' });
   if (!res.ok) throw new Error('Failed to bootstrap user');
-  const data: { user: IUser } = await res.json();
+  const data = (await res.json()) as { user?: IUser };
   const u = data.user;
+  if (!u) throw new Error('Invalid bootstrap response');
+  const personas = Array.isArray(u.personas) ? u.personas : (['user'] as IUser['personas']);
   return {
     auth0Id: u.auth0Id,
     email: u.email,
     name: u.name,
-    personas: u.personas,
+    personas,
     emailVerified: u.emailVerified,
   };
 }

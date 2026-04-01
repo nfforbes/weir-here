@@ -32,10 +32,10 @@ export default function Footer() {
         <Typography variant="body2" sx={{ opacity: 0.75 }}>
           <Box
             component="a"
-            href="tel:+18762879632"
+            href="tel:+18765669428"
             sx={{ color: 'rgba(207,175,91,0.75)', textDecoration: 'none', '&:hover': { color: '#cfaf5b' } }}
           >
-            (876) 287-9632
+            (876) 566-9428
           </Box>
           {' · '}
           <Box

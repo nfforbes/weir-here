@@ -18,6 +18,17 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, dispatch]);
 
+  /** Refresh roles from DB when returning to the tab (e.g. after `grant-administrator` or env bootstrap). */
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && !isLoading && user) {
+        dispatch(bootstrapUser());
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [user, isLoading, dispatch]);
+
   return <>{children}</>;
 }
 
