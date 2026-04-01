@@ -3,8 +3,10 @@ import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import Link from 'next/link';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/job-seekers'),
   title: 'For Job Seekers in Jamaica | Weir Here Staffing',
   description:
     'Find your next healthcare or domestic career opportunity in Jamaica. Free job matching, resume support, and interview coaching from Weir Here Staffing Solutions, Kingston.',

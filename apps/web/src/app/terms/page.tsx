@@ -5,8 +5,10 @@ import {
   Link,
 } from '@mui/material';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/terms'),
   title: 'Terms of Use | Weir Here Staffing',
   description:
     'Terms and conditions for using Weir Here Staffing in Jamaica—website, job board, and staffing services.',

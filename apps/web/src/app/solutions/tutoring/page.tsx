@@ -1,8 +1,10 @@
 import SchoolIcon from '@mui/icons-material/School';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/tutoring'),
     title: 'Tutoring Services in Jamaica | Weir Here Staffing',
     description:
         'Qualified tutors for Math, Science, English, and more in Jamaica. Weir Here Staffing Solutions connects students with experienced tutors across Kingston and beyond.',

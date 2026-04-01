@@ -1,8 +1,10 @@
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/medical-professionals'),
   title: 'Medical Professionals Staffing in Jamaica | Weir Here Staffing',
   description:
     'Skilled medical staff for hospitals, clinics, and healthcare facilities in Jamaica. Weir Here Staffing Solutions places qualified medical professionals across Kingston and beyond.',

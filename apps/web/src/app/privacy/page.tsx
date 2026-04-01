@@ -5,8 +5,10 @@ import {
   Link,
 } from '@mui/material';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/privacy'),
   title: 'Privacy Policy | Weir Here Staffing',
   description:
     'How Weir Here Staffing collects, uses, and protects personal information under applicable Jamaican law.',

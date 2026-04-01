@@ -1,7 +1,10 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
+import { getPublicSiteUrl } from '@/lib/siteUrl';
+
+export const dynamic = 'force-static';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.APP_BASE_URL || 'https://weirheresolutions.com';
+  const baseUrl = getPublicSiteUrl();
   return {
     rules: [
       {

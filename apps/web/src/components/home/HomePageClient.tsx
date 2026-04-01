@@ -348,7 +348,7 @@ export default function HomePageClient() {
           }}
         >
           <Typography variant="h4" fontWeight={700} sx={{ mb: 2, letterSpacing: 0.5 }}>
-            Weir Heir is About
+            Weir Here is About
           </Typography>
           <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
             A Company Built on Vision, Integrity & Innovation

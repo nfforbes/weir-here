@@ -5,8 +5,10 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import type { Metadata } from 'next';
 import LinkNext from 'next/link';
 import Image from 'next/image';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/about/patsy'),
   title: 'Patsy Weir — CFO | Weir Here Staffing',
   description:
     'Meet Patsy Weir, Chief Financial Officer of Weir Here Staffing Solutions. Expertise in financial planning, compliance, and strategic scaling for staffing operations.',

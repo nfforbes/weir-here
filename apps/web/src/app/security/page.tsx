@@ -5,8 +5,10 @@ import {
   Link,
 } from '@mui/material';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/security'),
   title: 'Security | Weir Here Staffing',
   description:
     'How Weir Here Staffing approaches security for our platform, accounts, and data.',

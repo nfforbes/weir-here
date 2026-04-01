@@ -5,8 +5,10 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import type { Metadata } from 'next';
 import LinkNext from 'next/link';
 import Image from 'next/image';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/about/carla'),
   title: 'Carla Brannon — CEO | Weir Here Staffing',
   description:
     'Meet Carla Brannon, Chief Executive Officer of Weir Here Staffing Solutions. 20+ years of healthcare operations and workforce leadership experience.',

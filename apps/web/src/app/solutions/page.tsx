@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 import Image from 'next/image';
 import { Box, Typography } from '@mui/material';
 import BoltIcon from '@mui/icons-material/Bolt';
@@ -7,6 +8,7 @@ import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions'),
   title: 'Staffing Solutions in Jamaica | Weir Here Staffing',
   description:
     'Explore healthcare and domestic staffing solutions in Jamaica — for employers looking to hire and job seekers building their careers. Weir Here Staffing Solutions, Kingston.',

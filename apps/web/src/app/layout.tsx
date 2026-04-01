@@ -2,26 +2,85 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Providers from '@/components/providers/Providers';
 import AppShell from '@/components/layout/AppShell';
+import { getPublicSiteUrl } from '@/lib/siteUrl';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
-const FALLBACK_SITE_URL = 'https://weirheresolutions.com';
+const BASE_URL = getPublicSiteUrl();
 
-function resolveAbsoluteSiteUrl(raw: string | undefined): string {
-  const trimmed = raw?.trim();
-  if (!trimmed) return FALLBACK_SITE_URL;
-  try {
-    return new URL(trimmed).toString().replace(/\/$/, '');
-  } catch {
-    console.warn(
-      '[layout] Invalid APP_BASE_URL; using fallback. Set a full URL like https://localhost:3000',
-    );
-    return FALLBACK_SITE_URL;
-  }
-}
+/** Google Business Profile Maps CID — links structured data to the verified listing. */
+const GOOGLE_BUSINESS_CID = '10951778937698477327';
 
-const BASE_URL = resolveAbsoluteSiteUrl(process.env.APP_BASE_URL);
+const GOOGLE_MAPS_SAME_AS = `https://www.google.com/maps?cid=${GOOGLE_BUSINESS_CID}`;
+
+const postalAddress = {
+  '@type': 'PostalAddress',
+  streetAddress: 'RoseDale Drive',
+  addressLocality: 'Kingston',
+  addressCountry: 'JM',
+} as const;
+
+const organizationId = `${BASE_URL}#organization`;
+
+const SCHEMA_GRAPH = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': organizationId,
+      name: 'Weir Here Staffing Solutions',
+      url: BASE_URL,
+      logo: `${BASE_URL}/weir-here-logo-transparent.png`,
+      email: 'info@weirheresolutions.com',
+      telephone: '+18765669428',
+      sameAs: [GOOGLE_MAPS_SAME_AS],
+      address: { ...postalAddress },
+    },
+    {
+      '@type': 'LocalBusiness',
+      '@id': `${BASE_URL}#localBusiness`,
+      name: 'Weir Here Staffing Solutions',
+      image: `${BASE_URL}/weir-here-logo-transparent.png`,
+      url: BASE_URL,
+      telephone: '+18765669428',
+      email: 'info@weirheresolutions.com',
+      parentOrganization: { '@id': organizationId },
+      sameAs: [GOOGLE_MAPS_SAME_AS],
+      identifier: {
+        '@type': 'PropertyValue',
+        propertyID: 'GoogleBusinessProfileCID',
+        value: GOOGLE_BUSINESS_CID,
+      },
+      address: { ...postalAddress },
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: 17.997,
+        longitude: -76.7936,
+      },
+      openingHoursSpecification: {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        opens: '08:00',
+        closes: '17:00',
+      },
+    },
+    {
+      '@type': 'Person',
+      name: 'Carla Brannon',
+      jobTitle: 'Chief Executive Officer',
+      url: `${BASE_URL}/about/carla`,
+      worksFor: { '@id': organizationId },
+    },
+    {
+      '@type': 'Person',
+      name: 'Patsy Weir',
+      jobTitle: 'Chief Financial Officer',
+      url: `${BASE_URL}/about/patsy`,
+      worksFor: { '@id': organizationId },
+    },
+  ],
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -68,46 +127,19 @@ export const metadata: Metadata = {
   },
 };
 
-const LOCAL_BUSINESS_SCHEMA = {
-  '@context': 'https://schema.org',
-  '@type': 'LocalBusiness',
-  name: 'Weir Here Staffing Solutions',
-  url: BASE_URL,
-  telephone: '+18765669428',
-  email: 'info@weirheresolutions.com',
-  image: `${BASE_URL}/weir-here-logo-transparent.png`,
-  address: {
-    '@type': 'PostalAddress',
-    streetAddress: 'RoseDale Drive',
-    addressLocality: 'Kingston',
-    addressCountry: 'JM',
-  },
-  geo: {
-    '@type': 'GeoCoordinates',
-    latitude: 17.997,
-    longitude: -76.7936,
-  },
-  openingHoursSpecification: {
-    '@type': 'OpeningHoursSpecification',
-    dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-    opens: '08:00',
-    closes: '17:00',
-  },
-};
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const ldJson = JSON.stringify(LOCAL_BUSINESS_SCHEMA);
+  const ldJson = JSON.stringify(SCHEMA_GRAPH);
 
   return (
     <html lang="en-JM" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         {/* JSON-LD in body (valid for Google); avoids head mutations from browser extensions that cause hydration mismatches. */}
         <script
-          id="weir-here-local-business-jsonld"
+          id="weir-here-schema-jsonld"
           type="application/ld+json"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: ldJson }}

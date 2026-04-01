@@ -1,8 +1,10 @@
 import ChildCareIcon from '@mui/icons-material/ChildCare';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/certified-babysitter'),
   title: 'Certified Babysitters in Jamaica | Weir Here Staffing',
   description:
     'Hire pediatric-trained, vetted babysitters and childcare providers in Jamaica. Weir Here Staffing Solutions places certified babysitters for families in Kingston and beyond.',

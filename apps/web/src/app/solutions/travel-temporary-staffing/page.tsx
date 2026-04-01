@@ -1,8 +1,10 @@
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/travel-temporary-staffing'),
   title: 'Travel & Temporary Staffing in Jamaica | Weir Here Staffing',
   description:
     'Travel nurses and allied health professionals for short-term and locum assignments in Jamaica and the Caribbean. Weir Here Staffing Solutions, Kingston.',

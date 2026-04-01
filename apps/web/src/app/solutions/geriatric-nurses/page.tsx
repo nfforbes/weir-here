@@ -1,8 +1,10 @@
 import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/geriatric-nurses'),
   title: 'Geriatric Nurses in Jamaica | Weir Here Staffing',
   description:
     'Specialized geriatric and long-term care nurses available in Jamaica. Weir Here Staffing Solutions places compassionate geriatric nurses for nursing homes and private care.',

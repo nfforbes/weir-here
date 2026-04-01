@@ -1,8 +1,10 @@
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/housekeeping'),
     title: 'Housekeeping Staff in Jamaica | Weir Here Staffing',
     description:
         'Professional, vetted housekeeping and cleaning staff available in Jamaica. Weir Here Staffing Solutions places reliable housekeepers for homes, hotels, and businesses in Kingston.',

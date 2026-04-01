@@ -1,8 +1,14 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
+import { getPublicSiteUrl } from '@/lib/siteUrl';
 
-const BASE_URL = process.env.APP_BASE_URL || 'https://weirheresolutions.com';
+/** Fully static sitemap — no DB/env-only crashes; safe URL join for hosts. */
+export const dynamic = 'force-static';
 
-const staticRoutes: Array<{ path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }> = [
+const staticRoutes: Array<{
+  path: string;
+  priority: number;
+  changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'];
+}> = [
   { path: '/', priority: 1.0, changeFrequency: 'weekly' },
   { path: '/about', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/about/carla', priority: 0.6, changeFrequency: 'monthly' },
@@ -31,9 +37,10 @@ const staticRoutes: Array<{ path: string; priority: number; changeFrequency: Met
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const base = getPublicSiteUrl();
   const now = new Date();
   return staticRoutes.map(({ path, priority, changeFrequency }) => ({
-    url: `${BASE_URL}${path}`,
+    url: path === '/' ? `${base}/` : `${base}${path}`,
     lastModified: now,
     changeFrequency,
     priority,

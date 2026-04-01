@@ -1,8 +1,10 @@
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/licensed-practical-nurses'),
   title: 'Licensed Practical Nurses (LPNs) in Jamaica | Weir Here Staffing',
   description:
     'Hire credential-verified Licensed Practical Nurses (LPNs) in Jamaica for acute care, long-term care, rehab, and skilled nursing. Flexible shifts — Weir Here Staffing Solutions, Kingston.',

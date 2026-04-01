@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 import { getPublishedTestimonials } from '@/lib/testimonialQueries';
 import TestimonialsPageContent from '@/components/testimonials/TestimonialsPageContent';
 
@@ -6,6 +7,7 @@ import TestimonialsPageContent from '@/components/testimonials/TestimonialsPageC
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
+  ...withCanonical('/testimonials'),
   title: 'Testimonials | Weir Here Staffing',
   description:
     'What clients and candidates say about partnering with Weir Here Staffing.',

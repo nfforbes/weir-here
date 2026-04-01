@@ -1,8 +1,10 @@
 import HomeWorkIcon from '@mui/icons-material/HomeWork';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/domestic-care'),
   title: 'Domestic Care Services in Jamaica | Weir Here Staffing',
   description:
     'In-home care aides and companions for seniors and individuals with special needs in Jamaica. Weir Here Staffing Solutions provides vetted domestic caregivers in Kingston.',

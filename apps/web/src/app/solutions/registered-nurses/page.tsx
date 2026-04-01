@@ -1,8 +1,10 @@
 import HealingIcon from '@mui/icons-material/Healing';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/registered-nurses'),
   title: 'Registered Nurses (RNs) in Jamaica | Weir Here Staffing',
   description:
     'Place qualified Registered Nurses across all specialties in Jamaica. Per diem, contract, and permanent RN staffing from Weir Here Staffing Solutions, Kingston.',

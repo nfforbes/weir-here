@@ -2,8 +2,10 @@ import { Box, Typography, Container } from '@mui/material';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/about'),
   title: 'About Weir Here Staffing Solutions | Kingston, Jamaica',
   description:
     'Learn about Weir Here Staffing Solutions — a Kingston, Jamaica staffing agency dedicated to connecting qualified healthcare professionals and domestic workers with employers and families. Meet our leadership.',

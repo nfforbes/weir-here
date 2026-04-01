@@ -15,8 +15,10 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import SchoolIcon from '@mui/icons-material/School';
 import type { Metadata } from 'next';
 import type { SvgIconComponent } from '@mui/icons-material';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/industries'),
   title: 'Industries We Serve | Weir Here Staffing Jamaica',
   description:
     'Weir Here Staffing Solutions serves healthcare, education, finance, technology, manufacturing, retail, logistics, and more in Jamaica. Find staffing solutions tailored to your industry.',

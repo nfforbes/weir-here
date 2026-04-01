@@ -1,8 +1,10 @@
 import PeopleIcon from '@mui/icons-material/People';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/support-staff'),
   title: 'Support Staff in Jamaica | Weir Here Staffing',
   description:
     'Administrative, clerical, and front-office support staff available in Jamaica. Weir Here Staffing Solutions provides reliable support staff to businesses in Kingston.',

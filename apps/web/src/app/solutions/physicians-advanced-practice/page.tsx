@@ -1,8 +1,10 @@
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
+  ...withCanonical('/solutions/physicians-advanced-practice'),
   title: 'Physicians & Advanced Practice Providers in Jamaica | Weir Here Staffing',
   description:
     'Board-certified physicians and advanced practice providers (APPs) for locum and permanent roles in Jamaica. Weir Here Staffing Solutions, Kingston.',
