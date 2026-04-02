@@ -84,6 +84,11 @@ const SCHEMA_GRAPH = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  },
   title: {
     default: 'Weir Here Staffing Solutions | Kingston, Jamaica',
     template: '%s | Weir Here Staffing',

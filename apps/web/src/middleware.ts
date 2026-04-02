@@ -21,12 +21,19 @@ export async function middleware(request: NextRequest) {
     return await auth0.middleware(request);
   } catch (err) {
     console.error('[Auth0 middleware]', err);
-    throw err;
+    // Fail open for public pages so a middleware bug/misconfig does not 500 SEO routes (sitemap, etc.).
+    if (request.nextUrl.pathname.startsWith('/auth/')) {
+      return new NextResponse('Authentication service error', {
+        status: 503,
+        headers: { 'content-type': 'text/plain; charset=utf-8' },
+      });
+    }
+    return NextResponse.next();
   }
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|llms.txt).*)',
   ],
 };

@@ -14,3 +14,7 @@ android/
 .DS_Store
 Thumbs.db
 coverage/
+
+# Generated at build time for Netlify stability
+apps/web/public/sitemap.xml
+apps/web/public/robots.txt

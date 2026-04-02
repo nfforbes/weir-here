@@ -24,6 +24,22 @@ const auth0ServerEnv: Record<string, string> = {
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@weir-here/shared'],
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
+    ];
+  },
   compiler: {
     defineServer: Object.fromEntries(
       Object.entries(auth0ServerEnv).map(([key, value]) => [`process.env.${key}`, value]),
