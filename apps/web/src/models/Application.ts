@@ -47,7 +47,18 @@ const ApplicationSchema = new Schema<ApplicationDocument>(
   { timestamps: true }
 );
 
-ApplicationSchema.index({ jobId: 1, applicantId: 1 }, { unique: true });
+/**
+ * One application per (job, applicant) for real Auth0 subs. Partial index avoids the classic
+ * MongoDB pitfall where a unique compound index on { jobId, userId } treated many docs
+ * with missing userId as { userId: null }, allowing only one "anonymous" application per job.
+ */
+ApplicationSchema.index(
+  { jobId: 1, applicantId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { applicantId: { $type: 'string' } },
+  },
+);
 
 export default mongoose.models.Application ||
   mongoose.model<ApplicationDocument>('Application', ApplicationSchema);

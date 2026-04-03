@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import Application from '@/models/Application';
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -12,6 +13,8 @@ declare global {
 
 const cached: MongooseCache = global._mongooseCache ?? { conn: null, promise: null };
 global._mongooseCache = cached;
+
+let applicationIndexesSynced = false;
 
 const CONNECT_OPTS: mongoose.ConnectOptions = {
   bufferCommands: false,
@@ -36,6 +39,16 @@ export async function connectDB(): Promise<typeof mongoose> {
 
   try {
     cached.conn = await cached.promise;
+    if (!applicationIndexesSynced) {
+      applicationIndexesSynced = true;
+      try {
+        await Application.syncIndexes();
+      } catch (syncErr) {
+        console.error('[mongodb] Application.syncIndexes failed:', syncErr);
+        applicationIndexesSynced = false;
+        throw syncErr;
+      }
+    }
     return cached.conn;
   } catch (err) {
     cached.promise = null;
