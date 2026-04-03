@@ -1,27 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import SystemSetting from '@/models/SystemSetting';
 import { sendMailViaGraph } from '@/lib/ms365';
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-async function loadMailRouting(): Promise<{ sendAs: string; notifyInbox: string } | null> {
-  await connectDB();
-  const rows = await SystemSetting.find({
-    key: { $in: ['MS365_MAIL_FROM', 'MS365_MAIL_TO'] },
-  }).lean();
-  const map = new Map(rows.map((r) => [r.key, r.value]));
-  const sendAs = (map.get('MS365_MAIL_FROM') || '').trim();
-  if (!sendAs) return null;
-  const notifyInbox = (map.get('MS365_MAIL_TO') || '').trim() || sendAs;
-  return { sendAs, notifyInbox };
-}
+import { escapeHtml, loadConsultationMailRouting } from '@/lib/mailRouting';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const routing = await loadMailRouting();
+    const routing = await loadConsultationMailRouting();
     if (!routing) {
       return NextResponse.json(
         {

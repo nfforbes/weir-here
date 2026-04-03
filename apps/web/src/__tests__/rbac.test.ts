@@ -58,12 +58,14 @@ describe('RBAC - isAdmin', () => {
 });
 
 describe('RBAC - filterMenuForUser', () => {
-  it('returns public menu items for visitors (parents with only auth-only children are omitted)', () => {
+  it('returns public menu items for visitors including Careers with Job Board (public listings)', () => {
     const filtered = filterMenuForUser(PUBLIC_MENU, [], false);
-    expect(filtered).toHaveLength(PUBLIC_MENU.length - 1);
+    expect(filtered).toHaveLength(PUBLIC_MENU.length);
     expect(filtered.map((i) => i.label)).toContain('Home');
-    expect(filtered.map((i) => i.label)).not.toContain('Careers');
+    expect(filtered.map((i) => i.label)).toContain('Careers');
     expect(filtered.map((i) => i.label)).toContain('About Us');
+    const careers = filtered.find((i) => i.label === 'Careers');
+    expect(careers?.children?.map((c) => c.label)).toEqual(['Job Board']);
   });
 
   it('hides auth-required items for unauthenticated users', () => {

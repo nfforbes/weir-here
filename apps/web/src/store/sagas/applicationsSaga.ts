@@ -15,8 +15,15 @@ import {
 
 async function getApplications(jobId: string): Promise<IApplication[]> {
   const res = await fetch(`/api/applications?jobId=${encodeURIComponent(jobId)}`);
-  if (!res.ok) throw new Error('Failed to fetch applications');
-  const data = await res.json();
+  const data = (await res.json().catch(() => ({}))) as {
+    applications?: IApplication[];
+    error?: string;
+  };
+  if (!res.ok) {
+    throw new Error(
+      typeof data.error === 'string' ? data.error : 'Failed to fetch applications',
+    );
+  }
   return Array.isArray(data?.applications) ? data.applications : [];
 }
 
@@ -25,8 +32,17 @@ async function postApplication(formData: FormData): Promise<IApplication> {
     method: 'POST',
     body: formData,
   });
-  if (!res.ok) throw new Error('Failed to submit application');
-  return res.json();
+  const data = (await res.json().catch(() => ({}))) as {
+    application?: IApplication;
+    error?: string;
+  };
+  if (!res.ok) {
+    throw new Error(
+      typeof data.error === 'string' ? data.error : 'Failed to submit application',
+    );
+  }
+  if (data.application) return data.application;
+  throw new Error('Failed to submit application');
 }
 
 async function patchApplicationStatus(
@@ -38,8 +54,19 @@ async function patchApplicationStatus(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
   });
-  if (!res.ok) throw new Error('Failed to update application status');
-  return res.json();
+  const data = (await res.json().catch(() => ({}))) as {
+    application?: IApplication;
+    error?: string;
+  };
+  if (!res.ok) {
+    throw new Error(
+      typeof data.error === 'string'
+        ? data.error
+        : 'Failed to update application status',
+    );
+  }
+  if (data.application) return data.application;
+  throw new Error('Failed to update application status');
 }
 
 function* handleFetchApplications(action: PayloadAction<string>) {

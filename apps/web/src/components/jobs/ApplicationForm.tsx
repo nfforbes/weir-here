@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, type FormEvent } from 'react';
+import { useState, useCallback, useRef, useEffect, type FormEvent } from 'react';
 import {
   Box,
   TextField,
@@ -38,8 +38,25 @@ export default function ApplicationForm({ job }: ApplicationFormProps) {
   });
   const [resume, setResume] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
+  const [submitPending, setSubmitPending] = useState(false);
   const [validationError, setValidationError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setSuccess(false);
+    setSubmitPending(false);
+  }, [job._id]);
+
+  useEffect(() => {
+    if (!submitPending) return;
+    if (loading) return;
+    if (error) {
+      setSubmitPending(false);
+      return;
+    }
+    setSuccess(true);
+    setSubmitPending(false);
+  }, [submitPending, loading, error]);
 
   const updateAnswer = useCallback((questionId: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -85,8 +102,8 @@ export default function ApplicationForm({ job }: ApplicationFormProps) {
       formData.append('answers', JSON.stringify(screeningAnswers));
       formData.append('resume', resume);
 
+      setSubmitPending(true);
       dispatch(submitApplication(formData));
-      setSuccess(true);
     },
     [answers, resume, job, dispatch],
   );

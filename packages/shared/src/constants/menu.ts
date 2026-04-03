@@ -27,7 +27,8 @@ export const PUBLIC_MENU: IMenuItem[] = [
     children: [
       { label: 'Dashboard', path: '/dashboard', icon: 'Dashboard', requiresAuth: true },
       { label: 'Postings', path: '/dashboard/postings', icon: 'PostAdd', requiresAuth: true },
-      { label: 'Job Board', path: '/jobs', icon: 'WorkOutline', requiresAuth: true },
+      /** Public job listings — visible without login; apply flow may still require auth. */
+      { label: 'Job Board', path: '/jobs', icon: 'WorkOutline' },
     ],
   },
   { label: 'About Us', path: '/about', icon: 'Info' },

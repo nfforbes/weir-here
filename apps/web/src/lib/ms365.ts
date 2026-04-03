@@ -87,6 +87,11 @@ async function getMS365Config(): Promise<MS365Config | null> {
   };
 }
 
+/** True when app credentials and SharePoint site ID are set (resume upload can run). */
+export async function isSharePointUploadConfigured(): Promise<boolean> {
+  return (await getMS365Config()) != null;
+}
+
 export async function uploadToSharePoint(
   folderType: 'resume' | 'logo' | 'jobAttachment',
   fileName: string,
@@ -112,12 +117,21 @@ export async function uploadToSharePoint(
   return driveItem.webUrl || uploadPath;
 }
 
+export interface GraphMailAttachment {
+  name: string;
+  contentType: string;
+  /** Base64-encoded file content (Microsoft Graph `fileAttachment.contentBytes`). */
+  contentBytes: string;
+}
+
 export interface SendGraphMailParams {
   /** Primary recipient (inbox that receives the message). */
   to: string;
   replyTo?: string;
   subject: string;
   bodyHtml: string;
+  /** Optional file attachments (e.g. PDF resume). */
+  attachments?: GraphMailAttachment[];
 }
 
 /**
@@ -154,6 +168,16 @@ export async function sendMailViaGraph(
           replyTo: [
             { emailAddress: { address: params.replyTo.trim() } },
           ],
+        }
+      : {}),
+    ...(params.attachments?.length
+      ? {
+          attachments: params.attachments.map((a) => ({
+            '@odata.type': '#microsoft.graph.fileAttachment',
+            name: a.name,
+            contentType: a.contentType,
+            contentBytes: a.contentBytes,
+          })),
         }
       : {}),
   };

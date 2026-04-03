@@ -63,6 +63,13 @@ const MAIL_FIELDS: FieldConfig[] = [
     helperText:
       'Where consultation form submissions are delivered. Leave blank to use the send-as mailbox.',
   },
+  {
+    key: 'MS365_APPLICATIONS_MAIL_TO',
+    label: 'Job applications inbox (optional)',
+    type: 'text',
+    helperText:
+      'Where job application notifications (with resume PDF) are sent. Leave blank to use the consultation inbox or send-as mailbox.',
+  },
 ];
 
 const SHAREPOINT_FIELDS: FieldConfig[] = [
