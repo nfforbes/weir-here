@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
           pdfAttached: Boolean(resumeAttachment),
         });
         await sendMailViaGraph(routing.sendAs, {
-          to: routing.notifyInbox,
+          recipients: routing.recipients,
           replyTo: applicantEmailRequired,
           subject: `New job application: ${job.title}`,
           bodyHtml: html,

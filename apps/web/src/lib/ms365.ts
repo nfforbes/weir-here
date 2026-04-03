@@ -117,6 +117,20 @@ export async function uploadToSharePoint(
   return driveItem.webUrl || uploadPath;
 }
 
+function dedupeTrimmedEmails(addresses: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of addresses) {
+    const a = raw.trim();
+    if (!a) continue;
+    const k = a.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(a);
+  }
+  return out;
+}
+
 export interface GraphMailAttachment {
   name: string;
   contentType: string;
@@ -125,8 +139,8 @@ export interface GraphMailAttachment {
 }
 
 export interface SendGraphMailParams {
-  /** Primary recipient (inbox that receives the message). */
-  to: string;
+  /** One or more TO recipients (same message to all). */
+  recipients: string[];
   replyTo?: string;
   subject: string;
   bodyHtml: string;
@@ -156,13 +170,20 @@ export async function sendMailViaGraph(
     throw new Error('Send-as mailbox address is missing.');
   }
 
+  const recipients = dedupeTrimmedEmails(params.recipients);
+  if (recipients.length === 0) {
+    throw new Error('At least one recipient email is required.');
+  }
+
   const message = {
     subject: params.subject,
     body: {
       contentType: 'HTML',
       content: params.bodyHtml,
     },
-    toRecipients: [{ emailAddress: { address: params.to.trim() } }],
+    toRecipients: recipients.map((address) => ({
+      emailAddress: { address },
+    })),
     ...(params.replyTo?.trim()
       ? {
           replyTo: [

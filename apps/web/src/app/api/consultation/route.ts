@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       `;
 
     await sendMailViaGraph(routing.sendAs, {
-      to: routing.notifyInbox,
+      recipients: routing.recipients,
       replyTo: email,
       subject,
       bodyHtml: html,

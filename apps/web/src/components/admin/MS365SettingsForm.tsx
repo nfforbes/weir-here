@@ -11,6 +11,7 @@ import {
   Alert,
   CircularProgress,
   Divider,
+  MenuItem,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { useAppDispatch, useAppSelector } from '@/store';
@@ -20,12 +21,26 @@ import {
 } from '@/store/slices/settingsSlice';
 import { toUserErrorMessage } from '@/lib/errorMessage';
 
-interface FieldConfig {
-  key: string;
-  label: string;
-  type: 'text' | 'password';
-  helperText?: string;
-}
+type FieldConfig =
+  | {
+      key: string;
+      label: string;
+      type: 'text' | 'password';
+      helperText?: string;
+    }
+  | {
+      key: string;
+      label: string;
+      type: 'select';
+      helperText?: string;
+      options: { value: string; label: string }[];
+    };
+
+const DELIVERY_OPTIONS = [
+  { value: 'primary', label: 'Primary inbox only' },
+  { value: 'secondary', label: 'Second inbox only' },
+  { value: 'both', label: 'Both inboxes' },
+] as const;
 
 const APP_REGISTRATION_FIELDS: FieldConfig[] = [
   {
@@ -61,14 +76,44 @@ const MAIL_FIELDS: FieldConfig[] = [
     label: 'Consultation inbox (optional)',
     type: 'text',
     helperText:
-      'Where consultation form submissions are delivered. Leave blank to use the send-as mailbox.',
+      'Primary address for consultation form submissions. Leave blank to use the send-as mailbox.',
+  },
+  {
+    key: 'MS365_MAIL_TO_2',
+    label: 'Consultation — second inbox (optional)',
+    type: 'text',
+    helperText:
+      'Optional second recipient for consultations. Used when delivery is “second” or “both”.',
+  },
+  {
+    key: 'MS365_CONSULTATION_DELIVERY',
+    label: 'Consultation delivery',
+    type: 'select',
+    helperText:
+      'Which address(es) receive consultation emails. If “second” or “both”, set the second inbox above.',
+    options: [...DELIVERY_OPTIONS],
   },
   {
     key: 'MS365_APPLICATIONS_MAIL_TO',
-    label: 'Job applications inbox (optional)',
+    label: 'Job applications — primary inbox (optional)',
     type: 'text',
     helperText:
-      'Where job application notifications (with resume PDF) are sent. Leave blank to use the consultation inbox or send-as mailbox.',
+      'Primary address for job application notifications. Leave blank to use the consultation inbox or send-as mailbox.',
+  },
+  {
+    key: 'MS365_APPLICATIONS_MAIL_TO_2',
+    label: 'Job applications — second inbox (optional)',
+    type: 'text',
+    helperText:
+      'Optional second recipient for job applications. Used when delivery is “second” or “both”.',
+  },
+  {
+    key: 'MS365_APPLICATIONS_DELIVERY',
+    label: 'Job applications delivery',
+    type: 'select',
+    helperText:
+      'Which address(es) receive job application notifications. Independent of consultation settings.',
+    options: [...DELIVERY_OPTIONS],
   },
 ];
 
@@ -79,13 +124,15 @@ const SHAREPOINT_FIELDS: FieldConfig[] = [
   { key: 'MS365_JOB_ATTACHMENT_PATH', label: 'Job attachment path', type: 'text' },
 ];
 
-const ALL_FIELDS = [
+const ALL_FIELDS: FieldConfig[] = [
   ...APP_REGISTRATION_FIELDS,
   ...MAIL_FIELDS,
   ...SHAREPOINT_FIELDS,
 ];
 
 const MASK_SKIP = '********';
+
+const DEFAULT_DELIVERY = 'primary';
 
 export default function MS365SettingsForm() {
   const dispatch = useAppDispatch();
@@ -99,7 +146,13 @@ export default function MS365SettingsForm() {
   }, [dispatch]);
 
   useEffect(() => {
-    setForm(settings);
+    const merged = { ...settings };
+    for (const field of ALL_FIELDS) {
+      if (field.type === 'select' && (merged[field.key] === undefined || merged[field.key] === '')) {
+        merged[field.key] = DEFAULT_DELIVERY;
+      }
+    }
+    setForm(merged);
   }, [settings]);
 
   const handleChange = useCallback((key: string, value: string) => {
@@ -115,6 +168,10 @@ export default function MS365SettingsForm() {
       for (const field of ALL_FIELDS) {
         const val = form[field.key] ?? '';
         if (field.type === 'password' && val === MASK_SKIP) continue;
+        if (field.type === 'select') {
+          payload[field.key] = val || DEFAULT_DELIVERY;
+          continue;
+        }
         payload[field.key] = val;
       }
 
@@ -124,8 +181,30 @@ export default function MS365SettingsForm() {
     [dispatch, form],
   );
 
-  const renderFields = (fields: FieldConfig[]) =>
-    fields.map((field) => (
+  const renderField = (field: FieldConfig) => {
+    if (field.type === 'select') {
+      return (
+        <TextField
+          key={field.key}
+          select
+          label={field.label}
+          fullWidth
+          value={form[field.key] ?? DEFAULT_DELIVERY}
+          onChange={(e) => handleChange(field.key, e.target.value)}
+          helperText={field.helperText}
+          slotProps={{
+            inputLabel: { shrink: true },
+          }}
+        >
+          {field.options.map((opt) => (
+            <MenuItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      );
+    }
+    return (
       <TextField
         key={field.key}
         label={field.label}
@@ -139,7 +218,8 @@ export default function MS365SettingsForm() {
           inputLabel: { shrink: true },
         }}
       />
-    ));
+    );
+  };
 
   return (
     <Paper sx={{ p: { xs: 2, md: 4 }, maxWidth: 700, mx: 'auto' }}>
@@ -171,7 +251,7 @@ export default function MS365SettingsForm() {
             App registration
           </Typography>
           <Stack spacing={2.5}>
-            {renderFields(APP_REGISTRATION_FIELDS)}
+            {APP_REGISTRATION_FIELDS.map(renderField)}
           </Stack>
 
           <Divider sx={{ my: 3 }} />
@@ -179,14 +259,14 @@ export default function MS365SettingsForm() {
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
             Email (Microsoft Graph)
           </Typography>
-          <Stack spacing={2.5}>{renderFields(MAIL_FIELDS)}</Stack>
+          <Stack spacing={2.5}>{MAIL_FIELDS.map(renderField)}</Stack>
 
           <Divider sx={{ my: 3 }} />
 
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
             SharePoint (file uploads)
           </Typography>
-          <Stack spacing={2.5}>{renderFields(SHAREPOINT_FIELDS)}</Stack>
+          <Stack spacing={2.5}>{SHAREPOINT_FIELDS.map(renderField)}</Stack>
 
           <Button
             type="submit"

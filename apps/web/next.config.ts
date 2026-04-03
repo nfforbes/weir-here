@@ -24,6 +24,10 @@ const auth0ServerEnv: Record<string, string> = {
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@weir-here/shared'],
+  /**
+   * If you see `ENOENT` for `.next/server/vendor-chunks/@auth0.js` (or similar), the build
+   * output is stale or incomplete — run `npm run rebuild` in `apps/web` and restart dev/server.
+   */
   async headers() {
     return [
       {

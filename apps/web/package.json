@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
+    "rebuild": "npm run clean && npm run build",
     "dev": "next dev -p 3000 --experimental-https",
     "dev:https": "next dev -p 3000 --experimental-https",
     "build": "node scripts/generate-sitemap.mjs && node scripts/generate-robots.mjs && next build",
