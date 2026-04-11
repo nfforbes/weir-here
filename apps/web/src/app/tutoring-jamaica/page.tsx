@@ -1,10 +1,11 @@
 import SchoolIcon from '@mui/icons-material/School';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
-import { Box, Typography, Paper, Grid, Chip } from '@mui/material';
+import { Box, Typography, Paper, Grid, Chip, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import ScienceIcon from '@mui/icons-material/Science';
 import LanguageIcon from '@mui/icons-material/Language';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { Metadata } from 'next';
 import { withCanonical } from '@/lib/siteUrl';
 
@@ -65,6 +66,42 @@ export default function TutoringSiloPage() {
             </Grid>
           ))}
         </Grid>
+
+        <Box sx={{ mt: 8 }}>
+          <Typography variant="h5" fontWeight={700} gutterBottom sx={{ color: '#1a1a1a' }}>
+            Frequently Asked Questions
+          </Typography>
+          <Accordion elevation={0} sx={{ '&:before': { display: 'none' }, borderBottom: '1px solid #e2e8f0' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#cfaf5b' }} />}>
+              <Typography fontWeight={600}>Do you offer in-person or virtual tutoring?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary">
+                We offer both! Depending on your location and preference, our educators can conduct sessions virtually via secure online platforms or in-person within the Kingston area.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion elevation={0} sx={{ '&:before': { display: 'none' }, borderBottom: '1px solid #e2e8f0' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#cfaf5b' }} />}>
+              <Typography fontWeight={600}>How do you prepare students for PEP and CAPE exams?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary">
+                Our approach is deeply aligned with the Ministry of Education's syllabi. We focus on past-paper reviews, time-management techniques, and critical thinking drills specific to the structures of PEP, CSEC, and CAPE.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion elevation={0} sx={{ '&:before': { display: 'none' }, borderBottom: '1px solid #e2e8f0' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#cfaf5b' }} />}>
+              <Typography fontWeight={600}>What subjects are available?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary">
+                We have experts across all core disciplines including Mathematics, Sciences (Biology, Chemistry, Physics), English Language & Literature, Humanities, and SAT preparation.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        </Box>
       </Box>
     </SolutionHeroTemplate>
   );

@@ -1,9 +1,10 @@
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
-import { Box, Typography, Paper, Grid, Avatar } from '@mui/material';
+import { Box, Typography, Paper, Grid, Avatar, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SpeedIcon from '@mui/icons-material/Speed';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { Metadata } from 'next';
 import { withCanonical } from '@/lib/siteUrl';
 
@@ -69,6 +70,42 @@ export default function StaffingSiloPage() {
             </Paper>
           </Grid>
         </Grid>
+
+        <Box sx={{ mt: 8 }}>
+          <Typography variant="h5" fontWeight={700} gutterBottom sx={{ color: '#1a1a1a' }}>
+            Frequently Asked Questions
+          </Typography>
+          <Accordion elevation={0} sx={{ '&:before': { display: 'none' }, borderBottom: '1px solid #e2e8f0' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#cfaf5b' }} />}>
+              <Typography fontWeight={600}>How fast can you place a nurse or medical professional?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary">
+                For urgent requirements, we can typically place qualified healthcare professionals within a relative short period of time, thanks to our pre-vetted roster of active candidates across Jamaica.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion elevation={0} sx={{ '&:before': { display: 'none' }, borderBottom: '1px solid #e2e8f0' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#cfaf5b' }} />}>
+              <Typography fontWeight={600}>What is your vetting process for medical staff?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary">
+                Our team conducts rigorous verification, including checking Nursing Council of Jamaica registrations, validating prior work history, and running comprehensive background and reference checks to ensure full compliance and patient safety.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion elevation={0} sx={{ '&:before': { display: 'none' }, borderBottom: '1px solid #e2e8f0' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#cfaf5b' }} />}>
+              <Typography fontWeight={600}>Do you handle temporary block bookings or just permanent placements?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary">
+                We offer highly flexible staffing solutions ranging from per-diem and short-term locum assignments to long-term contract and permanent placements, tailored specifically to your facility's census and operational needs.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        </Box>
       </Box>
     </SolutionHeroTemplate>
   );

@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   ...withCanonical('/solutions/physicians-advanced-practice'),
   title: 'Physicians & Advanced Practice Providers in Jamaica | Weir Here Staffing',
   description:
-    'Board-certified physicians and advanced practice providers (APPs) for locum and permanent roles in Jamaica. Weir Here Staffing Solutions, Kingston.',
+    'Qualified physicians and advanced practice providers (APPs) for locum and permanent roles in Jamaica. Weir Here Staffing Solutions, Kingston.',
 };
 
 const benefits = [
-  'Board-certified physicians and advanced practice providers',
+  'Qualified physicians and advanced practice providers',
   'NPs, PAs, and specialty physicians for short- and long-term needs',
   'Credentialing and privileging support',
   'Locum tenens and permanent placement options',

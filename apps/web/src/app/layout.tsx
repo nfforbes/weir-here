@@ -38,7 +38,7 @@ const SCHEMA_GRAPH = {
       address: { ...postalAddress },
     },
     {
-      '@type': 'LocalBusiness',
+      '@type': 'EmploymentAgency',
       '@id': `${BASE_URL}#localBusiness`,
       name: 'Weir Here Staffing Solutions',
       image: `${BASE_URL}/weir-here-logo-transparent.png`,

@@ -1,9 +1,10 @@
 import ChildCareIcon from '@mui/icons-material/ChildCare';
 import SolutionHeroTemplate from '@/components/solutions/SolutionHeroTemplate';
-import { Box, Typography, Paper, Grid } from '@mui/material';
+import { Box, Typography, Paper, Grid, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import SecurityIcon from '@mui/icons-material/Security';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { Metadata } from 'next';
 import { withCanonical } from '@/lib/siteUrl';
 
@@ -63,6 +64,42 @@ export default function BabysittingSiloPage() {
             </Paper>
           </Grid>
         </Grid>
+
+        <Box sx={{ mt: 8 }}>
+          <Typography variant="h5" fontWeight={700} gutterBottom sx={{ color: '#1a1a1a' }}>
+            Frequently Asked Questions
+          </Typography>
+          <Accordion elevation={0} sx={{ '&:before': { display: 'none' }, borderBottom: '1px solid #e2e8f0' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#cfaf5b' }} />}>
+              <Typography fontWeight={600}>What age groups do your nannies and babysitters care for?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary">
+                Our vetted professionals are experienced in providing care across all pediatric age groups, from newborns and infants to toddlers and school-age children.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion elevation={0} sx={{ '&:before': { display: 'none' }, borderBottom: '1px solid #e2e8f0' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#cfaf5b' }} />}>
+              <Typography fontWeight={600}>Can I request a caregiver for evening or weekend shifts?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary">
+                Absolutely. We understand that parents, especially those in healthcare or shift work, need flexible scheduling. We offer evening, weekend, and overnight babysitting services.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion elevation={0} sx={{ '&:before': { display: 'none' }, borderBottom: '1px solid #e2e8f0' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#cfaf5b' }} />}>
+              <Typography fontWeight={600}>Are your sitters trained in First Aid?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary">
+                Yes, our priority is your child's safety. Many of our sitters are fully CPR and First Aid certified, and some bring formal pediatric training from medical backgrounds.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        </Box>
       </Box>
     </SolutionHeroTemplate>
   );
