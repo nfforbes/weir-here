@@ -45,6 +45,7 @@ const SCHEMA_GRAPH = {
       url: BASE_URL,
       telephone: '+18765669428',
       email: 'info@weirheresolutions.com',
+      description: 'The premier staffing and care agency in Kingston, Jamaica, specializing in babysitting, academic tutoring, medical staffing, and domestic care.',
       parentOrganization: { '@id': organizationId },
       sameAs: [GOOGLE_MAPS_SAME_AS],
       identifier: {
@@ -57,6 +58,16 @@ const SCHEMA_GRAPH = {
         '@type': 'GeoCoordinates',
         latitude: 17.997,
         longitude: -76.7936,
+      },
+      hasOfferCatalog: {
+        '@type': 'OfferCatalog',
+        name: 'Staffing and Care Services',
+        itemListElement: [
+          { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Babysitting and Childcare' } },
+          { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Academic Tutoring (CSEC, CAPE, SAT, PEP)' } },
+          { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Healthcare Staffing' } },
+          { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Domestic and Elderly Care' } }
+        ]
       },
       openingHoursSpecification: {
         '@type': 'OpeningHoursSpecification',
@@ -90,30 +101,30 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
   title: {
-    default: 'Weir Here Staffing Solutions | Kingston, Jamaica',
+    default: '#1 Staffing & Care Agency Jamaica | Babysitters, Tutors & Domestic Staff',
     template: '%s | Weir Here Staffing',
   },
   description:
-    'Weir Here Staffing Solutions connects qualified healthcare professionals and domestic workers with employers and families in Kingston, Jamaica and beyond.',
+    'Weir Here Staffing Solutions connects qualified healthcare professionals, experienced nannies, and expert tutors with families and employers across Jamaica, ensuring peace of mind and academic excellence.',
   keywords: [
     'staffing agency Jamaica',
-    'healthcare staffing Kingston Jamaica',
-    'nursing agency Jamaica',
-    'domestic workers Jamaica',
+    'babysitter Kingston Jamaica',
+    'tutors Kingston Jamaica',
+    'nanny services Jamaica',
+    'healthcare staffing Jamaica',
+    'home care Jamaica',
+    'CSEC CAPE SAT tutoring Jamaica',
     'registered nurses Jamaica',
-    'LPN Jamaica',
-    'geriatric nurses Jamaica',
-    'babysitter Jamaica',
-    'Weir Here Staffing',
+    'domestic help Jamaica',
   ],
   openGraph: {
     type: 'website',
     locale: 'en_JM',
     url: BASE_URL,
     siteName: 'Weir Here Staffing Solutions',
-    title: 'Weir Here Staffing Solutions | Kingston, Jamaica',
+    title: '#1 Staffing & Care Agency Jamaica | Babysitters, Tutors & Domestic Staff',
     description:
-      'Connecting qualified healthcare professionals and domestic workers with employers and families across Jamaica.',
+      'Connecting qualified healthcare professionals, experienced nannies, and expert tutors with families and employers across Jamaica.',
     images: [
       {
         url: '/weir-here-logo-transparent.png',
@@ -125,9 +136,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Weir Here Staffing Solutions | Kingston, Jamaica',
+    title: '#1 Staffing & Care Agency Jamaica | Babysitters, Tutors & Domestic Staff',
     description:
-      'Connecting qualified healthcare professionals and domestic workers with employers and families across Jamaica.',
+      'Connecting qualified healthcare professionals, experienced nannies, and expert tutors with families and employers across Jamaica.',
     images: ['/weir-here-logo-transparent.png'],
   },
 };

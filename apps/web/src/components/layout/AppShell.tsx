@@ -3,6 +3,7 @@
 import { Box } from '@mui/material';
 import TopBanner from '@/components/layout/TopBanner';
 import Footer from '@/components/layout/Footer';
+import WhatsAppFloatingChat from '@/components/layout/WhatsAppFloatingChat';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ export default function AppShell({ children }: AppShellProps) {
         {children}
       </Box>
       <Footer />
+      <WhatsAppFloatingChat />
     </Box>
   );
 }

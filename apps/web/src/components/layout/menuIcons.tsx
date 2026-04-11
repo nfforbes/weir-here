@@ -4,6 +4,7 @@ import { type ReactElement } from 'react';
 import HomeIcon from '@mui/icons-material/Home';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import BusinessIcon from '@mui/icons-material/Business';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import FactoryIcon from '@mui/icons-material/Factory';
 import InfoIcon from '@mui/icons-material/Info';
@@ -34,6 +35,7 @@ const iconMap: Record<string, ReactElement> = {
   Home: <HomeIcon fontSize="small" />,
   Lightbulb: <LightbulbIcon fontSize="small" />,
   Business: <BusinessIcon fontSize="small" />,
+  BusinessCenter: <BusinessCenterIcon fontSize="small" />,
   PersonSearch: <PersonSearchIcon fontSize="small" />,
   Factory: <FactoryIcon fontSize="small" />,
   Info: <InfoIcon fontSize="small" />,

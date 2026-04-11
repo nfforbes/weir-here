@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -39,10 +40,12 @@
       body {
         background: var(--bg);
       }
+
       .print-page {
         break-after: page;
         break-inside: avoid;
       }
+
       .print-page:last-child {
         break-after: auto;
       }
@@ -65,6 +68,7 @@
         border: none;
         min-height: 7.6in;
       }
+
       /* definite block height so split content can center vertically in the content box */
       .print-page.split {
         min-height: 7.6in;
@@ -335,6 +339,44 @@
       letter-spacing: 0.02em;
     }
 
+    .brochure-footer {
+      position: absolute;
+      bottom: 0.55in;
+      left: 0.65in;
+      right: 0.65in;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid rgba(207, 175, 91, 0.35);
+      padding-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .brochure-footer-qr {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brochure-footer-qr img {
+      width: 50px;
+      height: 50px;
+      border: 2px solid white;
+      border-radius: 4px;
+      background: white;
+      padding: 2px;
+    }
+
+    .brochure-footer-address {
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    .brochure-footer-address strong {
+      color: var(--gold);
+    }
+
     @media screen {
       body {
         padding: 1rem;
@@ -344,21 +386,17 @@
     }
   </style>
 </head>
+
 <body>
   <!-- Cover: initial landing -->
   <section class="print-page cover" aria-label="Cover">
-    <img
-      class="cover-logo"
-      src="/weir-here-logo-transparent.png"
-      alt="Weir Here Staffing"
-      width="840"
-      height="270"
-    />
+    <img class="cover-logo" src="/weir-here-logo-transparent.png" alt="Weir Here Staffing" width="840" height="270" />
     <p class="cover-badge">Staffing solutions</p>
     <h1>SOLUTIONS</h1>
     <p class="cover-tagline">Healthcare staffing built on trust, speed, and people who show up ready to care.</p>
     <p class="cover-deck">
-      One partner for employers who need reliable talent—and for professionals who want the right next role. This brochure summarizes how we deliver.
+      One partner for employers who need reliable talent—and for professionals who want the right next role. This
+      brochure summarizes how we deliver.
     </p>
     <div class="cover-rule" aria-hidden="true"></div>
   </section>
@@ -369,11 +407,13 @@
       <p class="eyebrow">For employers</p>
       <h2>Hire faster. Stay compliant.</h2>
       <p class="lede">
-        Full-service staffing so you spend less time chasing candidates and more time running care. We match vetted talent to your volume, specialty, and schedule—temporary, contract, or long-term.
+        Full-service staffing so you spend less time chasing candidates and more time running care. We match vetted
+        talent to your volume, specialty, and schedule—temporary, contract, or long-term.
       </p>
       <div class="card">
         <h3>Why teams choose us</h3>
-        <p>Streamlined matching, flexible workforce models, and account partners who understand healthcare operations—not generic recruiting scripts.</p>
+        <p>Streamlined matching, flexible workforce models, and account partners who understand healthcare
+          operations—not generic recruiting scripts.</p>
       </div>
       <ul>
         <li>Scale up for census spikes without burning out core staff.</li>
@@ -399,11 +439,13 @@
       <p class="eyebrow">For job seekers</p>
       <h2>Your next role, without the runaround.</h2>
       <p class="lede">
-        We connect skilled clinicians and support professionals with organizations that value reliability and respect. Your time matters—so we keep the process clear and moving.
+        We connect skilled clinicians and support professionals with organizations that value reliability and respect.
+        Your time matters—so we keep the process clear and moving.
       </p>
       <div class="card">
         <h3>What you get</h3>
-        <p>Targeted opportunities, interview support, and advocates who know both sides of the hiring table—without fees that cut into your pay.</p>
+        <p>Targeted opportunities, interview support, and advocates who know both sides of the hiring table—without fees
+          that cut into your pay.</p>
       </div>
       <ul>
         <li>Roles across acute, long-term, community, and in-home settings.</li>
@@ -413,234 +455,145 @@
     </div>
   </section>
 
-  <!-- ——— One print page per solution (matches site Solutions menu) ——— -->
+  <!-- ——— One print page per solution (Content Silos) ——— -->
 
-  <section class="print-page split split--img-right" aria-label="Medical Professionals">
+  <section class="print-page split split--img-right" aria-label="Staffing Solutions">
     <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
-      <h2>Medical Professionals</h2>
+      <h2>Staffing Solutions</h2>
       <p class="lede">
-        Licensed physicians across specialties for short-term relief, long-term assignments, and steady facility coverage—aligned to your census and service lines.
+        Efficiency meets excellence. We bridge the talent gap for healthcare institutions and private employers across
+        Jamaica, delivering reliable staffing with unmatched speed.
       </p>
       <ul>
-        <li>Skilled medical staff for hospitals, clinics, and healthcare facilities.</li>
-        <li>Rapid placement when urgent gaps threaten continuity of care.</li>
+        <li>Rigorous medical credentialing &amp; vetting.</li>
+        <li>Large pool of qualified RNs, LPNs, and Geriatric Nurses.</li>
+        <li>Rapid placement for temporary or permanent roles.</li>
+        <li>Reach and Reliability across all 14 parishes.</li>
       </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/medical-professionals</p>
+      <p class="solution-web">weirheresolutions.com/staffing-solutions-jamaica</p>
     </div>
     <div class="brochure-panel brochure-panel--visual">
       <div class="img-ring">
-        <img src="/Doctor_and_nuse_standing_at_opposite_end_walk.gif" alt="" width="320" height="320" />
+        <img src="/Black_employees_standing_202604102014.jpeg" alt="" width="320" height="320" />
+      </div>
+    </div>
+    <div class="brochure-footer">
+      <div class="brochure-footer-qr">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://weirheresolutions.com/staffing-solutions-jamaica"
+          alt="QR Code" />
+        <p>Scan to view<br>this service online</p>
+      </div>
+      <div class="brochure-footer-address">
+        <strong>Weir Here Staffing</strong><br>
+        Kingston, Jamaica<br>
+        (876) 566-9428 | info@weirheresolutions.com
       </div>
     </div>
   </section>
 
-  <section class="print-page split split--img-left" aria-label="Physicians and Advanced Practice Providers">
-    <div class="brochure-panel brochure-panel--visual">
-      <div class="img-ring">
-        <img src="/Black_doctor_seeing_patient_ee388b378f.jpeg" alt="" width="320" height="320" />
-      </div>
-    </div>
-    <div class="brochure-panel brochure-panel--copy">
-      <p class="eyebrow">Solutions</p>
-      <h2>Physicians &amp; Advanced Practice Providers</h2>
-      <p class="lede">
-        Board-certified physicians, NPs, PAs, and APPs for locum tenens, contract, and permanent roles—with credentialing and privileging support.
-      </p>
-      <ul>
-        <li>Specialty and primary-care coverage tailored to your organization.</li>
-        <li>Locum tenens and contract-to-hire pathways.</li>
-        <li>Partner support for credentialing, scheduling, and continuity.</li>
-      </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/physicians-advanced-practice</p>
-    </div>
-  </section>
-
-  <section class="print-page split split--img-right" aria-label="Licensed Practical Nurses">
-    <div class="brochure-panel brochure-panel--copy">
-      <p class="eyebrow">Solutions</p>
-      <h2>Licensed Practical Nurses</h2>
-      <p class="lede">
-        Credential-verified LPNs for acute care, long-term care, rehab, skilled nursing, and clinics—with flexible engagement models.
-      </p>
-      <ul>
-        <li>Experience across med-surg, rehab, and skilled nursing environments.</li>
-        <li>Per diem, contract, and permanent scheduling.</li>
-        <li>Streamlined credentialing and onboarding.</li>
-      </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/licensed-practical-nurses</p>
-    </div>
+  <section class="print-page split split--img-left" aria-label="Babysitting Services">
     <div class="brochure-panel brochure-panel--visual">
       <div class="img-ring">
         <img src="/Black_nurse_babysitting_child_4e246048c5.jpeg" alt="" width="320" height="320" />
       </div>
     </div>
-  </section>
-
-  <section class="print-page split split--img-left" aria-label="Registered Nurses">
-    <div class="brochure-panel brochure-panel--visual">
-      <div class="img-ring">
-        <img src="/Nurse_carrying_water_to_patient_eb54b1fa50.jpeg" alt="" width="320" height="320" />
+    <div class="brochure-panel brochure-panel--copy">
+      <p class="eyebrow">Solutions</p>
+      <h2>Babysitting Services</h2>
+      <p class="lede">
+        Professional and attentive childcare for busy parents and healthcare professionals. Vetted nannies and sitters
+        you can trust.
+      </p>
+      <ul>
+        <li>Support for infants through school-age children.</li>
+        <li>Rigorous vetting process prioritizing safety and reliability.</li>
+        <li>Flexible scheduling to fit your shift work or daily needs.</li>
+      </ul>
+      <p class="solution-web">weirheresolutions.com/babysitting-services-jamaica</p>
+    </div>
+    <div class="brochure-footer">
+      <div class="brochure-footer-qr">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://weirheresolutions.com/babysitting-services-jamaica"
+          alt="QR Code" />
+        <p>Scan to view<br>this service online</p>
+      </div>
+      <div class="brochure-footer-address">
+        <strong>Weir Here Staffing</strong><br>
+        Kingston, Jamaica<br>
+        (876) 566-9428 | info@weirheresolutions.com
       </div>
     </div>
-    <div class="brochure-panel brochure-panel--copy">
-      <p class="eyebrow">Solutions</p>
-      <h2>Registered Nurses</h2>
-      <p class="lede">
-        Highly trained RNs across specialties for hospitals, clinics, home care, and specialty units—with scheduling support that matches your operations.
-      </p>
-      <ul>
-        <li>RNs aligned to unit needs and patient acuity.</li>
-        <li>Dedicated support for staffing plans and shift coverage.</li>
-        <li>Per diem, contract, and permanent layouts available.</li>
-      </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/registered-nurses</p>
-    </div>
   </section>
 
-  <section class="print-page split split--img-right" aria-label="Geriatric Nurses">
+  <section class="print-page split split--img-right" aria-label="Domestic & Elder Care">
     <div class="brochure-panel brochure-panel--copy">
       <p class="eyebrow">Solutions</p>
-      <h2>Geriatric Nurses</h2>
+      <h2>Domestic &amp; Elder Care</h2>
       <p class="lede">
-        Nurses focused on older adults—skilled nursing, assisted living, memory care, and private-duty settings—with compassionate, person-centered practice.
+        Compassionate, in-home support for seniors and individuals requiring daily assistance, allowing them to age
+        gracefully with dignity.
       </p>
       <ul>
-        <li>Experience with age-related conditions and long-term care workflows.</li>
-        <li>Flexible staffing for census changes and leave coverage.</li>
-        <li>Teams that strengthen quality and family confidence.</li>
+        <li>Personal care, medication reminders, and companionship.</li>
+        <li>Specialized Alzheimer's and Dementia care programs.</li>
+        <li>Customized care plans tailored to each family's unique needs.</li>
       </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/geriatric-nurses</p>
+      <p class="solution-web">weirheresolutions.com/domestic-care-jamaica</p>
     </div>
     <div class="brochure-panel brochure-panel--visual">
       <div class="img-ring">
         <img src="/realistic-scene-with-elderly-care-senior-people.png" alt="" width="320" height="320" />
       </div>
     </div>
-  </section>
-
-  <section class="print-page split split--img-left" aria-label="Certified Babysitter">
-    <div class="brochure-panel brochure-panel--visual">
-      <div class="img-ring">
-        <img src="/Black_nurse_babysitting_child_4e246048c5.jpeg" alt="" width="320" height="320" />
+    <div class="brochure-footer">
+      <div class="brochure-footer-qr">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://weirheresolutions.com/domestic-care-jamaica"
+          alt="QR Code" />
+        <p>Scan to view<br>this service online</p>
       </div>
-    </div>
-    <div class="brochure-panel brochure-panel--copy">
-      <p class="eyebrow">Solutions</p>
-      <h2>Certified Babysitter</h2>
-      <p class="lede">
-        Vetted childcare professionals—including pediatric-trained caregivers—for families who need safe, dependable coverage on flexible schedules.
-      </p>
-      <ul>
-        <li>Support for infants through school-age children.</li>
-        <li>Ideal for shift workers and healthcare parents who need reliability.</li>
-        <li>Screened providers focused on safety and warmth.</li>
-      </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/certified-babysitter</p>
-    </div>
-  </section>
-
-  <section class="print-page split split--img-right" aria-label="Support Staff">
-    <div class="brochure-panel brochure-panel--copy">
-      <p class="eyebrow">Solutions</p>
-      <h2>Support Staff</h2>
-      <p class="lede">
-        Administrative, clerical, and operational talent that keeps healthcare organizations running—front desk through revenue cycle and health information.
-      </p>
-      <ul>
-        <li>Medical reception, scheduling, and patient coordination.</li>
-        <li>Billing, coding, and HIM support.</li>
-        <li>Flexible coverage for peaks, leaves, and projects.</li>
-      </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/support-staff</p>
-    </div>
-    <div class="brochure-panel brochure-panel--visual">
-      <div class="img-ring">
-        <img src="/Black_orderly_pushing_gurney_12839cff65.jpeg" alt="" width="320" height="320" />
+      <div class="brochure-footer-address">
+        <strong>Weir Here Staffing</strong><br>
+        Kingston, Jamaica<br>
+        (876) 566-9428 | info@weirheresolutions.com
       </div>
     </div>
   </section>
 
-  <section class="print-page split split--img-left" aria-label="Travel and Temporary Staffing">
-    <div class="brochure-panel brochure-panel--visual">
-      <div class="img-ring">
-        <img src="/Black_orderly_pushing_gurney_12839cff65.jpeg" alt="" width="320" height="320" />
-      </div>
-    </div>
-    <div class="brochure-panel brochure-panel--copy">
-      <p class="eyebrow">Solutions</p>
-      <h2>Travel and Temporary Staffing</h2>
-      <p class="lede">
-        Fast access to travel nurses, allied health, and temporary teams—from a few shifts to multi-week assignments—with compliance handled thoughtfully.
-      </p>
-      <ul>
-        <li>Rapid response for census spikes and urgent gaps.</li>
-        <li>Support for housing, licensure, and onboarding where applicable.</li>
-        <li>Transparent handoffs so leaders stay focused on patients.</li>
-      </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/travel-temporary-staffing</p>
-    </div>
-  </section>
-
-  <section class="print-page split split--img-right" aria-label="Domestic Care">
-    <div class="brochure-panel brochure-panel--copy">
-      <p class="eyebrow">Solutions</p>
-      <h2>Domestic Care</h2>
-      <p class="lede">
-        In-home aides and companions for seniors and individuals with special needs—helping families keep loved ones safe, comfortable, and respected at home.
-      </p>
-      <ul>
-        <li>Personal care, light household support, and medication reminders.</li>
-        <li>Respite for family caregivers.</li>
-        <li>Vetted providers who align to your routines and preferences.</li>
-      </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/domestic-care</p>
-    </div>
-    <div class="brochure-panel brochure-panel--visual">
-      <div class="img-ring">
-        <img src="/Black_worker_walking_202603280201.jpeg" alt="" width="320" height="320" />
-      </div>
-    </div>
-  </section>
-
-  <section class="print-page split split--img-left" aria-label="Housekeeping">
-    <div class="brochure-panel brochure-panel--visual">
-      <div class="img-ring">
-        <img src="/Black_housekeepers_cleaning_202603240210.jpeg" alt="" width="320" height="320" />
-      </div>
-    </div>
-    <div class="brochure-panel brochure-panel--copy">
-      <p class="eyebrow">Solutions</p>
-      <h2>Housekeeping</h2>
-      <p class="lede">
-        Professional, vetted housekeeping for residences and workplaces—consistent standards, flexible cadence, and teams who show up ready to deliver.
-      </p>
-      <ul>
-        <li>Daily, weekly, or project-based schedules.</li>
-        <li>Deep cleaning and ongoing maintenance options.</li>
-        <li>Eco-conscious products available where requested.</li>
-      </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/housekeeping</p>
-    </div>
-  </section>
-
-  <section class="print-page split split--img-right" aria-label="Tutoring">
-    <div class="brochure-panel brochure-panel--copy">
-      <p class="eyebrow">Solutions</p>
-      <h2>Tutoring</h2>
-      <p class="lede">
-        Qualified educators for Math, Science, English, and more—personalized sessions that build confidence and measurable progress.
-      </p>
-      <ul>
-        <li>One-on-one instruction tailored to the learner.</li>
-        <li>Exam preparation and academic reinforcement.</li>
-        <li>In-person or online flexibility to fit busy families.</li>
-      </ul>
-      <p class="solution-web">weirheresolutions.com/solutions/tutoring</p>
-    </div>
+  <section class="print-page split split--img-left" aria-label="Tutoring Services">
     <div class="brochure-panel brochure-panel--visual">
       <div class="img-ring">
         <img src="/Black_teacher_teaching_202603240218.jpeg" alt="" width="320" height="320" />
+      </div>
+    </div>
+    <div class="brochure-panel brochure-panel--copy">
+      <p class="eyebrow">Solutions</p>
+      <h2>Tutoring Services</h2>
+      <p class="lede">
+        Fostering academic excellence across Jamaica. Our vetted, professional tutors provide personalized instruction
+        from PEP to CAPE levels.
+      </p>
+      <ul>
+        <li>Subject-specific support for Mathematics, Sciences, and more.</li>
+        <li>In-person and virtual online tutoring options.</li>
+        <li>Progress tracking and structured, personalized lesson plans.</li>
+      </ul>
+      <p class="solution-web">weirheresolutions.com/tutoring-jamaica</p>
+    </div>
+    <div class="brochure-footer">
+      <div class="brochure-footer-qr">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://weirheresolutions.com/tutoring-jamaica"
+          alt="QR Code" />
+        <p>Scan to view<br>this service online</p>
+      </div>
+      <div class="brochure-footer-address">
+        <strong>Weir Here Staffing</strong><br>
+        Kingston, Jamaica<br>
+        (876) 566-9428 | info@weirheresolutions.com
       </div>
     </div>
   </section>
@@ -656,7 +609,8 @@
       <p class="eyebrow">Start today</p>
       <h2>Let’s design your staffing plan.</h2>
       <p class="lede">
-        Whether you need coverage next week or a partner for the year ahead, we’ll align talent, pace, and budget—transparently.
+        Whether you need coverage next week or a partner for the year ahead, we’ll align talent, pace, and
+        budget—transparently.
       </p>
       <div class="cta-box">
         <strong>General inquiries</strong>
@@ -679,4 +633,5 @@
     Paper: Letter, Landscape. This document includes a cover, employer & job-seeker overviews, one page per Solutions menu offering (11), and a closing CTA.
   -->
 </body>
+
 </html>
