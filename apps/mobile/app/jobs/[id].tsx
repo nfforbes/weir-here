@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text, Button, Chip, Divider, ActivityIndicator, Surface } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { formatJobSalaryPlain } from '@weir-here/shared';
 import { useAppDispatch, useAppSelector } from '../../src/store';
 import { fetchJob, clearCurrentJob } from '../../src/store/slices/jobsSlice';
 import { ELECTRIC_BLUE } from '../../src/theme';
@@ -56,10 +57,7 @@ export default function JobDetailScreen() {
     );
   }
 
-  const salary =
-    job.salaryRange.min || job.salaryRange.max
-      ? `${job.salaryRange.currency} ${job.salaryRange.min.toLocaleString()} – ${job.salaryRange.max.toLocaleString()}`
-      : null;
+  const salary = formatJobSalaryPlain(job.salaryRange);
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>

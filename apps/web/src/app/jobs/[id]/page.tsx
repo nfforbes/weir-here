@@ -26,6 +26,7 @@ import { useUser } from '@auth0/nextjs-auth0/client';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchJob, clearCurrentJob } from '@/store/slices/jobsSlice';
 import { toUserErrorMessage } from '@/lib/errorMessage';
+import { formatJobSalaryPlain } from '@weir-here/shared';
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -73,10 +74,7 @@ export default function JobDetailPage() {
     );
   }
 
-  const salary =
-    job.salaryRange.min || job.salaryRange.max
-      ? `${job.salaryRange.currency} ${job.salaryRange.min.toLocaleString()} – ${job.salaryRange.max.toLocaleString()}`
-      : null;
+  const salary = formatJobSalaryPlain(job.salaryRange);
 
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>

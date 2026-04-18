@@ -31,6 +31,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import { useUser } from '@auth0/nextjs-auth0/client';
+import { formatJobSalaryPlain } from '@weir-here/shared';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchJob, clearCurrentJob, deleteJob } from '@/store/slices/jobsSlice';
 import { fetchApplications } from '@/store/slices/applicationsSlice';
@@ -131,6 +132,7 @@ export default function MyJobDetailPage() {
 
   const canManagePosting = user?.sub === job.postedBy;
   const isDeletingThis = deletingJobId === id;
+  const salaryLabel = formatJobSalaryPlain(job.salaryRange);
 
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
@@ -185,12 +187,8 @@ export default function MyJobDetailPage() {
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
           <Chip label={job.location} variant="outlined" size="small" />
           <Chip label={job.employmentType} variant="outlined" size="small" />
-          {job.salaryRange && (
-            <Chip
-              label={`${job.salaryRange.currency} ${Number(job.salaryRange.min).toLocaleString()} – ${Number(job.salaryRange.max).toLocaleString()}`}
-              variant="outlined"
-              size="small"
-            />
+          {salaryLabel && (
+            <Chip label={salaryLabel} variant="outlined" size="small" />
           )}
           {job.expiresAt && (
             <Chip

@@ -11,7 +11,7 @@ import {
   Stack,
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import { IJob } from '@weir-here/shared';
+import { IJob, jobHasDisplayableSalary } from '@weir-here/shared';
 
 interface JobCardProps {
   job: IJob;
@@ -93,7 +93,7 @@ export default function JobCard({ job }: JobCardProps) {
               color="primary"
               variant="outlined"
             />
-            {job.salaryRange && (
+            {jobHasDisplayableSalary(job.salaryRange) && (
               <Typography variant="body2" color="text.secondary">
                 {formatSalary(
                   job.salaryRange.min,

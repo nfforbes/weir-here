@@ -105,9 +105,13 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
     setResponsibilities(j.responsibilities ?? '');
     setRequirements(j.requirements ?? '');
     setHowToApply(j.howToApply ?? '');
-    setSalaryMin(j.salaryRange?.min ?? '');
-    setSalaryMax(j.salaryRange?.max ?? '');
-    setCurrency(j.salaryRange?.currency ?? 'JMD');
+    const sr = j.salaryRange;
+    const minN = sr?.min != null ? Number(sr.min) : 0;
+    const maxN = sr?.max != null ? Number(sr.max) : 0;
+    const noSalary = minN === 0 && maxN === 0;
+    setSalaryMin(noSalary ? '' : minN);
+    setSalaryMax(noSalary ? '' : maxN);
+    setCurrency(sr?.currency ?? 'JMD');
     setCategories(j.categories?.length ? [...j.categories] : []);
     setTags(j.tags?.length ? [...j.tags] : []);
     const exp = j.expiresAt ? new Date(j.expiresAt) : null;
@@ -174,10 +178,13 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
     if (!responsibilities.trim()) errs.responsibilities = 'Responsibilities are required';
     if (!requirements.trim()) errs.requirements = 'Requirements are required';
     if (!howToApply.trim()) errs.howToApply = 'How to apply is required';
-    if (salaryMin === '' || salaryMin < 0) errs.salaryMin = 'Valid minimum salary is required';
-    if (salaryMax === '' || salaryMax < 0) errs.salaryMax = 'Valid maximum salary is required';
-    if (salaryMin !== '' && salaryMax !== '' && salaryMin > salaryMax)
+    const hasMin = salaryMin !== '';
+    const hasMax = salaryMax !== '';
+    if (hasMin && salaryMin < 0) errs.salaryMin = 'Salary cannot be negative';
+    if (hasMax && salaryMax < 0) errs.salaryMax = 'Salary cannot be negative';
+    if (hasMin && hasMax && salaryMin > salaryMax) {
       errs.salaryMax = 'Max salary must be ≥ min salary';
+    }
     if (categories.length === 0) errs.categories = 'At least one category is required';
     if (!expiresAt) errs.expiresAt = 'Expiration date is required';
     setValidationErrors(errs);
@@ -192,6 +199,13 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
       e.preventDefault();
       if (!validate()) return;
 
+      const nMin = salaryMin === '' ? 0 : Number(salaryMin);
+      const nMax = salaryMax === '' ? 0 : Number(salaryMax);
+      let nOutMin = nMin;
+      let nOutMax = nMax;
+      if (salaryMin !== '' && salaryMax === '') nOutMax = nMin;
+      if (salaryMin === '' && salaryMax !== '') nOutMin = nMax;
+
       const payload = {
         title: title.trim(),
         location: location.trim(),
@@ -201,8 +215,8 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
         requirements: requirements.trim(),
         howToApply: howToApply.trim(),
         salaryRange: {
-          min: Number(salaryMin),
-          max: Number(salaryMax),
+          min: nOutMin,
+          max: nOutMax,
           currency,
         },
         categories,
@@ -364,13 +378,15 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
 
         {/* ── Salary ── */}
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-          Compensation
+          Compensation (optional)
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+          Leave blank to omit a salary range. If you enter only one bound, the other is set to match.
         </Typography>
 
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
           <TextField
             label="Min Salary"
-            required
             type="number"
             value={salaryMin}
             onChange={(e) => setSalaryMin(e.target.value === '' ? '' : Number(e.target.value))}
@@ -380,7 +396,6 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
           />
           <TextField
             label="Max Salary"
-            required
             type="number"
             value={salaryMax}
             onChange={(e) => setSalaryMax(e.target.value === '' ? '' : Number(e.target.value))}

@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { Searchbar, Card, Text, Chip, ActivityIndicator, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import type { IJob } from '@weir-here/shared';
+import { formatJobSalaryPlain, type IJob } from '@weir-here/shared';
 import { useAppDispatch, useAppSelector } from '../../src/store';
 import { fetchJobs, setSearchQuery } from '../../src/store/slices/jobsSlice';
 import { ELECTRIC_BLUE } from '../../src/theme';
@@ -10,10 +10,7 @@ import { ELECTRIC_BLUE } from '../../src/theme';
 function JobCard({ job }: { job: IJob }) {
   const router = useRouter();
 
-  const salary =
-    job.salaryRange.min || job.salaryRange.max
-      ? `${job.salaryRange.currency} ${job.salaryRange.min.toLocaleString()} – ${job.salaryRange.max.toLocaleString()}`
-      : null;
+  const salary = formatJobSalaryPlain(job.salaryRange);
 
   return (
     <Card style={styles.card} onPress={() => router.push(`/jobs/${job._id}`)}>
