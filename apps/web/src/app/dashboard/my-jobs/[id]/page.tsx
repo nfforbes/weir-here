@@ -103,8 +103,8 @@ export default function MyJobDetailPage() {
     );
   }
 
-  const loading = jobLoading || appsLoading;
-  const error = jobError || appsError;
+  const loading = jobLoading;
+  const error = jobError;
 
   if (loading) {
     return (

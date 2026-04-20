@@ -60,9 +60,7 @@ export default function ReviewPanel({ jobId }: ReviewPanelProps) {
   const [forms, setForms] = useState<Record<string, ReviewFormState>>({});
   const [submitted, setSubmitted] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    dispatch(fetchApplications(jobId));
-  }, [dispatch, jobId]);
+  // Applications are fetched by the parent page on mount
 
   const handleExpand = useCallback(
     (applicationId: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
