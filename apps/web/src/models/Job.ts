@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { slugify } from '@/lib/slugify';
 
 export interface ScreeningQuestionDoc {
   id: string;
@@ -9,6 +10,7 @@ export interface ScreeningQuestionDoc {
 
 export interface JobDocument extends Document {
   title: string;
+  slug: string;
   location: string;
   employmentType: string;
   description: string;
@@ -42,6 +44,7 @@ const ScreeningQuestionSchema = new Schema<ScreeningQuestionDoc>(
 const JobSchema = new Schema<JobDocument>(
   {
     title: { type: String, required: true, index: true },
+    slug: { type: String, required: true, unique: true, index: true },
     location: { type: String, required: true },
     employmentType: {
       type: String,
@@ -69,6 +72,25 @@ const JobSchema = new Schema<JobDocument>(
   },
   { timestamps: true }
 );
+
+JobSchema.pre('validate', async function (next) {
+  if (this.isModified('title') || !this.slug) {
+    let baseSlug = slugify(this.title);
+    if (!baseSlug) baseSlug = 'job';
+    
+    // Check for uniqueness
+    let slug = baseSlug;
+    let counter = 1;
+    const Job = mongoose.models.Job || mongoose.model('Job', JobSchema);
+    
+    while (await Job.exists({ slug, _id: { $ne: this._id } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    this.slug = slug;
+  }
+  next();
+});
 
 JobSchema.index({ title: 'text', description: 'text', tags: 'text' });
 

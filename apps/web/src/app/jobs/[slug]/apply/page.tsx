@@ -18,24 +18,24 @@ import ApplicationForm from '@/components/jobs/ApplicationForm';
 import { toUserErrorMessage } from '@/lib/errorMessage';
 
 export default function JobApplyPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user, isLoading: authLoading } = useUser();
   const { currentJob: job, loading, error } = useAppSelector((state) => state.jobs);
 
   useEffect(() => {
-    if (id) dispatch(fetchJob(id));
+    if (slug) dispatch(fetchJob(slug));
     return () => {
       dispatch(clearCurrentJob());
     };
-  }, [id, dispatch]);
+  }, [slug, dispatch]);
 
   useEffect(() => {
-    if (!authLoading && !user && id) {
-      router.replace(`/auth/login?returnTo=/jobs/${encodeURIComponent(id)}/apply`);
+    if (!authLoading && !user && slug) {
+      router.replace(`/auth/login?returnTo=/jobs/${encodeURIComponent(slug)}/apply`);
     }
-  }, [authLoading, user, router, id]);
+  }, [authLoading, user, router, slug]);
 
   if (authLoading || (!user && !authLoading)) {
     return (
@@ -77,7 +77,7 @@ export default function JobApplyPage() {
     <Container maxWidth="md" sx={{ py: 6 }}>
       <Button
         startIcon={<ArrowBackIcon />}
-        onClick={() => router.push(`/jobs/${id}`)}
+        onClick={() => router.push(`/jobs/${slug}`)}
         sx={{ mb: 3 }}
       >
         Back to job

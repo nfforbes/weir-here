@@ -29,24 +29,24 @@ import { toUserErrorMessage } from '@/lib/errorMessage';
 import { formatJobSalaryPlain } from '@weir-here/shared';
 
 export default function JobDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useUser();
   const { currentJob: job, loading, error } = useAppSelector((state) => state.jobs);
 
   useEffect(() => {
-    if (id) dispatch(fetchJob(id));
+    if (slug) dispatch(fetchJob(slug));
     return () => {
       dispatch(clearCurrentJob());
     };
-  }, [id, dispatch]);
+  }, [slug, dispatch]);
 
   const handleApply = () => {
     if (user) {
-      router.push(`/jobs/${id}/apply`);
+      router.push(`/jobs/${slug}/apply`);
     } else {
-      router.push(`/auth/login?returnTo=/jobs/${id}/apply`);
+      router.push(`/auth/login?returnTo=/jobs/${slug}/apply`);
     }
   };
 

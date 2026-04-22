@@ -31,6 +31,7 @@ export const PUBLIC_MENU: IMenuItem[] = [
     ],
   },
   { label: 'About Us', path: '/about', icon: 'Info' },
+  { label: 'Pay Now', path: '/payment', icon: 'Payment' },
   { label: 'Testimonials', path: '/testimonials', icon: 'FormatQuote' },
   { label: 'Contact Us', path: '/contact', icon: 'ContactMail' },
 ];

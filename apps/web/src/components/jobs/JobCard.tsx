@@ -67,7 +67,7 @@ export default function JobCard({ job }: JobCardProps) {
     >
       <CardActionArea
         component={Link}
-        href={`/jobs/${job._id}`}
+        href={`/jobs/${job.slug}`}
         sx={{ height: '100%' }}
       >
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

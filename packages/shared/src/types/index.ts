@@ -47,6 +47,7 @@ export interface ISalaryRange {
 export interface IJob {
   _id?: string;
   title: string;
+  slug: string;
   location: string;
   employmentType: EmploymentType;
   description: string;
