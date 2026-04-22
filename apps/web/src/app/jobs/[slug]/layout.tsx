@@ -6,29 +6,21 @@ import { getPublicSiteUrl } from '@/lib/siteUrl';
 /** Refresh job title/description metadata periodically for search snippets. */
 export const revalidate = 300;
 
-type Props = { children: React.ReactNode; params: Promise<{ id: string }> };
+type Props = { children: React.ReactNode; params: Promise<{ slug: string }> };
 
-const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
-
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const canonicalPath = `/jobs/${id}`;
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const canonicalPath = `/jobs/${slug}`;
   const base = getPublicSiteUrl();
   const absoluteUrl = `${base}${canonicalPath}`;
 
-  if (!OBJECT_ID_RE.test(id)) {
-    return {
-      title: 'Job posting',
-      alternates: { canonical: canonicalPath },
-    };
-  }
-
   try {
     await connectDB();
-    const job = await Job.findById(id).select('title location').lean<{
+    const job = await Job.findOne({ slug }).select('title location').lean<{
       title?: string;
       location?: string;
     }>();
+    
     if (!job?.title) {
       return {
         title: 'Job posting | Weir Here Staffing',
