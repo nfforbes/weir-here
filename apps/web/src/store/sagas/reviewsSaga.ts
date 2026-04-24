@@ -16,7 +16,8 @@ async function getReviews(applicationId: string): Promise<IReview[]> {
     `/api/reviews?applicationId=${encodeURIComponent(applicationId)}`
   );
   if (!res.ok) throw new Error('Failed to fetch reviews');
-  return res.json();
+  const data = await res.json();
+  return data.reviews || [];
 }
 
 async function postReview(payload: SubmitReviewPayload): Promise<IReview> {
@@ -26,7 +27,8 @@ async function postReview(payload: SubmitReviewPayload): Promise<IReview> {
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to submit review');
-  return res.json();
+  const data = await res.json();
+  return data.review;
 }
 
 function* handleFetchReviews(action: PayloadAction<string>) {

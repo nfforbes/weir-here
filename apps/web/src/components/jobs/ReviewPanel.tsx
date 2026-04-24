@@ -106,7 +106,7 @@ export default function ReviewPanel({ jobId }: ReviewPanelProps) {
 
   const reviewsForApp = useCallback(
     (appId: string): IReview[] =>
-      reviews.filter((r) => r.applicationId === appId),
+      (Array.isArray(reviews) ? reviews : []).filter((r) => r.applicationId === appId),
     [reviews],
   );
 
