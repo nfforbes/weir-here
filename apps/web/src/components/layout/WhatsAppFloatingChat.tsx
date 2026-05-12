@@ -4,7 +4,7 @@ import { Fab, Zoom, useScrollTrigger } from '@mui/material';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
 export default function WhatsAppFloatingChat() {
-  const phone = '18765669428'; // Jamaican number from layout.tsx
+  const phone = '18765619970'; // Jamaican number from layout.tsx
   const message = 'Hello, I would like to inquire about your staffing services.';
   const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 

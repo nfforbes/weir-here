@@ -12,6 +12,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
 const ADDRESS_MAPS_URL =
   'https://www.google.com/maps/search/?api=1&query=RoseDale+Drive%2C+Kingston%2C+Jamaica';
@@ -47,6 +48,25 @@ export default function ContactPageContent() {
               <br />
               Kingston, Jamaica
             </Typography>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Paper elevation={2} sx={{ p: 4, height: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+              <WhatsAppIcon color="primary" />
+              <Typography variant="h6" fontWeight={600}>
+                Phone / WhatsApp
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Link href="tel:+18765619970" underline="hover">
+                (876) 561-9970
+              </Link>
+              <Link href="tel:+18765619856" underline="hover">
+                (876) 561-9856
+              </Link>
+            </Box>
           </Paper>
         </Grid>
 

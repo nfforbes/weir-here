@@ -81,11 +81,6 @@ export default function TopBanner() {
           info@weirheresolutions.com &nbsp;|
         </Typography>
         <Box
-          component="a"
-          href="https://wa.me/18765669428"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Chat on WhatsApp at (876) 566-9428"
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -93,13 +88,49 @@ export default function TopBanner() {
             ml: 1,
             color: 'inherit',
             textDecoration: 'none',
-            '&:hover': { opacity: 0.85 },
           }}
         >
-          <Typography variant="caption" component="span" sx={{ opacity: 0.9 }}>
-            (876) 566-9428
-          </Typography>
-          <WhatsApp sx={{ fontSize: '1.1rem', opacity: 0.95 }} aria-hidden />
+          <Box
+            component="a"
+            href="https://wa.me/18765619970"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat on WhatsApp at (876) 561-9970"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              color: 'inherit',
+              textDecoration: 'none',
+              '&:hover': { opacity: 0.85 },
+            }}
+          >
+            <Typography variant="caption" component="span" sx={{ opacity: 0.9 }}>
+              (876) 561-9970
+            </Typography>
+            <WhatsApp sx={{ fontSize: '1.1rem', opacity: 0.95 }} aria-hidden />
+          </Box>
+          <Typography variant="caption" sx={{ opacity: 0.7, mx: 0.5 }}>/</Typography>
+          <Box
+            component="a"
+            href="https://wa.me/18765619856"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat on WhatsApp at (876) 561-9856"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              color: 'inherit',
+              textDecoration: 'none',
+              '&:hover': { opacity: 0.85 },
+            }}
+          >
+            <Typography variant="caption" component="span" sx={{ opacity: 0.9 }}>
+              (876) 561-9856
+            </Typography>
+            <WhatsApp sx={{ fontSize: '1.1rem', opacity: 0.95 }} aria-hidden />
+          </Box>
         </Box>
       </Box>
       
