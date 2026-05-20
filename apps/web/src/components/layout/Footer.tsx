@@ -29,7 +29,7 @@ export default function Footer() {
         <Typography variant="body2" sx={{ opacity: 0.75 }}>
           RoseDale Drive, Kingston, Jamaica
         </Typography>
-        <Typography variant="body2" sx={{ opacity: 0.75 }}>
+        <Typography component="div" variant="body2" sx={{ opacity: 0.75 }}>
           <Box sx={{ color: 'rgba(207,175,91,0.75)', display: 'inline-flex', gap: 0.5 }}>
             Call or WhatsApp: 
             <Box component="a" href="tel:+18765619970" sx={{ color: 'inherit', textDecoration: 'none', '&:hover': { color: '#cfaf5b' } }}>(876) 561-9970</Box>

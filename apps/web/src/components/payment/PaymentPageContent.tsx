@@ -27,8 +27,8 @@ export default function PaymentPageContent() {
   const renderPaypalButton = () => {
     if (window.paypal && typeof window.paypal.HostedButtons === 'function') {
       window.paypal.HostedButtons({
-        hostedButtonId: "FWLSGF84XBN66",
-      }).render("#paypal-container-FWLSGF84XBN66");
+        hostedButtonId: "XZYLWVXV3M33S",
+      }).render("#paypal-container-XZYLWVXV3M33S");
     }
   };
 
@@ -42,7 +42,7 @@ export default function PaymentPageContent() {
   return (
     <Box sx={{ bgcolor: 'background.default', py: { xs: 4, md: 8 } }}>
       <Script
-        src="https://www.paypal.com/sdk/js?client-id=BAAEUEPRE3Xz9G8BgtSiMz_TQXU9WTEnUmpgAY6xms1tnCAnD7X097b0J9-_QmVjaodNSsQbSVslniwtiw&components=hosted-buttons&disable-funding=venmo&currency=USD"
+        src="https://www.paypal.com/sdk/js?client-id=BAARvCJLYRGOpdjcHJltnDeEmtBpeXJ4SekkzqZqCQhfWQ1MCQkEXY8q-y72JKulXoqCtOzY0BJt_5hynU&components=hosted-buttons&enable-funding=venmo&currency=USD"
         onLoad={renderPaypalButton}
         strategy="afterInteractive"
       />
@@ -97,44 +97,6 @@ export default function PaymentPageContent() {
           </Box>
 
           <Box sx={{ p: { xs: 3, md: 6 }, position: 'relative' }}>
-            {/* Temporarily Unavailable Overlay */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 10,
-                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                backdropFilter: 'blur(4px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '0 0 16px 16px',
-              }}
-            >
-              <Typography
-                variant="h2"
-                sx={{
-                  color: 'error.main',
-                  fontWeight: 900,
-                  textAlign: 'center',
-                  textTransform: 'uppercase',
-                  transform: 'rotate(-5deg)',
-                  border: '8px solid',
-                  borderColor: 'error.main',
-                  p: 4,
-                  borderRadius: 4,
-                  letterSpacing: 4,
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                  bgcolor: 'white',
-                  maxWidth: '90%',
-                }}
-              >
-                Temporarily Unavailable
-              </Typography>
-            </Box>
 
             <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', color: 'text.secondary', lineHeight: 1.8 }}>
               Welcome to the Weir-Here Staffing Solutions secure payment gateway. We are committed to providing a seamless and professional experience, ensuring that managing your account is as efficient as the staffing services we provide.
@@ -219,7 +181,7 @@ export default function PaymentPageContent() {
 
             {/* PayPal Container */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-              <Box id="paypal-container-FWLSGF84XBN66" sx={{ width: '100%', maxWidth: 400 }}></Box>
+              <Box id="paypal-container-XZYLWVXV3M33S" sx={{ width: '100%', maxWidth: 400 }}></Box>
             </Box>
           </Box>
         </Paper>
