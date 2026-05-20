@@ -1,0 +1,12 @@
+# Copy to apps/kt/local.properties (not committed) and tune for your machine.
+# Used by Gradle to inject Android BuildConfig strings (see apps/kt/shared/build.gradle.kts).
+
+# Web app URL (omit trailing slash). Emulator to host machine Next.js:
+# weir_here.api.url=http://10.0.2.2:3000
+weir_here.api.url=http://10.0.2.2:3000
+
+# Auth0 Native app (SPA / Native Application) credentials — align with `.env.example` in repo root:
+# Same audience as AUTH0_AUDIENCE for Bearer JWT verification on `/api/*`.
+weir_here.auth0.domain=
+weir_here.auth0.clientId=
+weir_here.auth0.audience=

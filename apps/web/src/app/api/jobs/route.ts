@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth0 } from '@/lib/auth0';
+import { getApiAuthUser } from '@/lib/apiAuth';
 import crypto from 'crypto';
 import { connectDB } from '@/lib/mongodb';
 import Job from '@/models/Job';
@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
     const filter: Record<string, unknown> = {};
 
     if (mine === 'true') {
-      const session = await auth0.getSession();
-      if (!session) {
+      const authUser = await getApiAuthUser(request);
+      if (!authUser) {
         return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
       }
-      filter.postedBy = session.user.sub;
+      filter.postedBy = authUser.sub;
     } else {
       filter.expiresAt = { $gt: new Date() };
     }
@@ -54,23 +54,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
-    if (!session) {
+    const authUser = await getApiAuthUser(request);
+    if (!authUser) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
-    if (!session.user.email_verified) {
+    if (!authUser.emailVerified) {
       return NextResponse.json({ error: 'Email not verified' }, { status: 403 });
     }
 
     await connectDB();
 
-    const dbUser = await User.findOne({ auth0Id: session.user.sub });
+    const dbUser = await User.findOne({ auth0Id: authUser.sub });
     if (!dbUser?.personas.includes('administrator')) {
       return NextResponse.json({ error: 'Only administrators can create job postings.' }, { status: 403 });
     }
 
     const body = await request.json();
-    body.postedBy = session.user.sub;
+    body.postedBy = authUser.sub;
 
     const reviewerEmails: string[] = body.reviewerEmails || [];
     const job = await Job.create(body);
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       if (!existingUser) {
         await Invite.findOneAndUpdate(
           { email, jobId: job._id },
-          { email, jobId: job._id, invitedBy: session.user.sub, token: crypto.randomUUID(), accepted: false },
+          { email, jobId: job._id, invitedBy: authUser.sub, token: crypto.randomUUID(), accepted: false },
           { upsert: true, new: true }
         );
       }

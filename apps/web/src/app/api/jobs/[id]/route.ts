@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth0 } from '@/lib/auth0';
+import { getApiAuthUser } from '@/lib/apiAuth';
 import { connectDB } from '@/lib/mongodb';
 import mongoose from 'mongoose';
 import Job from '@/models/Job';
@@ -25,20 +25,20 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const session = await auth0.getSession();
-    if (!session) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const authUser = await getApiAuthUser(request);
+    if (!authUser) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     await connectDB();
     const { id: identifier } = await context.params;
     const isObjectId = mongoose.Types.ObjectId.isValid(identifier);
     const query = isObjectId ? { _id: identifier } : { slug: identifier };
-    
+
     const job = await Job.findOne(query);
     if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
 
-    const dbUser = await User.findOne({ auth0Id: session.user.sub });
+    const dbUser = await User.findOne({ auth0Id: authUser.sub });
     const isAdmin = dbUser?.personas.includes('administrator');
-    if (job.postedBy !== session.user.sub && !isAdmin) {
+    if (job.postedBy !== authUser.sub && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -75,22 +75,22 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: RouteContext) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const session = await auth0.getSession();
-    if (!session) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const authUser = await getApiAuthUser(request);
+    if (!authUser) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     await connectDB();
     const { id: identifier } = await context.params;
     const isObjectId = mongoose.Types.ObjectId.isValid(identifier);
     const query = isObjectId ? { _id: identifier } : { slug: identifier };
-    
+
     const job = await Job.findOne(query);
     if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
 
-    const dbUser = await User.findOne({ auth0Id: session.user.sub });
+    const dbUser = await User.findOne({ auth0Id: authUser.sub });
     const isAdmin = dbUser?.personas.includes('administrator');
-    if (job.postedBy !== session.user.sub && !isAdmin) {
+    if (job.postedBy !== authUser.sub && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

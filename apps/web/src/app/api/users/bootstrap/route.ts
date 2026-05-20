@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth0 } from '@/lib/auth0';
+import { NextResponse, type NextRequest } from 'next/server';
+import { getApiAuthUser } from '@/lib/apiAuth';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import type { Persona } from '@weir-here/shared';
@@ -35,16 +35,29 @@ function serializeUser(u: {
   };
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
-    const session = await auth0.getSession();
-    if (!session) {
+    const authUser = await getApiAuthUser(req);
+    if (!authUser) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     await connectDB();
 
-    const { sub, email, name, email_verified } = session.user;
+    const sub = authUser.sub;
+    const email = authUser.email;
+    const name = authUser.name?.trim() || email?.trim() || sub;
+    const email_verified = authUser.emailVerified;
+
+    if (!email) {
+      return NextResponse.json(
+        {
+          error:
+            'Your account email is not available on this token. Ensure openid/email scopes and a valid Bearer token (often the ID token for bootstrap).',
+        },
+        { status: 400 },
+      );
+    }
 
     let user = await User.findOne({ auth0Id: sub });
 
