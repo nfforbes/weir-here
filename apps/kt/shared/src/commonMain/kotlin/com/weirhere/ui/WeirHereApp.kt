@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.Image
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Card
@@ -31,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.Settings
 import com.weirhere.auth.PlatformLoginButton
@@ -41,9 +43,12 @@ import com.weirhere.model.ScreeningQuestionDto
 import com.weirhere.model.SalaryRangeDto
 import com.weirhere.network.WeirHereApi
 import com.weirhere.rbac.hasAdministrator
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 
-private enum class Tab { JOBS, MY, POST, PROFILE }
+private enum class Tab { JOBS, MY, ADMIN, PROFILE }
 
 private fun jobRouteId(job: JobJson): String? {
     val id = job.id?.trim().orEmpty()
@@ -70,6 +75,7 @@ fun WeirHereApp() {
     var personas by remember { mutableStateOf<List<String>>(emptyList()) }
     var emailVerified by remember { mutableStateOf(false) }
     var bootEmail by remember { mutableStateOf<String?>(null) }
+    var showSplash by remember { mutableStateOf(true) }
 
     var accessToken by remember { mutableStateOf<String?>(SessionStore.readSync()) }
 
@@ -89,6 +95,9 @@ fun WeirHereApp() {
                 personas = it.personas
                 emailVerified = it.emailVerified
                 bootEmail = it.email
+                if (hasAdministrator(it.personas) && tab == Tab.PROFILE) {
+                    tab = Tab.ADMIN
+                }
             }
             .onFailure {
                 message = "Bootstrap failed: ${it.message ?: it}"
@@ -117,10 +126,23 @@ fun WeirHereApp() {
 
     LaunchedEffect(Unit) {
         reloadPublic()
+        delay(2500)
+        showSplash = false
     }
 
     LaunchedEffect(accessToken, tab) {
         if (tab == Tab.MY) reloadMine()
+    }
+
+    if (showSplash) {
+        @OptIn(ExperimentalResourceApi::class)
+        Image(
+            painter = painterResource("splash_bg.png"),
+            contentDescription = "Splash background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        return
     }
 
     MaterialTheme {
@@ -146,9 +168,9 @@ fun WeirHereApp() {
                         icon = {},
                     )
                     BottomNavigationItem(
-                        selected = tab == Tab.POST,
-                        onClick = { tab = Tab.POST },
-                        label = { Text("Post") },
+                        selected = tab == Tab.ADMIN,
+                        onClick = { tab = Tab.ADMIN },
+                        label = { Text("Admin") },
                         enabled = hasAdministrator(personas),
                         icon = {},
                     )
@@ -188,11 +210,11 @@ fun WeirHereApp() {
                             api = api,
                         )
 
-                    Tab.POST ->
+                    Tab.ADMIN ->
                         if (hasAdministrator(personas)) {
-                            PostJobUi(api = api, accessToken = accessToken)
+                            AdminDashboardUi(api = api, accessToken = accessToken)
                         } else {
-                            Text("Only administrators can post jobs.")
+                            Text("Only administrators can access the admin dashboard.")
                         }
 
                     Tab.PROFILE ->
@@ -296,6 +318,60 @@ private fun MineUi(
                     Modifier.padding(top = 8.dp),
                     style = MaterialTheme.typography.body2,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
+    val bearer = accessToken?.trim().orEmpty()
+    if (bearer.isEmpty()) {
+        Text("Sign in from Profile before accessing the admin dashboard.")
+        return
+    }
+
+    var currentView by remember { mutableStateOf("MENU") }
+
+    if (currentView == "MENU") {
+        LazyColumn(Modifier.fillMaxSize()) {
+            item {
+                Text("Admin Dashboard", style = MaterialTheme.typography.h5, modifier = Modifier.padding(bottom = 16.dp))
+            }
+            val options = listOf(
+                "My Jobs" to "MY_JOBS",
+                "Providers" to "PROVIDERS",
+                "Clients" to "CLIENTS",
+                "Assignments" to "ASSIGNMENTS",
+                "Reports" to "REPORTS",
+                "Configuration" to "CONFIGURATION",
+                "Users" to "USERS",
+                "Settings" to "SETTINGS",
+                "Testimonials" to "TESTIMONIALS"
+            )
+            items(options) { (label, viewId) ->
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable { currentView = viewId }
+                ) {
+                    Text(label, Modifier.padding(16.dp), style = MaterialTheme.typography.subtitle1)
+                }
+            }
+        }
+    } else {
+        Column(Modifier.fillMaxSize()) {
+            TextButton(onClick = { currentView = "MENU" }, modifier = Modifier.padding(bottom = 8.dp)) {
+                Text("← Back to Menu")
+            }
+            when (currentView) {
+                "MY_JOBS" -> PostJobUi(api = api, accessToken = accessToken)
+                else -> {
+                    Text("$currentView Dashboard")
+                    Spacer(Modifier.height(8.dp))
+                    Text("This section is under construction.", color = MaterialTheme.colors.secondary)
+                }
             }
         }
     }

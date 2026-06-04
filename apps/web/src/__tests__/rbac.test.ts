@@ -87,8 +87,8 @@ describe('RBAC - filterMenuForUser', () => {
   it('shows admin menu to administrators', () => {
     const filtered = filterMenuForUser(ADMIN_MENU, ['administrator'], true);
     expect(filtered).toHaveLength(1);
-    expect(filtered[0].label).toBe('Configuration');
-    expect(filtered[0].children?.map((c) => c.label)).toEqual(['Users', 'Settings', 'Testimonials']);
+    expect(filtered[0].label).toBe('Admin Portal');
+    expect(filtered[0].children).toBeUndefined();
   });
 
   it('removes parent items with no visible children', () => {

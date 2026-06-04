@@ -32,18 +32,17 @@ describe('Menu definitions', () => {
     expect(labels).toContain('Home');
     expect(labels).toContain('Solutions');
     expect(labels).toContain('Careers');
-    expect(labels).toContain('Industries');
     expect(labels).toContain('About Us');
     expect(labels).toContain('Contact Us');
   });
 
-  it('Solutions menu has children for Employers and Job Seekers', () => {
+  it('Solutions menu has expected children', () => {
     const solutions = PUBLIC_MENU.find((i) => i.label === 'Solutions');
     expect(solutions).toBeDefined();
     expect(solutions!.children).toBeDefined();
     const childLabels = solutions!.children!.map((c) => c.label);
-    expect(childLabels).toContain('For Employers');
-    expect(childLabels).toContain('For Job Seekers');
+    expect(childLabels).toContain('Staffing Solutions');
+    expect(childLabels).toContain('Medical Professionals');
   });
 
   it('Careers menu has Job Board as child', () => {

@@ -26,6 +26,7 @@ import {
   Toolbar,
   Typography,
   Chip,
+  Grid,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -187,131 +188,149 @@ export default function AdminTestimonialsManager() {
   return (
     <Box>
       <Toolbar disableGutters sx={{ gap: 2, mb: 2, pl: 0 }}>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Add testimonial
-        </Button>
+        {!dialogOpen && (
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+            Add testimonial
+          </Button>
+        )}
         <Button variant="outlined" onClick={() => void load()}>
           Refresh
         </Button>
       </Toolbar>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Author</TableCell>
-              <TableCell>Quote preview</TableCell>
-              <TableCell>Order</TableCell>
-              <TableCell>Published</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.length === 0 ? (
+      {dialogOpen ? (
+        <Paper sx={{ p: 4 }}>
+          <Typography variant="h6" mb={3}>{editing ? 'Edit testimonial' : 'New testimonial'}</Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                label="Quote"
+                value={form.quote}
+                onChange={(e) => setForm((f) => ({ ...f, quote: e.target.value }))}
+                multiline
+                minRows={4}
+                required
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Author name"
+                value={form.authorName}
+                onChange={(e) => setForm((f) => ({ ...f, authorName: e.target.value }))}
+                required
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Author title or role (optional)"
+                value={form.authorTitle}
+                onChange={(e) => setForm((f) => ({ ...f, authorTitle: e.target.value }))}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Context / organization (optional)"
+                value={form.context}
+                onChange={(e) => setForm((f) => ({ ...f, context: e.target.value }))}
+                fullWidth
+                helperText="e.g. Acute care facility, Kingston region"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Avatar image URL (optional)"
+                value={form.avatarUrl}
+                onChange={(e) => setForm((f) => ({ ...f, avatarUrl: e.target.value }))}
+                fullWidth
+                helperText="https://… or a path under /public such as /photo.jpg"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Sort order"
+                type="number"
+                value={form.sortOrder}
+                onChange={(e) => setForm((f) => ({ ...f, sortOrder: Number(e.target.value) || 0 }))}
+                fullWidth
+                helperText="Lower numbers appear first on the public page."
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={form.published}
+                    onChange={(e) => setForm((f) => ({ ...f, published: e.target.checked }))}
+                  />
+                }
+                label="Published (visible on /testimonials)"
+              />
+            </Grid>
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
+              <Button onClick={closeDialog} disabled={saving}>
+                Cancel
+              </Button>
+              <Button onClick={() => void save()} variant="contained" disabled={saving}>
+                {saving ? <CircularProgress size={20} /> : 'Save'}
+              </Button>
+            </Grid>
+          </Grid>
+        </Paper>
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={5}>
-                  <Typography color="text.secondary" sx={{ py: 2 }}>
-                    No testimonials yet. Add one or run the seed script to import defaults.
-                  </Typography>
-                </TableCell>
+                <TableCell>Author</TableCell>
+                <TableCell>Quote preview</TableCell>
+                <TableCell>Order</TableCell>
+                <TableCell>Published</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
-            ) : (
-              rows.map((row) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>
-                    <Typography fontWeight={600}>{row.authorName}</Typography>
-                    {[row.authorTitle, row.context].filter(Boolean).join(' · ') || '—'}
-                  </TableCell>
-                  <TableCell sx={{ maxWidth: 360 }}>
-                    <Typography variant="body2" noWrap title={row.quote}>
-                      {row.quote}
+            </TableHead>
+            <TableBody>
+              {rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5}>
+                    <Typography color="text.secondary" sx={{ py: 2 }}>
+                      No testimonials yet. Add one or run the seed script to import defaults.
                     </Typography>
                   </TableCell>
-                  <TableCell>{row.sortOrder}</TableCell>
-                  <TableCell>
-                    {row.published ? <Chip size="small" label="Yes" color="success" /> : <Chip size="small" label="Draft" />}
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton size="small" aria-label="Edit" onClick={() => openEdit(row)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" aria-label="Delete" color="error" onClick={() => setDeleteId(row.id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="md">
-        <DialogTitle>{editing ? 'Edit testimonial' : 'New testimonial'}</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          <TextField
-            label="Quote"
-            value={form.quote}
-            onChange={(e) => setForm((f) => ({ ...f, quote: e.target.value }))}
-            multiline
-            minRows={4}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Author name"
-            value={form.authorName}
-            onChange={(e) => setForm((f) => ({ ...f, authorName: e.target.value }))}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Author title or role (optional)"
-            value={form.authorTitle}
-            onChange={(e) => setForm((f) => ({ ...f, authorTitle: e.target.value }))}
-            fullWidth
-          />
-          <TextField
-            label="Context / organization (optional)"
-            value={form.context}
-            onChange={(e) => setForm((f) => ({ ...f, context: e.target.value }))}
-            fullWidth
-            helperText="e.g. Acute care facility, Kingston region"
-          />
-          <TextField
-            label="Avatar image URL (optional)"
-            value={form.avatarUrl}
-            onChange={(e) => setForm((f) => ({ ...f, avatarUrl: e.target.value }))}
-            fullWidth
-            helperText="https://… or a path under /public such as /photo.jpg"
-          />
-          <TextField
-            label="Sort order"
-            type="number"
-            value={form.sortOrder}
-            onChange={(e) => setForm((f) => ({ ...f, sortOrder: Number(e.target.value) || 0 }))}
-            fullWidth
-            helperText="Lower numbers appear first on the public page."
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={form.published}
-                onChange={(e) => setForm((f) => ({ ...f, published: e.target.checked }))}
-              />
-            }
-            label="Published (visible on /testimonials)"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button onClick={() => void save()} variant="contained" disabled={saving}>
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+              ) : (
+                rows.map((row) => (
+                  <TableRow key={row.id} hover>
+                    <TableCell>
+                      <Typography fontWeight={600}>{row.authorName}</Typography>
+                      {[row.authorTitle, row.context].filter(Boolean).join(' · ') || '—'}
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 360 }}>
+                      <Typography variant="body2" noWrap title={row.quote}>
+                        {row.quote}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{row.sortOrder}</TableCell>
+                    <TableCell>
+                      {row.published ? <Chip size="small" label="Yes" color="success" /> : <Chip size="small" label="Draft" />}
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton size="small" aria-label="Edit" onClick={() => openEdit(row)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" aria-label="Delete" color="error" onClick={() => setDeleteId(row.id)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <Dialog open={!!deleteId} onClose={() => !saving && setDeleteId(null)}>
         <DialogTitle>Delete testimonial?</DialogTitle>

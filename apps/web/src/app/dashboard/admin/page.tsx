@@ -16,6 +16,7 @@ import { useAppSelector } from '@/store';
 import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 export default function AdminDashboardPage() {
   const { user, isLoading: authLoading } = useUser();
@@ -55,6 +56,17 @@ export default function AdminDashboardPage() {
         Manage users, testimonials, and system settings.
       </Typography>
       <Stack spacing={2}>
+        <Button
+          component={Link}
+          href="/dashboard/admin/portal"
+          variant="contained"
+          size="large"
+          startIcon={<AdminPanelSettingsIcon />}
+          fullWidth
+          sx={{ justifyContent: 'flex-start', py: 1.5, mb: 1 }}
+        >
+          Admin Portal (Providers, Clients, Billing &amp; Reports)
+        </Button>
         <Button
           component={Link}
           href="/dashboard/admin/users"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Box,
   TextField,
@@ -60,8 +60,12 @@ export type JobPostFormProps = {
 export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const { loading, error } = useAppSelector((state) => state.jobs);
   const isEdit = Boolean(existingJob?._id);
+
+  const isPortal = pathname?.startsWith('/dashboard/admin/portal');
+  const basePath = isPortal ? '/dashboard/admin/portal/my-jobs' : '/dashboard/my-jobs';
 
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
@@ -231,18 +235,18 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
       if (isEdit && existingJob?._id) {
         dispatch(updateJob({ id: existingJob._id, data: payload }));
         setSuccess(true);
-        setTimeout(() => router.push(`/dashboard/my-jobs/${existingJob._id}`), 1500);
+        setTimeout(() => router.push(`${basePath}/${existingJob._id}`), 1500);
       } else {
         dispatch(createJob(payload));
         setSuccess(true);
-        setTimeout(() => router.push('/dashboard/my-jobs'), 1500);
+        setTimeout(() => router.push(basePath), 1500);
       }
     },
     [
       validate, dispatch, title, location, employmentType, description,
       responsibilities, requirements, howToApply, salaryMin, salaryMax,
       currency, categories, tags, expiresAt, screeningQuestions, skills,
-      benefits, reviewerEmails, router, isEdit, existingJob?._id,
+      benefits, reviewerEmails, router, basePath, isEdit, existingJob?._id,
     ],
   );
 

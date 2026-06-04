@@ -48,33 +48,10 @@ export const AUTHENTICATED_MENU: IMenuItem[] = [
 
 export const ADMIN_MENU: IMenuItem[] = [
   {
-    label: 'Configuration',
-    path: '/dashboard/admin',
-    icon: 'Tune',
+    label: 'Admin Portal',
+    path: '/dashboard/admin/portal',
+    icon: 'AdminPanelSettings',
     requiresAuth: true,
     requiredPersonas: ['administrator'],
-    children: [
-      {
-        label: 'Users',
-        path: '/dashboard/admin/users',
-        icon: 'Group',
-        requiresAuth: true,
-        requiredPersonas: ['administrator'],
-      },
-      {
-        label: 'Settings',
-        path: '/dashboard/admin/settings',
-        icon: 'Settings',
-        requiresAuth: true,
-        requiredPersonas: ['administrator'],
-      },
-      {
-        label: 'Testimonials',
-        path: '/dashboard/admin/testimonials',
-        icon: 'FormatQuote',
-        requiresAuth: true,
-        requiredPersonas: ['administrator'],
-      },
-    ],
   },
 ];

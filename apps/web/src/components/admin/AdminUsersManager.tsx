@@ -27,6 +27,7 @@ import {
   Toolbar,
   Typography,
   Chip,
+  TablePagination,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -53,6 +54,10 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
   const [deleteRow, setDeleteRow] = useState<AdminUserRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [snack, setSnack] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -91,6 +96,16 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
         u.auth0Id.toLowerCase().includes(q),
     );
   }, [users, search]);
+
+  // Reset page to 0 if search query changes
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
+
+  const paginatedUsers = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filtered.slice(start, start + rowsPerPage);
+  }, [filtered, page, rowsPerPage]);
 
   const openEdit = (row: AdminUserRow) => {
     setEditRow(row);
@@ -194,7 +209,7 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((row) => (
+              paginatedUsers.map((row) => (
                 <TableRow key={row.id} hover>
                   <TableCell>{row.name}</TableCell>
                   <TableCell>{row.email}</TableCell>
@@ -225,6 +240,18 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          component="div"
+          count={filtered.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(_event, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+        />
       </TableContainer>
 
       <Dialog open={!!editRow} onClose={closeEdit} fullWidth maxWidth="xs">

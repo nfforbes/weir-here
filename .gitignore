@@ -18,3 +18,10 @@ coverage/
 # Generated at build time for Netlify stability
 apps/web/public/sitemap.xml
 apps/web/public/robots.txt
+
+# Mobile app Gradle cache
+apps/mobile/.gradle/
+apps/mobile/.idea/
+apps/mobile/androidApp/build/
+apps/mobile/shared/build/
+apps/mobile/.kotlin/
