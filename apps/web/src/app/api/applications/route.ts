@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
+import { getApiAuthUser } from '@/lib/apiAuth';
 import { connectDB } from '@/lib/mongodb';
 import {
   isSharePointUploadConfigured,
