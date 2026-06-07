@@ -81,3 +81,16 @@ data class JobUpsertPayload(
     val benefits: List<String> = emptyList(),
     val reviewerEmails: List<String> = emptyList(),
 )
+
+@Serializable
+data class ScreeningAnswerDto(
+    val questionId: String,
+    val answer: String
+)
+
+@Serializable
+data class ApplicationPayload(
+    val jobId: String,
+    val answers: List<ScreeningAnswerDto> = emptyList(),
+    val resumePath: String = ""
+)

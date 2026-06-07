@@ -11,7 +11,6 @@ import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.provider.WebAuthProvider
 import com.auth0.android.result.Credentials
-import com.weirhere.shared.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -62,25 +61,29 @@ private tailrec fun unwrap(c: android.content.Context): Activity? =
         else -> null
     }
 
+const val AUTH0_DOMAIN = "n4consulting.us.auth0.com"
+const val AUTH0_CLIENT_ID = "7gvIVgyZkkGlws8kMjhzS47mmoBnXaFb"
+val AUTH0_CUSTOM_API_AUDIENCE: String? = null
+const val REDIRECT_URI = "weirhere://callback"
+const val PREFS_NAME = "weirhere_auth"
+const val KEY_ACCESS_TOKEN = "access_token"
+const val KEY_ID_TOKEN = "id_token"
+const val KEY_REFRESH_TOKEN = "refresh_token"
+
 private suspend fun login(activity: Activity): String =
     suspendCancellableCoroutine { cont ->
-        val domain = BuildConfig.AUTH0_DOMAIN
-        val clientId = BuildConfig.AUTH0_CLIENT_ID
-        val audience = BuildConfig.AUTH0_AUDIENCE
-        if (domain.isBlank() || clientId.isBlank()) {
-            cont.resumeWithException(IllegalArgumentException("Set AUTH0_DOMAIN and AUTH0_CLIENT_ID in apps/kt/local.properties"))
-            return@suspendCancellableCoroutine
-        }
         val auth0 =
             Auth0(
-                domain,
-                clientId,
+                AUTH0_CLIENT_ID,
+                AUTH0_DOMAIN,
             )
 
         var req =
             WebAuthProvider.login(auth0)
-                .withScheme(SCHEME)
+                .withScheme("weirhere")
+                .withRedirectUri("weirhere://callback")
                 .withScope("openid profile email offline_access")
+        val audience = AUTH0_CUSTOM_API_AUDIENCE ?: ""
         if (audience.isNotBlank()) {
             req = req.withAudience(audience)
         }
@@ -93,15 +96,13 @@ private suspend fun login(activity: Activity): String =
                 }
 
                 override fun onSuccess(result: Credentials) {
-                    val at = result.accessToken
-                    if (at.isNullOrBlank()) {
-                        if (cont.isActive) cont.resumeWithException(IllegalStateException("No access token"))
+                    val token = result.idToken ?: result.accessToken
+                    if (token.isNullOrBlank()) {
+                        if (cont.isActive) cont.resumeWithException(IllegalStateException("No token"))
                     } else {
-                        if (cont.isActive) cont.resume(at)
+                        if (cont.isActive) cont.resume(token)
                     }
                 }
             },
         )
     }
-
-private const val SCHEME = "weirhere"

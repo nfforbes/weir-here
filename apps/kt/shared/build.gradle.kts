@@ -18,7 +18,7 @@ val localProps =
 fun quoted(s: String): String =
     '"' + s.replace("\\", "\\\\").replace("\"", "\\\"") + '"'
 
-val apiUrl = (localProps["weir_here.api.url"] as String?) ?: "http://10.0.2.2:3000"
+val apiUrl = (localProps["weir_here.api.url"] as String?) ?: "https://weirheresolutions.com"
 val auth0Domain = (localProps["weir_here.auth0.domain"] as String?) ?: ""
 val auth0ClientId = (localProps["weir_here.auth0.clientId"] as String?) ?: ""
 val auth0Audience = (localProps["weir_here.auth0.audience"] as String?) ?: ""

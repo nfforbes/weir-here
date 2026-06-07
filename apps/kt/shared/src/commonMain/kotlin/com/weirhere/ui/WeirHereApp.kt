@@ -10,9 +10,29 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.ui.unit.sp
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Card
@@ -32,7 +52,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.Settings
 import com.weirhere.auth.PlatformLoginButton
@@ -76,6 +98,7 @@ fun WeirHereApp() {
     var emailVerified by remember { mutableStateOf(false) }
     var bootEmail by remember { mutableStateOf<String?>(null) }
     var showSplash by remember { mutableStateOf(true) }
+    var publicJobsPage by remember { mutableStateOf(1) }
 
     var accessToken by remember { mutableStateOf<String?>(SessionStore.readSync()) }
 
@@ -91,15 +114,18 @@ fun WeirHereApp() {
             return@LaunchedEffect
         }
         runCatching { api.bootstrap("Bearer ${tok}") }
-            .onSuccess {
-                personas = it.personas
-                emailVerified = it.emailVerified
-                bootEmail = it.email
-                if (hasAdministrator(it.personas) && tab == Tab.PROFILE) {
-                    tab = Tab.ADMIN
+            .onSuccess { userBootstrap ->
+                if (userBootstrap != null) {
+                    personas = userBootstrap.personas
+                    emailVerified = userBootstrap.emailVerified
+                    bootEmail = userBootstrap.email
+                    if (hasAdministrator(userBootstrap.personas) && tab == Tab.PROFILE) {
+                        tab = Tab.ADMIN
+                    }
                 }
             }
             .onFailure {
+                if (it is kotlinx.coroutines.CancellationException) throw it
                 message = "Bootstrap failed: ${it.message ?: it}"
             }
     }
@@ -107,9 +133,12 @@ fun WeirHereApp() {
     fun reloadPublic() {
         scope.launch {
             loadingJobs = true
-            runCatching { api.listJobs(page = 1, limit = 50) }
+            runCatching { api.listJobs(page = publicJobsPage, limit = 10) }
                 .onSuccess { jobs = it.jobs }
-                .onFailure { message = it.message ?: it.toString() }
+                .onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    message = it.message ?: it.toString()
+                }
             loadingJobs = false
         }
     }
@@ -120,12 +149,18 @@ fun WeirHereApp() {
         scope.launch {
             runCatching { api.listMyJobs("Bearer ${tok}") }
                 .onSuccess { myJobs = it.jobs }
-                .onFailure { message = it.message ?: it.toString() }
+                .onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    message = it.message ?: it.toString()
+                }
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(publicJobsPage) {
         reloadPublic()
+    }
+
+    LaunchedEffect(Unit) {
         delay(2500)
         showSplash = false
     }
@@ -145,10 +180,30 @@ fun WeirHereApp() {
         return
     }
 
-    MaterialTheme {
+    val customColors = androidx.compose.material.lightColors(
+        primary = androidx.compose.ui.graphics.Color.Black, // Black background for menus
+        onPrimary = androidx.compose.ui.graphics.Color(0xFFCFAF5B) // Custom Gold text/icons
+    )
+    MaterialTheme(colors = customColors) {
         Scaffold(
             topBar = {
-                TopAppBar(title = { Text("Weir Here Jobs") })
+                TopAppBar(
+                    title = { 
+                        Text(
+                            "Weir Here", 
+                            modifier = Modifier.fillMaxWidth(), 
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        ) 
+                    },
+                    actions = {
+                        androidx.compose.material.IconButton(onClick = { tab = Tab.PROFILE }) {
+                            androidx.compose.material.Icon(
+                                imageVector = Icons.Filled.Person,
+                                contentDescription = "Login"
+                            )
+                        }
+                    }
+                )
             },
             bottomBar = {
                 BottomNavigation {
@@ -199,7 +254,31 @@ fun WeirHereApp() {
                 }
 
                 when (tab) {
-                    Tab.JOBS -> JobListUi(loadingJobs, jobs)
+                    Tab.JOBS -> JobListUi(
+                        loading = loadingJobs, 
+                        jobs = jobs,
+                        page = publicJobsPage,
+                        onPageChange = { publicJobsPage = it },
+                        accessToken = accessToken,
+                        onLoginRequest = { tab = Tab.PROFILE },
+                        onApplyRequest = { job ->
+                            val tok = accessToken?.trim().orEmpty()
+                            if (tok.isEmpty()) return@JobListUi
+                            scope.launch {
+                                runCatching { 
+                                    api.applyToJob(
+                                        tok, 
+                                        com.weirhere.model.ApplicationPayload(job.id ?: job.slug)
+                                    ) 
+                                }
+                                .onSuccess { message = "Application submitted successfully!" }
+                                .onFailure {
+                                    if (it is kotlinx.coroutines.CancellationException) throw it
+                                    message = "Failed to apply: ${it.message ?: it.toString()}"
+                                }
+                            }
+                        }
+                    )
 
                     Tab.MY ->
                         MineUi(
@@ -217,17 +296,20 @@ fun WeirHereApp() {
                             Text("Only administrators can access the admin dashboard.")
                         }
 
-                    Tab.PROFILE ->
-                        ProfileUi(
-                            personas = personas,
-                            email = bootEmail,
-                            emailVerified = emailVerified,
-                            onLogout = {
+                    Tab.PROFILE -> ProfileUi(
+                        personas = personas,
+                        email = bootEmail,
+                        emailVerified = emailVerified,
+                        onLogout = {
+                            val tok = accessToken?.trim().orEmpty()
+                            scope.launch {
                                 SessionStore.setAccess(null)
-                                personas = emptyList()
-                                bootEmail = null
-                            },
-                        )
+                                message = "Logged out"
+                                tab = Tab.JOBS
+                            }
+                        },
+                        onBack = { tab = Tab.JOBS }
+                    )
                 }
             }
         }
@@ -238,7 +320,25 @@ fun WeirHereApp() {
 private fun JobListUi(
     loading: Boolean,
     jobs: List<JobJson>,
+    page: Int,
+    onPageChange: (Int) -> Unit,
+    accessToken: String?,
+    onLoginRequest: () -> Unit,
+    onApplyRequest: (JobJson) -> Unit
 ) {
+    var selectedJobId by remember { mutableStateOf<String?>(null) }
+
+    val selectedJob = jobs.find { (it.id ?: it.slug) == selectedJobId }
+    if (selectedJobId != null && selectedJob != null) {
+        Column(Modifier.fillMaxSize()) {
+            TextButton(onClick = { selectedJobId = null }) {
+                Text("← Back to Jobs")
+            }
+            JobDetailsUi(selectedJob, accessToken, onLoginRequest, onApplyRequest)
+        }
+        return
+    }
+
     if (loading) {
         CircularProgressIndicator(Modifier.padding(24.dp))
     }
@@ -246,12 +346,48 @@ private fun JobListUi(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 16.dp),
     ) {
-        items(jobs, key = { "${it.slug}-${it.id}" }) {
-            Card(Modifier.padding(vertical = 4.dp)) {
+        itemsIndexed(jobs, key = { _, it -> "${it.slug}-${it.id}" }) { index, it ->
+            val jobId = it.id ?: it.slug
+            val isSelected = selectedJobId == jobId
+            val bgColor = if (isSelected) {
+                MaterialTheme.colors.primary.copy(alpha = 0.3f)
+            } else if (index % 2 == 0) {
+                MaterialTheme.colors.surface
+            } else {
+                androidx.compose.ui.graphics.Color(0xFFEEEEEE)
+            }
+
+            Card(
+                Modifier
+                    .padding(vertical = 4.dp)
+                    .clickable { selectedJobId = jobId },
+                backgroundColor = bgColor
+            ) {
                 Column(Modifier.padding(12.dp)) {
                     Text(it.title, style = MaterialTheme.typography.h6)
                     Text("${it.location} · ${it.employmentType}")
                     Text(it.description, maxLines = 3)
+                }
+            }
+        }
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = { onPageChange(page - 1) },
+                    enabled = page > 1
+                ) {
+                    Text("Previous")
+                }
+                Text("Page $page")
+                TextButton(
+                    onClick = { onPageChange(page + 1) },
+                    enabled = jobs.size == 10
+                ) {
+                    Text("Next")
                 }
             }
         }
@@ -292,13 +428,25 @@ private fun MineUi(
     }
 
     LazyColumn {
-        items(myJobs, key = { "${it.slug}-${it.id}" }) {
+        itemsIndexed(myJobs, key = { _, it -> "${it.slug}-${it.id}" }) { index, it ->
+            val jobId = it.id ?: it.slug
+            val targetId = editTarget?.id ?: editTarget?.slug
+            val isSelected = targetId != null && targetId == jobId
+            val bgColor = if (isSelected) {
+                MaterialTheme.colors.primary.copy(alpha = 0.3f)
+            } else if (index % 2 == 0) {
+                MaterialTheme.colors.surface
+            } else {
+                androidx.compose.ui.graphics.Color(0xFFEEEEEE)
+            }
+
             Card(
                 Modifier
                     .padding(vertical = 4.dp)
                     .clickable(enabled = admin) {
                         if (admin) editTarget = it
                     },
+                backgroundColor = bgColor
             ) {
                 Column(Modifier.padding(12.dp)) {
                     Text(it.title, style = MaterialTheme.typography.h6)
@@ -442,27 +590,147 @@ private fun ProfileUi(
     email: String?,
     emailVerified: Boolean,
     onLogout: () -> Unit,
+    onBack: () -> Unit,
 ) {
-    Column {
-        Text(
-            email?.let { "$it (${if (emailVerified) "verified" else "unverified"})" }
-                ?: "(not logged in)",
-        )
-        Spacer(Modifier.height(8.dp))
-        Text("Personas: ${personas.joinToString()}")
+    val isLoggedIn = email != null
 
-        Spacer(Modifier.height(16.dp))
+    Column(
+        Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            androidx.compose.material.Icon(
+                imageVector = Icons.Filled.ArrowBack,
+                contentDescription = "Back",
+                modifier = Modifier.size(28.dp).clickable { onBack() }
+            )
+            Text("Profile", style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
+            if (isLoggedIn) {
+                androidx.compose.material.Icon(
+                    imageVector = Icons.Filled.Edit,
+                    contentDescription = "Edit",
+                    modifier = Modifier.size(28.dp).clickable { /* no op */ }
+                )
+            } else {
+                Spacer(modifier = Modifier.size(28.dp))
+            }
+        }
+        Spacer(Modifier.height(24.dp))
 
-        PlatformLoginButton(
-            label = "Login with Auth0",
-            onAccessToken = { SessionStore.setAccess(it) },
-            onError = { err -> println("login err: $err") },
-        )
+        // Avatar
+        Box(contentAlignment = androidx.compose.ui.Alignment.BottomEnd) {
+            androidx.compose.material.Icon(
+                imageVector = Icons.Filled.AccountCircle,
+                contentDescription = "Avatar",
+                modifier = Modifier.size(120.dp),
+                tint = if (isLoggedIn) Color.Black else Color.LightGray
+            )
+            if (isLoggedIn) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(4.dp)
+                        .background(Color.White, shape = CircleShape)
+                        .border(1.dp, Color.LightGray, shape = CircleShape),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    androidx.compose.material.Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Edit Avatar",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Black
+                    )
+                }
+            }
+        }
+        
+        Spacer(Modifier.height(24.dp))
 
-        Spacer(Modifier.height(16.dp))
+        // Tabs (General / Location)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .background(Color(0xFFF0F0F0), shape = RoundedCornerShape(8.dp))
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(Color(0xFF2D1E5A), shape = RoundedCornerShape(8.dp)),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                Text("General", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                Text("Location", color = Color.Gray, fontWeight = FontWeight.Bold)
+            }
+        }
 
-        TextButton(onClick = onLogout) {
-            Text("Logout")
+        Spacer(Modifier.height(24.dp))
+
+        // Fields
+        ProfileField("Name", if (isLoggedIn) "John Doe" else "", isLoggedIn)
+        ProfileField("Email", if (isLoggedIn) email ?: "" else "", isLoggedIn, trailingIcon = Icons.Filled.Email)
+        ProfileField("Roll Number", if (isLoggedIn) "202XXXXXX" else "", isLoggedIn)
+        ProfileField("Date of Birth", if (isLoggedIn) "23/05/19XX" else "", isLoggedIn, trailingIcon = Icons.Filled.ArrowDropDown)
+        ProfileField("Aadhaar Number", if (isLoggedIn) "3802 0999 XXXX" else "", isLoggedIn)
+
+        Spacer(Modifier.height(24.dp))
+
+        if (isLoggedIn) {
+            androidx.compose.material.Button(
+                onClick = { /* Save changes no-op */ },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                colors = androidx.compose.material.ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2D1E5A)),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Save changes", color = Color.White, fontSize = 16.sp)
+            }
+            Spacer(Modifier.height(16.dp))
+            TextButton(onClick = onLogout) {
+                Text("Logout")
+            }
+        } else {
+            Text("Logged out", color = Color.Gray, style = MaterialTheme.typography.subtitle1)
+            Spacer(Modifier.height(16.dp))
+            PlatformLoginButton(
+                label = "Login with Auth0",
+                onAccessToken = { SessionStore.setAccess(it) },
+                onError = { err -> println("login err: $err") },
+            )
+        }
+    }
+}
+
+@Composable
+fun ProfileField(label: String, value: String, enabled: Boolean, trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Text(label, style = MaterialTheme.typography.subtitle2, fontWeight = FontWeight.Bold, color = if (enabled) Color.Black else Color.Gray)
+        Spacer(Modifier.height(4.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(if (enabled) Color(0xFFF5F5F5) else Color(0xFFE0E0E0), shape = RoundedCornerShape(4.dp))
+                .border(1.dp, Color(0xFFE0E0E0), shape = RoundedCornerShape(4.dp))
+                .padding(12.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(value.ifEmpty { if (enabled) "XXXXXXXXXXXXXX" else "" }, color = if (enabled) Color.Gray else Color.LightGray)
+            if (trailingIcon != null) {
+                androidx.compose.material.Icon(imageVector = trailingIcon, contentDescription = null, tint = Color.Gray)
+            }
         }
     }
 }
@@ -601,5 +869,43 @@ private fun JobUpsertForm(
         ) {
             Text(if (working) "…" else submitLabel)
         }
+    }
+}
+
+@Composable
+private fun JobDetailsUi(
+    job: JobJson,
+    accessToken: String?,
+    onLoginRequest: () -> Unit,
+    onApplyRequest: (JobJson) -> Unit
+) {
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
+        Text(job.title, style = MaterialTheme.typography.h4)
+        Text("${job.location} · ${job.employmentType}", style = MaterialTheme.typography.subtitle1)
+        Spacer(Modifier.height(16.dp))
+        Text("Description", style = MaterialTheme.typography.h6)
+        Text(job.description)
+        Spacer(Modifier.height(8.dp))
+        Text("Responsibilities", style = MaterialTheme.typography.h6)
+        Text(job.responsibilities)
+        Spacer(Modifier.height(8.dp))
+        Text("Requirements", style = MaterialTheme.typography.h6)
+        Text(job.requirements)
+        Spacer(Modifier.height(8.dp))
+        Text("How to Apply", style = MaterialTheme.typography.h6)
+        Text(job.howToApply)
+        Spacer(Modifier.height(16.dp))
+
+        if (accessToken.isNullOrBlank()) {
+            androidx.compose.material.Button(onClick = onLoginRequest) {
+                Text("Log in to Apply")
+            }
+        } else {
+            androidx.compose.material.Button(onClick = { onApplyRequest(job) }) {
+                Text("Apply Now")
+            }
+        }
+
+        Spacer(Modifier.height(32.dp))
     }
 }

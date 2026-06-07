@@ -45,7 +45,7 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
             }
         }
 
-    suspend fun bootstrap(bearerAccessToken: String): UserBootstrap {
+    suspend fun bootstrap(bearerAccessToken: String): UserBootstrap? {
         val res: BootstrapResponse =
             client.post("api/users/bootstrap") {
                 header(HttpHeaders.Authorization, bearer(bearerAccessToken))
@@ -100,11 +100,21 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
             header(HttpHeaders.Authorization, bearer(accessToken))
         }.body()
 
+    suspend fun applyToJob(
+        accessToken: String,
+        body: com.weirhere.model.ApplicationPayload,
+    ) {
+        client.post("api/applications") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+            setBody(body)
+        }
+    }
+
     private fun bearer(token: String) = if (token.startsWith("Bearer ")) token else "Bearer $token"
 }
 
 @kotlinx.serialization.Serializable
-private data class BootstrapResponse(val user: UserBootstrap)
+private data class BootstrapResponse(val user: UserBootstrap? = null)
 
 @kotlinx.serialization.Serializable
-private data class SimpleMessageDto(val message: String)
+data class SimpleMessageDto(val message: String)

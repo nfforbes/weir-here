@@ -73,8 +73,8 @@ function buildJobApplicationEmailHtml(params: {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
-    if (!session) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const sessionUser = await getApiAuthUser(request);
+    if (!sessionUser) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const jobId = request.nextUrl.searchParams.get('jobId');
     if (!jobId) return NextResponse.json({ error: 'jobId query param is required' }, { status: 400 });
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       .lean<{ postedBy: string; reviewerEmails?: string[] | null } | null>();
     if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
 
-    const allowed = await canAccessJobApplications(session.user, job);
+    const allowed = await canAccessJobApplications(sessionUser, job);
     if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const applications = await Application.find({ jobId }).sort({ createdAt: -1 }).lean();
@@ -98,9 +98,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
-    if (!session) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    if (!session.user.email_verified) return NextResponse.json({ error: 'Email not verified' }, { status: 403 });
+    const sessionUser = await getApiAuthUser(request);
+    if (!sessionUser) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!sessionUser.emailVerified) return NextResponse.json({ error: 'Email not verified' }, { status: 403 });
 
     await connectDB();
 
@@ -154,16 +154,16 @@ export async function POST(request: NextRequest) {
     const job = await Job.findById(jobId);
     if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
 
-    const existing = await Application.findOne({ jobId, applicantId: session.user.sub });
+    const existing = await Application.findOne({ jobId, applicantId: sessionUser.sub });
     if (existing) return NextResponse.json({ error: 'You have already applied to this job' }, { status: 409 });
 
     const answersList = (Array.isArray(answers) ? answers : []) as ScreeningAnswerDoc[];
 
     const applicantName =
-      session.user.name?.trim() ||
-      session.user.email?.trim() ||
+      sessionUser.name?.trim() ||
+      sessionUser.email?.trim() ||
       'Applicant';
-    const applicantEmailRequired = session.user.email?.trim();
+    const applicantEmailRequired = sessionUser.email?.trim();
     if (!applicantEmailRequired) {
       return NextResponse.json({ error: 'Your account has no email address' }, { status: 400 });
     }
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
 
     const application = await Application.create({
       jobId,
-      applicantId: session.user.sub,
+      applicantId: sessionUser.sub,
       applicantName,
       applicantEmail: applicantEmailRequired,
       answers: answersList,
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
           jobPublicUrl,
           applicantName,
           applicantEmail: applicantEmailRequired,
-          applicantAuth0Sub: session.user.sub,
+          applicantAuth0Sub: sessionUser.sub,
           resumeUrl: resumePath || '',
           resumeStoredInSharePoint: Boolean(resumePath),
           applicationId: String(application._id),

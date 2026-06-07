@@ -5,7 +5,7 @@ package com.weirhere.env
  * Override at build/run time via environment or Xcode scheme vars if supported.
  */
 actual object Env {
-    actual fun apiBaseUrl(): String = "http://127.0.0.1:3000"
+    actual fun apiBaseUrl(): String = "https://weirheresolutions.com"
 
     actual fun auth0Domain(): String = ""
     actual fun auth0ClientId(): String = ""
