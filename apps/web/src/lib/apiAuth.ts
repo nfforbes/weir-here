@@ -15,13 +15,20 @@ function getIssuer(): string | null {
   return domain ? `https://${domain}/` : null;
 }
 
+// Hard-coded mobile client ID as a safety fallback so JWT validation works
+// even if the Vercel env var is temporarily missing or stale.
+const MOBILE_CLIENT_ID_FALLBACK = '7gvIVgyZkkGlws8kMjhzS47mmoBnXaFb';
+
 function bearerAudiences(): string[] {
   const a = [
     process.env.AUTH0_AUDIENCE,
     process.env.AUTH0_MOBILE_CLIENT_ID,
+    MOBILE_CLIENT_ID_FALLBACK,
     process.env.AUTH0_CLIENT_ID,
   ].map((x) => (typeof x === 'string' ? x.trim() : ''));
-  return [...new Set(a.filter(Boolean))];
+  const audiences = [...new Set(a.filter(Boolean))];
+  console.log('[apiAuth] bearerAudiences:', audiences);
+  return audiences;
 }
 
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
@@ -45,21 +52,27 @@ async function verifyAuth0Jwt(authHeader: string | null): Promise<JWTPayload | n
   if (!token) return null;
   const issuer = getIssuer();
   const JWKS = getJwks();
+  console.log('[apiAuth] issuer:', issuer, 'JWKS ready:', !!JWKS);
   if (!issuer || !JWKS) return null;
 
   const audiences = bearerAudiences();
   if (audiences.length === 0) return null;
 
+  // Log first 20 chars of token so we can verify it's being sent
+  console.log('[apiAuth] verifying token prefix:', token.substring(0, 20) + '...');
+
   let lastErr: unknown;
   for (const audience of audiences) {
     try {
       const { payload } = await jwtVerify(token, JWKS, { issuer, audience });
+      console.log('[apiAuth] JWT verified with audience:', audience);
       return payload;
     } catch (e) {
+      console.warn('[apiAuth] audience failed:', audience, (e as Error)?.message);
       lastErr = e;
     }
   }
-  console.warn('[apiAuth] JWT verify failed for all audiences:', lastErr);
+  console.warn('[apiAuth] JWT verify failed for all audiences. Last error:', lastErr);
   return null;
 }
 
