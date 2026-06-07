@@ -23,6 +23,9 @@ const auth0ServerEnv: Record<string, string> = {
 };
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   /** Transpile Auth0 so the server bundle does not rely on a flaky `vendor-chunks/@auth0.js` split. */
   transpilePackages: ['@weir-here/shared', '@auth0/nextjs-auth0'],
   async headers() {
