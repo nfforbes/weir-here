@@ -59,9 +59,7 @@ async function verifyAuth0Jwt(authHeader: string | null): Promise<JWTPayload | n
       lastErr = e;
     }
   }
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn('[apiAuth] JWT verify failed for all audiences:', lastErr);
-  }
+  console.warn('[apiAuth] JWT verify failed for all audiences:', lastErr);
   return null;
 }
 
@@ -146,6 +144,13 @@ export async function getApiAuthUser(request: Request): Promise<ApiAuthUser | nu
 
   const token = authHeader.slice('bearer '.length).trim();
   const payload = await verifyAuth0Jwt(authHeader);
-  if (!payload) return null;
-  return jwtPayloadToUser(payload, token);
+  if (!payload) {
+    (request as any).authError = 'JWT verify failed';
+    return null;
+  }
+  const user = await jwtPayloadToUser(payload, token);
+  if (!user) {
+    (request as any).authError = 'jwtPayloadToUser failed';
+  }
+  return user;
 }

@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
   try {
     const authUser = await getApiAuthUser(req);
     if (!authUser) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      const reason = (req as any).authError || 'Unknown validation failure';
+      return NextResponse.json({ error: `Not authenticated: ${reason}` }, { status: 401 });
     }
 
     await connectDB();
