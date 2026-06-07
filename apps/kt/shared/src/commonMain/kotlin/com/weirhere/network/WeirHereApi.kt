@@ -40,6 +40,7 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
                     },
                 )
             }
+            expectSuccess = true
             defaultRequest {
                 url(apiRoot)
                 header(HttpHeaders.Accept, ContentType.Application.Json.toString())
