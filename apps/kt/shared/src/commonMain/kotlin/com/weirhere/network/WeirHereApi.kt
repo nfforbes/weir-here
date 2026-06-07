@@ -20,6 +20,7 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -42,6 +43,7 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
             defaultRequest {
                 url(apiRoot)
                 header(HttpHeaders.Accept, ContentType.Application.Json.toString())
+                contentType(ContentType.Application.Json)
             }
         }
 
@@ -79,6 +81,7 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
     ): JobSingleResponse =
         client.post("api/jobs") {
             header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
             setBody(body)
         }.body()
 
@@ -89,6 +92,7 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
     ): JobSingleResponse =
         client.put("api/jobs/$id") {
             header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
             setBody(body)
         }.body()
 
@@ -106,6 +110,7 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
     ) {
         client.post("api/applications") {
             header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
             setBody(body)
         }
     }
