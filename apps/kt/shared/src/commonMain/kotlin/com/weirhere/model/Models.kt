@@ -116,3 +116,39 @@ data class AdminUsersResponse(
 data class UpdatePersonasPayload(
     val personas: List<String>,
 )
+
+@Serializable
+data class ApplicationDto(
+    @SerialName("_id") val id: String? = null,
+    val jobId: String = "",
+    val applicantId: String = "",
+    val applicantName: String = "",
+    val applicantEmail: String = "",
+    val answers: List<ScreeningAnswerDto> = emptyList(),
+    val resumePath: String = "",
+    val status: String = "submitted",
+    val createdAt: String = "",
+    val updatedAt: String = "",
+)
+
+@Serializable
+data class ApplicationsResponse(
+    val applications: List<ApplicationDto> = emptyList(),
+)
+
+@Serializable
+data class ReviewDto(
+    @SerialName("_id") val id: String? = null,
+    val applicationId: String = "",
+    val reviewerId: String = "",
+    val rating: Int = 0,
+    val eliminated: Boolean = false,
+    val notes: String = "",
+    val createdAt: String = "",
+    val updatedAt: String = "",
+)
+
+@Serializable
+data class ReviewsResponse(
+    val reviews: List<ReviewDto> = emptyList(),
+)

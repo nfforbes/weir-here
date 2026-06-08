@@ -15,6 +15,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -23,6 +24,15 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+
+@kotlinx.serialization.Serializable
+private data class BootstrapResponse(val user: UserBootstrap? = null)
+
+@kotlinx.serialization.Serializable
+private data class SingleUserResponse(val user: com.weirhere.model.AdminUserDto)
+
+@kotlinx.serialization.Serializable
+data class SimpleMessageDto(val message: String)
 
 class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine()) {
     private val apiRoot = Env.apiBaseUrl().trimEnd('/') + '/'
@@ -67,9 +77,14 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
             if (!q.isNullOrBlank()) parameter("q", q.trim())
         }.body()
 
-    suspend fun listMyJobs(accessToken: String): JobListResponse =
+    suspend fun listJobs(
+        accessToken: String,
+        page: Int = 1,
+        limit: Int = 10
+    ): JobListResponse =
         client.get("api/jobs") {
-            parameter("mine", "true")
+            parameter("page", page)
+            parameter("limit", limit)
             header(HttpHeaders.Authorization, bearer(accessToken))
         }.body()
 
@@ -140,14 +155,23 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
         }
     }
 
+    suspend fun listApplications(
+        accessToken: String,
+        jobId: String
+    ): com.weirhere.model.ApplicationsResponse =
+        client.get("api/applications") {
+            parameter("jobId", jobId)
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun listReviews(
+        accessToken: String,
+        applicationId: String
+    ): com.weirhere.model.ReviewsResponse =
+        client.get("api/reviews") {
+            parameter("applicationId", applicationId)
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
     private fun bearer(token: String) = if (token.startsWith("Bearer ")) token else "Bearer $token"
 }
-
-@kotlinx.serialization.Serializable
-private data class BootstrapResponse(val user: UserBootstrap? = null)
-
-@kotlinx.serialization.Serializable
-private data class SingleUserResponse(val user: com.weirhere.model.AdminUserDto)
-
-@kotlinx.serialization.Serializable
-data class SimpleMessageDto(val message: String)

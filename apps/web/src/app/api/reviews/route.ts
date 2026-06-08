@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth0 } from '@/lib/auth0';
+import { getApiAuthUser } from '@/lib/apiAuth';
 import { connectDB } from '@/lib/mongodb';
 import Review from '@/models/Review';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
-    if (!session) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const sessionUser = await getApiAuthUser(request);
+    if (!sessionUser) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const applicationId = request.nextUrl.searchParams.get('applicationId');
     if (!applicationId) return NextResponse.json({ error: 'applicationId query param is required' }, { status: 400 });
@@ -22,16 +22,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
-    if (!session) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const sessionUser = await getApiAuthUser(request);
+    if (!sessionUser) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     await connectDB();
     const { applicationId, rating, eliminated, notes } = await request.json();
     if (!applicationId) return NextResponse.json({ error: 'applicationId is required' }, { status: 400 });
 
     const review = await Review.findOneAndUpdate(
-      { applicationId, reviewerId: session.user.sub },
-      { applicationId, reviewerId: session.user.sub, rating: rating ?? 0, eliminated: eliminated ?? false, notes: notes ?? '' },
+      { applicationId, reviewerId: sessionUser.sub },
+      { applicationId, reviewerId: sessionUser.sub, rating: rating ?? 0, eliminated: eliminated ?? false, notes: notes ?? '' },
       { upsert: true, new: true }
     );
 

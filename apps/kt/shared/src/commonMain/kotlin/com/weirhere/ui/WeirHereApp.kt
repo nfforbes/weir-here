@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.Settings
 import com.weirhere.auth.PlatformLoginButton
 import com.weirhere.data.SessionStore
+import com.weirhere.model.AdminUserDto
 import com.weirhere.model.JobJson
 import com.weirhere.model.JobUpsertPayload
 import com.weirhere.model.ScreeningQuestionDto
@@ -487,7 +487,7 @@ private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
                 Text("Admin Dashboard", style = MaterialTheme.typography.h5, modifier = Modifier.padding(bottom = 16.dp))
             }
             val options = listOf(
-                "My Jobs" to "MY_JOBS",
+                "Jobs" to "JOBS",
                 "Providers" to "PROVIDERS",
                 "Clients" to "CLIENTS",
                 "Assignments" to "ASSIGNMENTS",
@@ -514,7 +514,8 @@ private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
                 Text("← Back to Menu")
             }
             when (currentView) {
-                "MY_JOBS" -> PostJobUi(api = api, accessToken = accessToken)
+                "JOBS" -> AdminJobsUi(api = api, accessToken = accessToken)
+                "POST_JOB" -> PostJobUi(api = api, accessToken = accessToken)
                 "USERS"   -> AdminUsersUi(api = api, accessToken = accessToken)
                 else -> {
                     Text("$currentView Dashboard")
@@ -1147,6 +1148,226 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
                                 onClick = { deleteTarget = user }
                             ) {
                                 Text("Del", color = MaterialTheme.colors.error)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AdminJobsUi(api: WeirHereApi, accessToken: String?) {
+    val scope = rememberCoroutineScope()
+    val tok = accessToken?.trim().orEmpty()
+
+    var jobs by remember { mutableStateOf<List<JobJson>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var page by remember { mutableStateOf(1) }
+    var total by remember { mutableStateOf(0) }
+    var selectedJob by remember { mutableStateOf<JobJson?>(null) }
+
+    fun reload(pageNum: Int) {
+        scope.launch {
+            loading = true
+            error = null
+            runCatching { api.listJobs(tok, page = pageNum, limit = 10) }
+                .onSuccess { 
+                    jobs = it.jobs
+                    total = it.total
+                    page = it.page
+                }
+                .onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    error = it.message ?: it.toString()
+                }
+            loading = false
+        }
+    }
+
+    LaunchedEffect(tok) { reload(1) }
+
+    if (selectedJob != null) {
+        Column(Modifier.fillMaxSize()) {
+            TextButton(onClick = { selectedJob = null }, modifier = Modifier.padding(bottom = 8.dp)) {
+                Text("← Back to Jobs")
+            }
+            AdminJobDetailUi(api = api, accessToken = tok, job = selectedJob!!)
+        }
+        return
+    }
+
+    if (loading) {
+        CircularProgressIndicator(Modifier.padding(24.dp))
+        return
+    }
+
+    error?.let {
+        Text("Error: $it", color = MaterialTheme.colors.error)
+        TextButton(onClick = { reload(page) }) { Text("Retry") }
+        return
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Text("All Jobs", style = MaterialTheme.typography.h6)
+            TextButton(onClick = { reload(page) }) { Text("Refresh") }
+        }
+
+        if (jobs.isEmpty()) {
+            Text("No jobs found.")
+        } else {
+            LazyColumn(Modifier.weight(1f)) {
+                items(jobs, key = { it.id.orEmpty() }) { job ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { selectedJob = job },
+                        elevation = 2.dp
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(job.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.subtitle1)
+                            Text("${job.location} • ${job.employmentType}", style = MaterialTheme.typography.body2, color = Color.Gray)
+                        }
+                    }
+                }
+            }
+
+            // Pagination Controls
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                androidx.compose.material.Button(
+                    onClick = { reload(page - 1) },
+                    enabled = page > 1 && !loading
+                ) { Text("Previous") }
+                
+                Text("Page $page")
+                
+                val hasMore = (page * 10) < total
+                androidx.compose.material.Button(
+                    onClick = { reload(page + 1) },
+                    enabled = hasMore && !loading
+                ) { Text("Next") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AdminJobDetailUi(api: WeirHereApi, accessToken: String, job: JobJson) {
+    val scope = rememberCoroutineScope()
+    var applications by remember { mutableStateOf<List<com.weirhere.model.ApplicationDto>>(emptyList()) }
+    var reviewsByApp by remember { mutableStateOf<Map<String, List<com.weirhere.model.ReviewDto>>>(emptyMap()) }
+    var loadingApps by remember { mutableStateOf(true) }
+    var expandedAppId by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(job.id) {
+        loadingApps = true
+        error = null
+        job.id?.let { jid ->
+            runCatching { api.listApplications(accessToken, jid) }
+                .onSuccess { applications = it.applications }
+                .onFailure {
+                    if (it !is kotlinx.coroutines.CancellationException) {
+                        error = it.message ?: it.toString()
+                    }
+                }
+        }
+        loadingApps = false
+    }
+
+    LaunchedEffect(expandedAppId) {
+        val appId = expandedAppId
+        if (appId != null && !reviewsByApp.containsKey(appId)) {
+            runCatching { api.listReviews(accessToken, appId) }
+                .onSuccess { resp ->
+                    reviewsByApp = reviewsByApp + (appId to resp.reviews)
+                }
+        }
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), elevation = 2.dp) {
+            Column(Modifier.padding(16.dp)) {
+                Text(job.title, style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
+                Text("${job.location} • ${job.employmentType}", color = Color.Gray)
+                Spacer(Modifier.height(8.dp))
+                Text("Total Applicants: ${applications.size}")
+            }
+        }
+
+        if (loadingApps) {
+            CircularProgressIndicator(Modifier.padding(16.dp))
+        } else if (error != null) {
+            Text("Error loading applications: $error", color = MaterialTheme.colors.error, modifier = Modifier.padding(16.dp))
+        } else if (applications.isEmpty()) {
+            Text("No applications yet for this job.", modifier = Modifier.padding(16.dp))
+        } else {
+            LazyColumn(Modifier.fillMaxSize()) {
+                items(applications, key = { it.id.orEmpty() }) { app ->
+                    val isExpanded = expandedAppId == app.id
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { 
+                            expandedAppId = if (isExpanded) null else app.id 
+                        },
+                        elevation = 1.dp
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                Column {
+                                    Text(app.applicantName, fontWeight = FontWeight.Bold)
+                                    Text(app.applicantEmail, style = MaterialTheme.typography.body2, color = Color.Gray)
+                                }
+                                Box(
+                                    modifier = Modifier.background(androidx.compose.ui.graphics.Color(0xFFE3F2FD), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(app.status, color = androidx.compose.ui.graphics.Color(0xFF1565C0), style = MaterialTheme.typography.caption)
+                                }
+                            }
+                            
+                            if (isExpanded) {
+                                Spacer(Modifier.height(16.dp))
+                                Text("Screening Answers", fontWeight = FontWeight.SemiBold)
+                                if (app.answers.isEmpty()) {
+                                    Text("No screening answers.", style = MaterialTheme.typography.body2, color = Color.Gray)
+                                } else {
+                                    app.answers.forEach { ans ->
+                                        val qText = job.screeningQuestions.find { it.id == ans.questionId }?.question ?: ans.questionId
+                                        Text("Q: $qText", style = MaterialTheme.typography.caption, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 4.dp))
+                                        Text("A: ${ans.answer}", style = MaterialTheme.typography.body2)
+                                    }
+                                }
+
+                                Spacer(Modifier.height(16.dp))
+                                Text("Reviews", fontWeight = FontWeight.SemiBold)
+                                val reviews = reviewsByApp[app.id.orEmpty()]
+                                if (reviews == null) {
+                                    CircularProgressIndicator(Modifier.size(20.dp).padding(top = 8.dp))
+                                } else if (reviews.isEmpty()) {
+                                    Text("No reviews yet.", style = MaterialTheme.typography.body2, color = Color.Gray)
+                                } else {
+                                    reviews.forEach { rev ->
+                                        Column(Modifier.padding(top = 4.dp).background(Color(0xFFFAFAFA)).padding(8.dp).fillMaxWidth()) {
+                                            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                                Text("Rating: ${rev.rating}/10", style = MaterialTheme.typography.body2, fontWeight = FontWeight.Medium)
+                                                if (rev.eliminated) {
+                                                    Text("Eliminated", style = MaterialTheme.typography.body2, color = MaterialTheme.colors.error)
+                                                }
+                                            }
+                                            if (rev.notes.isNotBlank()) {
+                                                Text(rev.notes, style = MaterialTheme.typography.caption)
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
