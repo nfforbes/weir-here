@@ -515,6 +515,7 @@ private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
             }
             when (currentView) {
                 "MY_JOBS" -> PostJobUi(api = api, accessToken = accessToken)
+                "USERS"   -> AdminUsersUi(api = api, accessToken = accessToken)
                 else -> {
                     Text("$currentView Dashboard")
                     Spacer(Modifier.height(8.dp))
@@ -907,5 +908,250 @@ private fun JobDetailsUi(
         }
 
         Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
+    val scope = rememberCoroutineScope()
+    val tok = accessToken?.trim().orEmpty()
+
+    var users by remember { mutableStateOf<List<com.weirhere.model.AdminUserDto>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var search by remember { mutableStateOf("") }
+
+    // Edit dialog state
+    var editTarget by remember { mutableStateOf<com.weirhere.model.AdminUserDto?>(null) }
+    var editIsAdmin by remember { mutableStateOf(false) }
+    var editIsUser by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+
+    // Delete dialog state
+    var deleteTarget by remember { mutableStateOf<com.weirhere.model.AdminUserDto?>(null) }
+
+    fun reload() {
+        scope.launch {
+            loading = true
+            error = null
+            runCatching { api.listAdminUsers(tok) }
+                .onSuccess { users = it.users }
+                .onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    error = it.message ?: it.toString()
+                }
+            loading = false
+        }
+    }
+
+    LaunchedEffect(tok) { reload() }
+
+    if (loading) {
+        CircularProgressIndicator(Modifier.padding(24.dp))
+        return
+    }
+
+    error?.let {
+        Text("Error: $it", color = MaterialTheme.colors.error)
+        TextButton(onClick = { reload() }) { Text("Retry") }
+        return
+    }
+
+    val filtered = remember(users, search) {
+        if (search.isBlank()) users
+        else {
+            val q = search.trim().lowercase()
+            users.filter {
+                it.email.lowercase().contains(q) ||
+                it.name.lowercase().contains(q)
+            }
+        }
+    }
+
+    // Edit dialog
+    editTarget?.let { target ->
+        androidx.compose.material.AlertDialog(
+            onDismissRequest = { if (!saving) editTarget = null },
+            title = { Text("Edit Roles") },
+            text = {
+                Column {
+                    Text(target.name, fontWeight = FontWeight.Bold)
+                    Text(target.email, style = MaterialTheme.typography.body2)
+                    Spacer(Modifier.height(12.dp))
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        androidx.compose.material.Checkbox(
+                            checked = editIsUser,
+                            onCheckedChange = { editIsUser = it },
+                            enabled = !saving
+                        )
+                        Text("User")
+                    }
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        androidx.compose.material.Checkbox(
+                            checked = editIsAdmin,
+                            onCheckedChange = { editIsAdmin = it },
+                            enabled = !saving
+                        )
+                        Text("Administrator")
+                    }
+                }
+            },
+            confirmButton = {
+                androidx.compose.material.Button(
+                    onClick = {
+                        val personas = buildList<String> {
+                            if (editIsUser) add("user")
+                            if (editIsAdmin) add("administrator")
+                        }
+                        if (personas.isEmpty()) { error = "Select at least one role."; return@Button }
+                        scope.launch {
+                            saving = true
+                            runCatching { api.updateUserPersonas(tok, target.id, personas) }
+                                .onSuccess { editTarget = null; reload() }
+                                .onFailure {
+                                    if (it is kotlinx.coroutines.CancellationException) throw it
+                                    error = it.message ?: it.toString()
+                                }
+                            saving = false
+                        }
+                    },
+                    enabled = !saving
+                ) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { if (!saving) editTarget = null }) { Text("Cancel") }
+            }
+        )
+    }
+
+    // Delete dialog
+    deleteTarget?.let { target ->
+        androidx.compose.material.AlertDialog(
+            onDismissRequest = { if (!saving) deleteTarget = null },
+            title = { Text("Remove user?") },
+            text = { Text("Delete ${target.name} (${target.email}) from the app database?") },
+            confirmButton = {
+                androidx.compose.material.Button(
+                    onClick = {
+                        scope.launch {
+                            saving = true
+                            runCatching { api.deleteAdminUser(tok, target.id) }
+                                .onSuccess { deleteTarget = null; reload() }
+                                .onFailure {
+                                    if (it is kotlinx.coroutines.CancellationException) throw it
+                                    error = it.message ?: it.toString()
+                                }
+                            saving = false
+                        }
+                    },
+                    enabled = !saving,
+                    colors = androidx.compose.material.ButtonDefaults.buttonColors(
+                        backgroundColor = MaterialTheme.colors.error,
+                        contentColor = Color.White
+                    )
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { if (!saving) deleteTarget = null }) { Text("Cancel") }
+            }
+        )
+    }
+
+    // Search bar + refresh
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedTextField(
+            value = search,
+            onValueChange = { search = it },
+            label = { Text("Search name or email") },
+            modifier = Modifier.weight(1f),
+            singleLine = true
+        )
+        TextButton(onClick = { reload() }) { Text("Refresh") }
+    }
+
+    Text(
+        "${filtered.size} user(s)",
+        style = MaterialTheme.typography.caption,
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
+
+    LazyColumn(Modifier.fillMaxSize()) {
+        itemsIndexed(filtered, key = { _, u -> u.id }) { index, user ->
+            val bgColor = if (index % 2 == 0) MaterialTheme.colors.surface
+                          else androidx.compose.ui.graphics.Color(0xFFEEEEEE)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 3.dp),
+                backgroundColor = bgColor,
+                elevation = 1.dp
+            ) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                user.name.ifBlank { "(no name)" },
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.body1
+                            )
+                            Text(
+                                user.email,
+                                style = MaterialTheme.typography.caption,
+                                color = Color.Gray
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                user.personas.forEach { persona ->
+                                    val label = if (persona == "administrator") "Admin" else "User"
+                                    val chipColor = if (persona == "administrator")
+                                        androidx.compose.ui.graphics.Color(0xFF2D1E5A)
+                                    else MaterialTheme.colors.secondary
+                                    Box(
+                                        modifier = Modifier
+                                            .background(chipColor, shape = RoundedCornerShape(4.dp))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(label, color = Color.White, style = MaterialTheme.typography.overline)
+                                    }
+                                }
+                                if (user.emailVerified) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(
+                                                androidx.compose.ui.graphics.Color(0xFF388E3C),
+                                                shape = RoundedCornerShape(4.dp)
+                                            )
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text("Verified", color = Color.White, style = MaterialTheme.typography.overline)
+                                    }
+                                }
+                            }
+                        }
+                        Row {
+                            TextButton(
+                                onClick = {
+                                    editTarget = user
+                                    editIsAdmin = user.personas.contains("administrator")
+                                    editIsUser = user.personas.contains("user")
+                                }
+                            ) { Text("Edit") }
+                            TextButton(
+                                onClick = { deleteTarget = user }
+                            ) {
+                                Text("Del", color = MaterialTheme.colors.error)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -94,3 +94,25 @@ data class ApplicationPayload(
     val answers: List<ScreeningAnswerDto> = emptyList(),
     val resumePath: String = ""
 )
+
+@Serializable
+data class AdminUserDto(
+    val id: String = "",
+    val auth0Id: String = "",
+    val email: String = "",
+    val name: String = "",
+    val personas: List<String> = emptyList(),
+    val emailVerified: Boolean = false,
+    val createdAt: String = "",
+    val updatedAt: String = "",
+)
+
+@Serializable
+data class AdminUsersResponse(
+    val users: List<AdminUserDto> = emptyList(),
+)
+
+@Serializable
+data class UpdatePersonasPayload(
+    val personas: List<String>,
+)

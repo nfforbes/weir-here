@@ -116,11 +116,38 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
         }
     }
 
+    suspend fun listAdminUsers(accessToken: String): com.weirhere.model.AdminUsersResponse =
+        client.get("api/admin/users") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun updateUserPersonas(
+        accessToken: String,
+        userId: String,
+        personas: List<String>,
+    ): com.weirhere.model.AdminUserDto {
+        val resp: SingleUserResponse = client.patch("api/admin/users/$userId") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
+            setBody(com.weirhere.model.UpdatePersonasPayload(personas))
+        }.body()
+        return resp.user
+    }
+
+    suspend fun deleteAdminUser(accessToken: String, userId: String) {
+        client.delete("api/admin/users/$userId") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }
+    }
+
     private fun bearer(token: String) = if (token.startsWith("Bearer ")) token else "Bearer $token"
 }
 
 @kotlinx.serialization.Serializable
 private data class BootstrapResponse(val user: UserBootstrap? = null)
+
+@kotlinx.serialization.Serializable
+private data class SingleUserResponse(val user: com.weirhere.model.AdminUserDto)
 
 @kotlinx.serialization.Serializable
 data class SimpleMessageDto(val message: String)

@@ -15,7 +15,7 @@ function normalizePersonas(raw: unknown): Persona[] | null {
 
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const gate = await requireAdministrator();
+    const gate = await requireAdministrator(request);
     if (!gate.ok) {
       return NextResponse.json({ error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' }, { status: gate.status });
     }
@@ -73,7 +73,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
 
 export async function DELETE(_request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const gate = await requireAdministrator();
+    const gate = await requireAdministrator(_request);
     if (!gate.ok) {
       return NextResponse.json({ error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' }, { status: gate.status });
     }

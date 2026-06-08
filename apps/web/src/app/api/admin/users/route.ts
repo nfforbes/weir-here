@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import User from '@/models/User';
 import { requireAdministrator } from '@/lib/adminAuth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const gate = await requireAdministrator();
+    const gate = await requireAdministrator(request);
     if (!gate.ok) {
       return NextResponse.json({ error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' }, { status: gate.status });
     }
