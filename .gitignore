@@ -25,3 +25,5 @@ apps/mobile/.idea/
 apps/mobile/androidApp/build/
 apps/mobile/shared/build/
 apps/mobile/.kotlin/
+
+.vercel
