@@ -118,7 +118,12 @@ const MAIL_FIELDS: FieldConfig[] = [
 ];
 
 const SHAREPOINT_FIELDS: FieldConfig[] = [
-  { key: 'MS365_SHAREPOINT_SITE_ID', label: 'SharePoint site ID', type: 'text' },
+  { 
+    key: 'MS365_SHAREPOINT_SITE_ID', 
+    label: 'SharePoint site ID', 
+    type: 'text',
+    helperText: 'The app registration needs Sites.ReadWrite.All or Files.ReadWrite.All (application) permission with admin consent for file uploads.'
+  },
   { key: 'MS365_RESUME_FOLDER_PATH', label: 'Resume folder path', type: 'text' },
   { key: 'MS365_LOGO_FOLDER_PATH', label: 'Logo folder path', type: 'text' },
   { key: 'MS365_JOB_ATTACHMENT_PATH', label: 'Job attachment path', type: 'text' },

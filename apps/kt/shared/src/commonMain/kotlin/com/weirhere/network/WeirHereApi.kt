@@ -88,6 +88,12 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
             header(HttpHeaders.Authorization, bearer(accessToken))
         }.body()
 
+    suspend fun listMyJobs(accessToken: String): JobListResponse =
+        client.get("api/jobs") {
+            parameter("mine", "true")
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
     suspend fun getJob(identifier: String): JobJson =
         client.get("api/jobs/$identifier").body<JobSingleResponse>().job
 
@@ -171,6 +177,86 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
         client.get("api/reviews") {
             parameter("applicationId", applicationId)
             header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun listProviders(accessToken: String): List<com.weirhere.model.ProviderDto> =
+        client.get("api/admin/providers") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun createProvider(accessToken: String, payload: com.weirhere.model.ProviderUpsertPayload): com.weirhere.model.ProviderDto =
+        client.post("api/admin/providers") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }.body()
+
+    suspend fun updateProvider(accessToken: String, payload: com.weirhere.model.ProviderUpsertPayload): com.weirhere.model.ProviderDto =
+        client.put("api/admin/providers") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }.body()
+
+    suspend fun deleteProvider(accessToken: String, id: String): SimpleMessageDto =
+        client.delete("api/admin/providers") {
+            parameter("id", id)
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun listClients(accessToken: String): List<com.weirhere.model.ClientDto> =
+        client.get("api/admin/clients") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun createClient(accessToken: String, payload: com.weirhere.model.ClientUpsertPayload): com.weirhere.model.ClientDto =
+        client.post("api/admin/clients") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }.body()
+
+    suspend fun updateClient(accessToken: String, payload: com.weirhere.model.ClientUpsertPayload): com.weirhere.model.ClientDto =
+        client.put("api/admin/clients") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }.body()
+
+    suspend fun deleteClient(accessToken: String, id: String): SimpleMessageDto =
+        client.delete("api/admin/clients") {
+            parameter("id", id)
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun listAssignments(accessToken: String): List<com.weirhere.model.AssignmentDto> =
+        client.get("api/admin/assignments") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun createAssignment(accessToken: String, payload: com.weirhere.model.AssignmentUpsertPayload): com.weirhere.model.AssignmentDto =
+        client.post("api/admin/assignments") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }.body()
+
+    suspend fun deleteAssignment(accessToken: String, id: String): SimpleMessageDto =
+        client.delete("api/admin/assignments") {
+            parameter("id", id)
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun getConfiguration(accessToken: String): com.weirhere.model.ConfigValuesDto =
+        client.get("api/admin/configuration") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+        }.body()
+
+    suspend fun updateConfiguration(accessToken: String, payload: com.weirhere.model.ConfigValuesDto): com.weirhere.model.ConfigValuesDto =
+        client.post("api/admin/configuration") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
+            setBody(payload)
         }.body()
 
     private fun bearer(token: String) = if (token.startsWith("Bearer ")) token else "Bearer $token"

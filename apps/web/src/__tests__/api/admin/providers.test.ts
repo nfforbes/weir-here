@@ -31,6 +31,17 @@ jest.mock('@/models/Provider', () => ({
   },
 }));
 
+const mockQualFind = jest.fn();
+const mockQualDeleteMany = jest.fn();
+
+jest.mock('@/models/Qualification', () => ({
+  __esModule: true,
+  default: {
+    find: (...a: unknown[]) => mockQualFind(...a),
+    deleteMany: (...a: unknown[]) => mockQualDeleteMany(...a),
+  },
+}));
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function adminOk() {
@@ -69,19 +80,24 @@ describe('GET /api/admin/providers', () => {
     expect(res.status).toBe(403);
   });
 
-  it('returns provider list on success', async () => {
+  it('returns providers with qualifications on success', async () => {
     adminOk();
     const fakeProviders = [
-      { _id: '1', name: 'Alice', info: 'Bio A' },
-      { _id: '2', name: 'Bob', info: 'Bio B' },
+      { _id: '1', name: 'Alice', address: '123 Main' },
+      { _id: '2', name: 'Bob', address: '456 Side' },
     ];
+    const fakeQuals = [{ _id: 'q1', providerId: { toString: () => '1' }, fileName: 'doc.pdf', driveFileId: 'xyz' }];
+
     mockFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(fakeProviders) }) });
+    mockQualFind.mockReturnValue({ lean: jest.fn().mockResolvedValue(fakeQuals) });
 
     const { GET } = await import('@/app/api/admin/providers/route');
     const res = await GET();
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(fakeProviders);
+    expect(body).toHaveLength(2);
+    expect(body[0].qualifications).toHaveLength(1);
+    expect(body[0].qualifications[0].fileName).toBe('doc.pdf');
   });
 });
 
@@ -99,7 +115,7 @@ describe('POST /api/admin/providers', () => {
   it('returns 400 when name is missing', async () => {
     adminOk();
     const { POST } = await import('@/app/api/admin/providers/route');
-    const req = makeRequest('POST', 'https://example.com/api/admin/providers', { info: 'some info' });
+    const req = makeRequest('POST', 'https://example.com/api/admin/providers', { address: 'some address' });
     const res = await POST(req);
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -116,16 +132,16 @@ describe('POST /api/admin/providers', () => {
 
   it('creates and returns provider on success', async () => {
     adminOk();
-    const created = { _id: 'abc', name: 'Alice', info: 'Good nurse' };
+    const created = { _id: 'abc', name: 'Alice', address: '123 Main' };
     mockCreate.mockResolvedValue(created);
 
     const { POST } = await import('@/app/api/admin/providers/route');
-    const req = makeRequest('POST', 'https://example.com/api/admin/providers', { name: 'Alice', info: 'Good nurse' });
+    const req = makeRequest('POST', 'https://example.com/api/admin/providers', { name: 'Alice', address: '123 Main' });
     const res = await POST(req);
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.name).toBe('Alice');
-    expect(mockCreate).toHaveBeenCalledWith({ name: 'Alice', info: 'Good nurse' });
+    expect(mockCreate).toHaveBeenCalledWith({ name: 'Alice', address: '123 Main' });
   });
 });
 
@@ -159,10 +175,10 @@ describe('PUT /api/admin/providers', () => {
 
   it('returns updated provider on success', async () => {
     adminOk();
-    const updated = { _id: '1', name: 'Updated', info: 'new info' };
+    const updated = { _id: '1', name: 'Updated', address: 'New Address' };
     mockFindByIdAndUpdate.mockResolvedValue(updated);
     const { PUT } = await import('@/app/api/admin/providers/route');
-    const req = makeRequest('PUT', 'https://example.com/api/admin/providers', { id: '1', name: 'Updated', info: 'new info' });
+    const req = makeRequest('PUT', 'https://example.com/api/admin/providers', { id: '1', name: 'Updated', address: 'New Address' });
     const res = await PUT(req);
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -192,6 +208,7 @@ describe('DELETE /api/admin/providers', () => {
   it('deletes and returns success', async () => {
     adminOk();
     mockFindByIdAndDelete.mockResolvedValue({});
+    mockQualDeleteMany.mockResolvedValue({ deletedCount: 1 });
     const { DELETE } = await import('@/app/api/admin/providers/route');
     const req = makeRequest('DELETE', 'https://example.com/api/admin/providers?id=abc123');
     const res = await DELETE(req);
@@ -199,5 +216,6 @@ describe('DELETE /api/admin/providers', () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(mockFindByIdAndDelete).toHaveBeenCalledWith('abc123');
+    expect(mockQualDeleteMany).toHaveBeenCalledWith({ providerId: 'abc123' });
   });
 });

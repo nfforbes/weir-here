@@ -1,4 +1,4 @@
-export type Persona = 'administrator' | 'user';
+export type Persona = 'administrator' | 'user' | 'provider';
 
 export interface IUser {
   _id?: string;

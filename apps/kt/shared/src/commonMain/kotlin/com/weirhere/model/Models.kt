@@ -152,3 +152,89 @@ data class ReviewDto(
 data class ReviewsResponse(
     val reviews: List<ReviewDto> = emptyList(),
 )
+
+@Serializable
+data class QualificationDto(
+    @SerialName("_id") val id: String,
+    val fileName: String,
+    val description: String? = null,
+    val driveWebViewLink: String,
+    val uploadedAt: String? = null
+)
+
+@Serializable
+data class ProviderDto(
+    @SerialName("_id") val id: String,
+    val name: String,
+    val email: String? = null,
+    val address: String,
+    val qualifications: List<QualificationDto> = emptyList()
+)
+
+@Serializable
+data class ProviderUpsertPayload(
+    val id: String? = null,
+    val name: String,
+    val email: String? = null,
+    val address: String
+)
+
+@Serializable
+data class ClientDto(
+    @SerialName("_id") val id: String? = null,
+    val name: String = "",
+    val address: String = ""
+)
+
+@Serializable
+data class ClientUpsertPayload(
+    val id: String? = null,
+    val name: String,
+    val address: String,
+)
+
+@Serializable
+data class EmbeddedClientDto(
+    @SerialName("_id") val id: String? = null,
+    val name: String = "",
+    val address: String = ""
+)
+
+@Serializable
+data class EmbeddedProviderDto(
+    @SerialName("_id") val id: String? = null,
+    val name: String = ""
+)
+
+@Serializable
+data class AssignmentDto(
+    @SerialName("_id") val id: String? = null,
+    val clientId: EmbeddedClientDto? = null,
+    val providerId: EmbeddedProviderDto? = null,
+    val clientChargeCents: Int = 0,
+    val providerPayCents: Int = 0,
+    val providerHourlyRateCents: Int = 0,
+    val description: String = "",
+    val serviceDate: String = "",
+    val isBilled: Boolean = false,
+    val isPaid: Boolean = false,
+)
+
+@Serializable
+data class AssignmentUpsertPayload(
+    val clientId: String,
+    val providerId: String,
+    val clientChargeCents: Int,
+    val providerPayCents: Int,
+    val providerHourlyRateCents: Int,
+    val description: String,
+    val serviceDate: String,
+)
+
+@Serializable
+data class ConfigValuesDto(
+    val gdrive_client_id: String = "",
+    val gdrive_client_secret: String = "",
+    val gdrive_refresh_token: String = "",
+    val gdrive_folder_id: String = "",
+)

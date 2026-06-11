@@ -58,7 +58,7 @@ describe('POST /api/admin/qualifications', () => {
   it('returns 401 when not authenticated', async () => {
     adminUnauthorized(401);
     const { POST } = await import('@/app/api/admin/qualifications/route');
-    const req = makeFormDataRequest({ clientId: 'c1' }, { name: 'doc.pdf', content: 'data', type: 'application/pdf' });
+    const req = makeFormDataRequest({ providerId: 'p1' }, { name: 'doc.pdf', content: 'data', type: 'application/pdf' });
     const res = await POST(req);
     expect(res.status).toBe(401);
   });
@@ -67,43 +67,43 @@ describe('POST /api/admin/qualifications', () => {
     adminOk();
     const { POST } = await import('@/app/api/admin/qualifications/route');
     // FormData without a file
-    const req = makeFormDataRequest({ clientId: 'c1' });
+    const req = makeFormDataRequest({ providerId: 'p1' });
     const res = await POST(req);
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe('No file provided');
   });
 
-  it('returns 400 when clientId is missing', async () => {
+  it('returns 400 when providerId is missing', async () => {
     adminOk();
     const { POST } = await import('@/app/api/admin/qualifications/route');
     const req = makeFormDataRequest({}, { name: 'doc.pdf', content: 'data', type: 'application/pdf' });
     const res = await POST(req);
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe('clientId is required');
+    expect((await res.json()).error).toBe('providerId is required');
   });
 
   it('uploads to Drive and creates qualification record', async () => {
     adminOk();
     mockUploadFileToDrive.mockResolvedValue({ fileId: 'drive-id', webViewLink: 'https://drive.google.com/file/d/drive-id/view' });
-    const createdQual = { _id: 'q1', clientId: 'c1', fileName: 'doc.pdf', driveFileId: 'drive-id' };
+    const createdQual = { _id: 'q1', providerId: 'p1', fileName: 'doc.pdf', driveFileId: 'drive-id' };
     mockQualCreate.mockResolvedValue(createdQual);
 
     const { POST } = await import('@/app/api/admin/qualifications/route');
-    const req = makeFormDataRequest({ clientId: 'c1' }, { name: 'doc.pdf', content: '%PDF content', type: 'application/pdf' });
+    const req = makeFormDataRequest({ providerId: 'p1' }, { name: 'doc.pdf', content: '%PDF content', type: 'application/pdf' });
     const res = await POST(req);
 
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.driveFileId).toBe('drive-id');
     expect(mockUploadFileToDrive).toHaveBeenCalledWith(expect.any(Buffer), 'doc.pdf', 'application/pdf');
-    expect(mockQualCreate).toHaveBeenCalledWith(expect.objectContaining({ clientId: 'c1', fileName: 'doc.pdf' }));
+    expect(mockQualCreate).toHaveBeenCalledWith(expect.objectContaining({ providerId: 'p1', fileName: 'doc.pdf' }));
   });
 
   it('returns 500 when Drive upload fails', async () => {
     adminOk();
     mockUploadFileToDrive.mockRejectedValue(new Error('Google Drive is not configured. Please add credentials in Admin → Configuration.'));
     const { POST } = await import('@/app/api/admin/qualifications/route');
-    const req = makeFormDataRequest({ clientId: 'c1' }, { name: 'doc.pdf', content: 'data', type: 'application/pdf' });
+    const req = makeFormDataRequest({ providerId: 'p1' }, { name: 'doc.pdf', content: 'data', type: 'application/pdf' });
     const res = await POST(req);
     expect(res.status).toBe(500);
     expect((await res.json()).error).toContain('Google Drive is not configured');

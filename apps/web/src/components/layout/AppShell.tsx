@@ -12,7 +12,7 @@ interface AppShellProps {
 
 export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname() || '';
-  const isPortal = pathname.startsWith('/dashboard/admin/portal');
+  const isPortal = pathname.startsWith('/dashboard/admin/portal') || pathname.startsWith('/dashboard/provider/portal');
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -21,7 +21,7 @@ export default function AppShell({ children }: AppShellProps) {
         {children}
       </Box>
       {!isPortal && <Footer />}
-      <WhatsAppFloatingChat />
+      {!isPortal && <WhatsAppFloatingChat />}
     </Box>
   );
 }

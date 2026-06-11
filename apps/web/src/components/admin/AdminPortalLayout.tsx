@@ -37,12 +37,11 @@ const DRAWER_WIDTH = 260;
 
 const NAV_ITEMS = [
   { label: 'Back to Site', icon: <HomeIcon />, href: '/', external: false },
-  { label: 'My Jobs', icon: <WorkIcon />, href: '/dashboard/admin/portal/my-jobs', external: false },
+  { label: 'Jobs', icon: <WorkIcon />, href: '/dashboard/admin/portal/my-jobs', external: false },
   { label: 'Providers', icon: <PersonIcon />, href: '/dashboard/admin/portal/providers', external: false },
   { label: 'Clients', icon: <GroupIcon />, href: '/dashboard/admin/portal/clients', external: false },
   { label: 'Assignments', icon: <AssignmentIcon />, href: '/dashboard/admin/portal/assignments', external: false },
   { label: 'Reports', icon: <BarChartIcon />, href: '/dashboard/admin/portal/reports', external: false },
-  { label: 'Configuration', icon: <SettingsIcon />, href: '/dashboard/admin/portal/configuration', external: false },
   { label: 'Users', icon: <PeopleIcon />, href: '/dashboard/admin/portal/users', external: false },
   { label: 'Settings', icon: <SettingsIcon />, href: '/dashboard/admin/portal/settings', external: false },
   { label: 'Testimonials', icon: <FormatQuoteIcon />, href: '/dashboard/admin/portal/testimonials', external: false },

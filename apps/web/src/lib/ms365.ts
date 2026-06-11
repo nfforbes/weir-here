@@ -108,10 +108,13 @@ export async function uploadToSharePoint(
     jobAttachment: config.jobAttachmentPath,
   };
   const folderPath = folderPathMap[folderType];
-  const uploadPath = `${folderPath}/${fileName}`;
+  const uploadPath = `${folderPath.startsWith('/') ? '' : '/'}${folderPath}/${fileName}`;
+  
+  // Encode each segment of the path to handle spaces and special characters
+  const encodedPath = uploadPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
 
   const driveItem = await client
-    .api(`/sites/${config.siteId}/drive/root:${uploadPath}:/content`)
+    .api(`/sites/${config.siteId}/drive/root:${encodedPath}:/content`)
     .put(fileBuffer);
 
   return driveItem.webUrl || uploadPath;

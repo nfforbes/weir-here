@@ -38,8 +38,8 @@ export const PUBLIC_MENU: IMenuItem[] = [
 
 export const AUTHENTICATED_MENU: IMenuItem[] = [
   {
-    label: 'My Jobs',
-    path: '/dashboard/my-jobs',
+    label: 'Assignments',
+    path: '/dashboard/provider/portal/assignments',
     icon: 'PostAdd',
     requiresAuth: true,
     requiredPersonas: ['user'],
@@ -53,5 +53,12 @@ export const ADMIN_MENU: IMenuItem[] = [
     icon: 'AdminPanelSettings',
     requiresAuth: true,
     requiredPersonas: ['administrator'],
+  },
+  {
+    label: 'Provider Portal',
+    path: '/dashboard/provider/portal',
+    icon: 'MedicalServices',
+    requiresAuth: true,
+    requiredPersonas: ['provider'],
   },
 ];

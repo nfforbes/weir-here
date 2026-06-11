@@ -4,7 +4,7 @@ import type { Persona } from '@weir-here/shared';
 import User from '@/models/User';
 import { requireAdministrator, countAdministrators } from '@/lib/adminAuth';
 
-const VALID_PERSONAS: Persona[] = ['administrator', 'user'];
+const VALID_PERSONAS: Persona[] = ['administrator', 'user', 'provider'];
 
 function normalizePersonas(raw: unknown): Persona[] | null {
   if (!Array.isArray(raw) || raw.length === 0) return null;
@@ -29,7 +29,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     const personas = normalizePersonas(body.personas);
     if (!personas) {
       return NextResponse.json(
-        { error: 'personas must be a non-empty array of "user" and/or "administrator"' },
+        { error: 'personas must be a non-empty array of valid roles' },
         { status: 400 },
       );
     }

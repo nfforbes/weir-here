@@ -30,13 +30,15 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { clientId, providerId, clientChargeCents, providerPayCents, description, serviceDate } = body;
+  const { clientId, providerId, clientChargeCents, providerHourlyRateCents, providerPayCents, description, serviceDate } = body;
 
   if (!clientId) return NextResponse.json({ error: 'clientId is required' }, { status: 400 });
   if (!providerId) return NextResponse.json({ error: 'providerId is required' }, { status: 400 });
   if (clientChargeCents == null || clientChargeCents < 0)
     return NextResponse.json({ error: 'clientChargeCents must be >= 0' }, { status: 400 });
-  if (providerPayCents == null || providerPayCents < 0)
+  if (providerHourlyRateCents == null || providerHourlyRateCents < 0)
+    return NextResponse.json({ error: 'providerHourlyRateCents must be >= 0' }, { status: 400 });
+  if (providerPayCents != null && providerPayCents < 0)
     return NextResponse.json({ error: 'providerPayCents must be >= 0' }, { status: 400 });
 
   await connectDB();
@@ -44,7 +46,8 @@ export async function POST(req: NextRequest) {
     clientId,
     providerId,
     clientChargeCents,
-    providerPayCents,
+    providerHourlyRateCents,
+    providerPayCents: providerPayCents || 0,
     description: description ?? '',
     serviceDate: serviceDate ? new Date(serviceDate) : new Date(),
   });

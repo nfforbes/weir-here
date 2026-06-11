@@ -51,9 +51,16 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
   const [editRow, setEditRow] = useState<AdminUserRow | null>(null);
   const [editAdmin, setEditAdmin] = useState(false);
   const [editUser, setEditUser] = useState(false);
+  const [editProvider, setEditProvider] = useState(false);
   const [deleteRow, setDeleteRow] = useState<AdminUserRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [snack, setSnack] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
+  
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteUser, setInviteUser] = useState(true);
+  const [inviteProvider, setInviteProvider] = useState(false);
+  const [inviteAdmin, setInviteAdmin] = useState(false);
 
   // Pagination state
   const [page, setPage] = useState(0);
@@ -111,6 +118,7 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
     setEditRow(row);
     setEditAdmin(row.personas.includes('administrator'));
     setEditUser(row.personas.includes('user'));
+    setEditProvider(row.personas.includes('provider'));
   };
 
   const closeEdit = () => {
@@ -121,6 +129,7 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
     if (!editRow) return;
     const personas: Persona[] = [];
     if (editUser) personas.push('user');
+    if (editProvider) personas.push('provider');
     if (editAdmin) personas.push('administrator');
     if (personas.length === 0) {
       setSnack({ message: 'Select at least one role.', severity: 'error' });
@@ -165,6 +174,42 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
     }
   };
 
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) {
+      setSnack({ message: 'Email is required', severity: 'error' });
+      return;
+    }
+    const roles: Persona[] = [];
+    if (inviteUser) roles.push('user');
+    if (inviteProvider) roles.push('provider');
+    if (inviteAdmin) roles.push('administrator');
+    
+    if (roles.length === 0) {
+      setSnack({ message: 'Select at least one role.', severity: 'error' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/users/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail, roles }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Invite failed');
+      setSnack({ message: 'Invite sent successfully.', severity: 'success' });
+      setInviteOpen(false);
+      setInviteEmail('');
+      setInviteUser(true);
+      setInviteProvider(false);
+      setInviteAdmin(false);
+    } catch (e: unknown) {
+      setSnack({ message: toUserErrorMessage(e, 'Invite failed'), severity: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -185,6 +230,10 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
         />
         <Button variant="outlined" onClick={() => void loadUsers()}>
           Refresh
+        </Button>
+        <Box sx={{ flexGrow: 1 }} />
+        <Button variant="contained" onClick={() => setInviteOpen(true)}>
+          Invite User
         </Button>
       </Toolbar>
 
@@ -216,7 +265,7 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                       {row.personas.map((p) => (
-                        <Chip key={p} size="small" label={p === 'administrator' ? 'Administrator' : 'User'} />
+                        <Chip key={p} size="small" label={p === 'administrator' ? 'Administrator' : p === 'provider' ? 'Provider' : 'User'} />
                       ))}
                     </Box>
                   </TableCell>
@@ -266,6 +315,10 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
               label="User (job posting, applications, dashboard)"
             />
             <FormControlLabel
+              control={<Checkbox checked={editProvider} onChange={(e) => setEditProvider(e.target.checked)} />}
+              label="Provider (assignments, profile)"
+            />
+            <FormControlLabel
               control={
                 <Checkbox checked={editAdmin} onChange={(e) => setEditAdmin(e.target.checked)} />
               }
@@ -297,6 +350,46 @@ export default function AdminUsersManager({ currentAuth0Id }: { currentAuth0Id: 
           </Button>
           <Button onClick={() => void confirmDelete()} color="error" variant="contained" disabled={saving}>
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={inviteOpen} onClose={() => !saving && setInviteOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Invite User</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Send an email invitation to join the platform.
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Email Address"
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            disabled={saving}
+          />
+          <FormGroup sx={{ mt: 2 }}>
+            <FormControlLabel
+              control={<Checkbox checked={inviteUser} onChange={(e) => setInviteUser(e.target.checked)} />}
+              label="User"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={inviteProvider} onChange={(e) => setInviteProvider(e.target.checked)} />}
+              label="Provider"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={inviteAdmin} onChange={(e) => setInviteAdmin(e.target.checked)} />}
+              label="Administrator"
+            />
+          </FormGroup>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setInviteOpen(false)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={() => void handleInvite()} variant="contained" disabled={saving || !inviteEmail.trim()}>
+            {saving ? <CircularProgress size={20} /> : 'Send Invite'}
           </Button>
         </DialogActions>
       </Dialog>

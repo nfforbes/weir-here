@@ -6,6 +6,7 @@ import { Container, Typography, Box, CircularProgress, Stack } from '@mui/materi
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useAppSelector } from '@/store';
 import MS365SettingsForm from '@/components/admin/MS365SettingsForm';
+import GoogleDriveSettingsForm from '@/components/admin/GoogleDriveSettingsForm';
 
 export default function AdminSettingsPage() {
   const { user, isLoading: authLoading } = useUser();
@@ -42,10 +43,11 @@ export default function AdminSettingsPage() {
         Admin Settings
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Configure Microsoft 365 (Microsoft Graph for email, SharePoint for uploads).
+        Configure Microsoft 365 (Microsoft Graph for email, SharePoint for uploads) and Google Drive integrations.
       </Typography>
       <Stack spacing={4}>
         <MS365SettingsForm />
+        <GoogleDriveSettingsForm />
       </Stack>
     </Box>
   );

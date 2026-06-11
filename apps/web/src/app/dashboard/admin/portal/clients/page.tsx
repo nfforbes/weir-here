@@ -32,32 +32,20 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { ELECTRIC_BLUE } from '@/theme/theme';
 
-interface Qualification {
-  _id: string;
-  fileName: string;
-  driveWebViewLink: string;
-  uploadedAt: string;
-}
-
 interface Client {
   _id: string;
   name: string;
   address: string;
-  qualifications: Qualification[];
 }
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const [form, setForm] = useState({ name: '', address: '' });
   const [saving, setSaving] = useState(false);
-  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -105,7 +93,7 @@ export default function ClientsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this client and all their qualifications?')) return;
+    if (!confirm('Delete this client?')) return;
     try {
       await fetch(`/api/admin/clients?id=${id}`, { method: 'DELETE' });
       await fetchClients();
@@ -114,52 +102,8 @@ export default function ClientsPage() {
     }
   };
 
-  const handleUploadClick = (clientId: string) => {
-    setUploadingFor(clientId);
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !uploadingFor) return;
-
-    setUploadProgress(true);
-    setError('');
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('clientId', uploadingFor);
-
-    try {
-      const res = await fetch('/api/admin/qualifications', { method: 'POST', body: formData });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Upload failed');
-      }
-      setSuccess(`"${file.name}" uploaded to Google Drive successfully`);
-      await fetchClients();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setUploadProgress(false);
-      setUploadingFor(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const handleDeleteQual = async (id: string) => {
-    if (!confirm('Remove this qualification?')) return;
-    try {
-      await fetch(`/api/admin/qualifications?id=${id}`, { method: 'DELETE' });
-      await fetchClients();
-    } catch {
-      setError('Delete failed');
-    }
-  };
-
   return (
     <Box>
-      <input ref={fileInputRef} type="file" hidden onChange={handleFileChange} accept="*/*" />
-
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <GroupIcon sx={{ color: ELECTRIC_BLUE, fontSize: 32 }} />
@@ -173,8 +117,6 @@ export default function ClientsPage() {
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>{success}</Alert>}
-      {uploadProgress && <LinearProgress sx={{ mb: 2 }} />}
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
@@ -216,7 +158,6 @@ export default function ClientsPage() {
               <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#f5f7fa' } }}>
                 <TableCell>Name</TableCell>
                 <TableCell>Address</TableCell>
-                <TableCell>Qualifications</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -238,37 +179,6 @@ export default function ClientsPage() {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="text.secondary">{c.address}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      {c.qualifications.length === 0 && (
-                        <Typography variant="caption" color="text.disabled">None</Typography>
-                      )}
-                      {c.qualifications.map((q) => (
-                        <Box key={q._id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Chip
-                            label={q.fileName}
-                            size="small"
-                            variant="outlined"
-                            clickable
-                            component="a"
-                            href={q.driveWebViewLink}
-                            target="_blank"
-                            icon={<OpenInNewIcon style={{ fontSize: 12 }} />}
-                            onDelete={() => handleDeleteQual(q._id)}
-                          />
-                        </Box>
-                      ))}
-                      <Button
-                        size="small"
-                        startIcon={<UploadFileIcon />}
-                        onClick={() => handleUploadClick(c._id)}
-                        sx={{ mt: 0.5, width: 'fit-content' }}
-                        disabled={uploadProgress}
-                      >
-                        Upload
-                      </Button>
-                    </Box>
                   </TableCell>
                   <TableCell align="right">
                     <Tooltip title="Edit">

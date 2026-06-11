@@ -28,16 +28,7 @@ jest.mock('@/models/Client', () => ({
   },
 }));
 
-const mockQualFind = jest.fn();
-const mockQualDeleteMany = jest.fn();
 
-jest.mock('@/models/Qualification', () => ({
-  __esModule: true,
-  default: {
-    find: (...a: unknown[]) => mockQualFind(...a),
-    deleteMany: (...a: unknown[]) => mockQualDeleteMany(...a),
-  },
-}));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -70,21 +61,18 @@ describe('GET /api/admin/clients', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns clients with their qualifications', async () => {
+  it('returns clients on success', async () => {
     adminOk();
     const fakeClients = [{ _id: 'c1', name: 'Client A', address: '1 Main St' }];
-    const fakeQuals = [{ _id: 'q1', clientId: { toString: () => 'c1' }, fileName: 'doc.pdf', driveFileId: 'xyz' }];
 
     mockClientFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(fakeClients) }) });
-    mockQualFind.mockReturnValue({ lean: jest.fn().mockResolvedValue(fakeQuals) });
 
     const { GET } = await import('@/app/api/admin/clients/route');
     const res = await GET();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toHaveLength(1);
-    expect(body[0].qualifications).toHaveLength(1);
-    expect(body[0].qualifications[0].fileName).toBe('doc.pdf');
+    expect(body[0].name).toBe('Client A');
   });
 });
 
@@ -164,15 +152,13 @@ describe('DELETE /api/admin/clients', () => {
     expect(res.status).toBe(400);
   });
 
-  it('deletes client and associated qualifications', async () => {
+  it('deletes client', async () => {
     adminOk();
     mockClientFindByIdAndDelete.mockResolvedValue({});
-    mockQualDeleteMany.mockResolvedValue({ deletedCount: 2 });
     const { DELETE } = await import('@/app/api/admin/clients/route');
     const req = makeRequest('DELETE', `${BASE}?id=c1`);
     const res = await DELETE(req);
     expect(res.status).toBe(200);
     expect((await res.json()).success).toBe(true);
-    expect(mockQualDeleteMany).toHaveBeenCalledWith({ clientId: 'c1' });
   });
 });

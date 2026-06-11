@@ -3,6 +3,7 @@ import { getApiAuthUser } from '@/lib/apiAuth';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import type { Persona } from '@weir-here/shared';
+import PlatformInvite from '@/models/PlatformInvite';
 
 function parseAdminBootstrapEmails(): string[] {
   const raw = process.env.ADMIN_BOOTSTRAP_EMAILS?.trim();
@@ -63,8 +64,16 @@ export async function POST(req: NextRequest) {
     let user = await User.findOne({ auth0Id: sub });
 
     if (!user) {
-      const personas: Persona[] = ['user'];
-      if (shouldGrantEnvAdmin(email)) {
+      let personas: Persona[] = ['user'];
+      
+      const invite = await PlatformInvite.findOne({ email: email.trim().toLowerCase(), accepted: false });
+      if (invite && invite.roles && invite.roles.length > 0) {
+        personas = invite.roles as Persona[];
+        invite.accepted = true;
+        await invite.save();
+      }
+      
+      if (shouldGrantEnvAdmin(email) && !personas.includes('administrator')) {
         personas.push('administrator');
       }
       user = await User.create({

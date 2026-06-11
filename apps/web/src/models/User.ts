@@ -18,8 +18,8 @@ const UserSchema = new Schema<UserDocument>(
     name: { type: String, required: true },
     personas: {
       type: [String],
-      enum: ['administrator', 'user'],
-      default: ['user'],
+      enum: ['administrator', 'user', 'provider'],
+      default: ['user'], // added provider to enum
     },
     emailVerified: { type: Boolean, default: false },
   },

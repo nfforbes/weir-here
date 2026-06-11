@@ -11,19 +11,7 @@ export async function GET() {
   await connectDB();
   const clients = await Client.find({}).sort({ name: 1 }).lean();
 
-  // Attach qualifications
-  const qualifications = await Qualification.find({
-    clientId: { $in: clients.map((c) => c._id) },
-  }).lean();
-
-  const clientsWithQuals = clients.map((c) => ({
-    ...c,
-    qualifications: qualifications.filter(
-      (q) => q.clientId.toString() === String(c._id)
-    ),
-  }));
-
-  return NextResponse.json(clientsWithQuals);
+  return NextResponse.json(clients);
 }
 
 export async function POST(req: NextRequest) {
@@ -68,6 +56,5 @@ export async function DELETE(req: NextRequest) {
 
   await connectDB();
   await Client.findByIdAndDelete(id);
-  await Qualification.deleteMany({ clientId: id });
   return NextResponse.json({ success: true });
 }

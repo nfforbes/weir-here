@@ -2,7 +2,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ProviderDocument extends Document {
   name: string;
-  info: string;
+  email: string;
+  address: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -10,7 +11,8 @@ export interface ProviderDocument extends Document {
 const ProviderSchema = new Schema<ProviderDocument>(
   {
     name: { type: String, required: true, trim: true },
-    info: { type: String, default: '' },
+    email: { type: String, unique: true, required: true, trim: true, lowercase: true },
+    address: { type: String, default: '' },
   },
   { timestamps: true }
 );

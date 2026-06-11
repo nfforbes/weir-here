@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -21,18 +21,31 @@ import {
   CircularProgress,
   Tooltip,
   Chip,
+  LinearProgress,
   Grid,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { ELECTRIC_BLUE } from '@/theme/theme';
+
+interface Qualification {
+  _id: string;
+  fileName: string;
+  description?: string;
+  driveWebViewLink: string;
+  uploadedAt: string;
+}
 
 interface Provider {
   _id: string;
   name: string;
-  info: string;
+  email?: string;
+  address: string;
+  qualifications: Qualification[];
 }
 
 export default function ProvidersPage() {
@@ -41,8 +54,14 @@ export default function ProvidersPage() {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Provider | null>(null);
-  const [form, setForm] = useState({ name: '', info: '' });
+  const [form, setForm] = useState({ name: '', email: '', address: '' });
   const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [gridUploadState, setGridUploadState] = useState<{ providerId: string; file: File | null; description: string } | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(false);
+  const [stagedQualifications, setStagedQualifications] = useState<{ file: File | null; description: string }[]>([]);
+  const [editingQualifications, setEditingQualifications] = useState<Qualification[]>([]);
+  const [qualificationsToDelete, setQualificationsToDelete] = useState<string[]>([]);
 
   const fetchProviders = useCallback(async () => {
     setLoading(true);
@@ -62,11 +81,15 @@ export default function ProvidersPage() {
   const handleOpen = (provider?: Provider) => {
     if (provider) {
       setEditing(provider);
-      setForm({ name: provider.name, info: provider.info });
+      setForm({ name: provider.name, email: provider.email || '', address: provider.address });
+      setEditingQualifications([...provider.qualifications]);
     } else {
       setEditing(null);
-      setForm({ name: '', info: '' });
+      setForm({ name: '', email: '', address: '' });
+      setEditingQualifications([]);
     }
+    setStagedQualifications([]);
+    setQualificationsToDelete([]);
     setOpen(true);
   };
 
@@ -80,6 +103,42 @@ export default function ProvidersPage() {
         body: JSON.stringify({ ...(editing ? { id: editing._id } : {}), ...form }),
       });
       if (!res.ok) throw new Error(await res.text());
+      const savedProvider = await res.json();
+      const providerId = editing ? editing._id : savedProvider._id;
+
+      // Process edits to existing qualifications
+      for (const eq of editingQualifications) {
+        const original = editing?.qualifications.find((q) => q._id === eq._id);
+        if (original && original.description !== eq.description) {
+          const editRes = await fetch('/api/admin/qualifications', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: eq._id, description: eq.description }),
+          });
+          if (!editRes.ok) throw new Error(`Failed to update qualification: ${eq.fileName}`);
+        }
+      }
+
+      // Process deletes of existing qualifications
+      for (const id of qualificationsToDelete) {
+        const delRes = await fetch(`/api/admin/qualifications?id=${id}`, { method: 'DELETE' });
+        if (!delRes.ok) throw new Error(`Failed to delete qualification`);
+      }
+
+      for (const sq of stagedQualifications) {
+        if (!sq.file) continue;
+        const formData = new FormData();
+        formData.append('file', sq.file);
+        formData.append('providerId', providerId);
+        if (sq.description) formData.append('description', sq.description);
+
+        const uploadRes = await fetch('/api/admin/qualifications', { method: 'POST', body: formData });
+        if (!uploadRes.ok) {
+           const errorData = await uploadRes.json().catch(() => ({}));
+           throw new Error(`Failed to upload ${sq.file.name}: ${errorData.error || uploadRes.statusText}`);
+        }
+      }
+
       await fetchProviders();
       setOpen(false);
     } catch (e: unknown) {
@@ -90,7 +149,7 @@ export default function ProvidersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this provider?')) return;
+    if (!confirm('Delete this provider and all their qualifications?')) return;
     try {
       await fetch(`/api/admin/providers?id=${id}`, { method: 'DELETE' });
       await fetchProviders();
@@ -99,8 +158,49 @@ export default function ProvidersPage() {
     }
   };
 
+  const handleGridUploadClick = (providerId: string) => {
+    setGridUploadState({ providerId, file: null, description: '' });
+  };
+
+  const handleGridUploadSubmit = async () => {
+    if (!gridUploadState || !gridUploadState.file || !gridUploadState.description.trim()) return;
+
+    setUploadProgress(true);
+    setError('');
+    const formData = new FormData();
+    formData.append('file', gridUploadState.file);
+    formData.append('providerId', gridUploadState.providerId);
+    formData.append('description', gridUploadState.description.trim());
+
+    try {
+      const res = await fetch('/api/admin/qualifications', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Upload failed');
+      }
+      setSuccess(`"${gridUploadState.file.name}" uploaded successfully`);
+      await fetchProviders();
+      setGridUploadState(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadProgress(false);
+    }
+  };
+
+  const handleDeleteQual = async (id: string) => {
+    if (!confirm('Remove this qualification?')) return;
+    try {
+      await fetch(`/api/admin/qualifications?id=${id}`, { method: 'DELETE' });
+      await fetchProviders();
+    } catch {
+      setError('Delete failed');
+    }
+  };
+
   return (
     <Box>
+
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <PersonIcon sx={{ color: ELECTRIC_BLUE, fontSize: 32 }} />
@@ -114,6 +214,8 @@ export default function ProvidersPage() {
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>{success}</Alert>}
+      {uploadProgress && <LinearProgress sx={{ mb: 2 }} />}
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
@@ -121,7 +223,7 @@ export default function ProvidersPage() {
         <Paper sx={{ p: 4 }}>
           <Typography variant="h6" mb={3}>{editing ? 'Edit Provider' : 'New Provider'}</Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 autoFocus
                 fullWidth
@@ -130,19 +232,103 @@ export default function ProvidersPage() {
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               />
             </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Email *"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
+            </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 multiline
-                rows={4}
-                label="Information / Bio"
-                value={form.info}
-                onChange={(e) => setForm((f) => ({ ...f, info: e.target.value }))}
+                rows={2}
+                label="Address"
+                value={form.address}
+                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
               />
             </Grid>
+            
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" fontWeight={600} mb={1}>Qualifications</Typography>
+              {editingQualifications.map((eq, i) => (
+                <Box key={eq._id} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                  <Button variant="outlined" component="a" href={eq.driveWebViewLink} target="_blank" sx={{ minWidth: 120 }}>
+                    View File
+                  </Button>
+                  <Typography variant="body2" sx={{ minWidth: 100, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {eq.fileName}
+                  </Typography>
+                  <TextField 
+                    size="small"
+                    label="Description *" 
+                    value={eq.description || ''}
+                    onChange={(e) => {
+                      const newEqs = [...editingQualifications];
+                      newEqs[i].description = e.target.value;
+                      setEditingQualifications(newEqs);
+                    }}
+                    sx={{ flexGrow: 1 }}
+                  />
+                  <IconButton color="error" onClick={() => {
+                      const newEqs = [...editingQualifications];
+                      newEqs.splice(i, 1);
+                      setEditingQualifications(newEqs);
+                      setQualificationsToDelete([...qualificationsToDelete, eq._id]);
+                  }}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
+              {stagedQualifications.map((sq, i) => (
+                <Box key={i} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                  <Button variant="outlined" component="label" sx={{ minWidth: 120 }}>
+                    {sq.file ? 'Change File' : 'Select File'}
+                    <input type="file" hidden onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      const newStaged = [...stagedQualifications];
+                      newStaged[i].file = file;
+                      setStagedQualifications(newStaged);
+                    }} />
+                  </Button>
+                  <Typography variant="body2" sx={{ minWidth: 100, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {sq.file ? sq.file.name : 'No file selected'}
+                  </Typography>
+                  <TextField 
+                    size="small"
+                    label="Description *" 
+                    value={sq.description}
+                    onChange={(e) => {
+                      const newStaged = [...stagedQualifications];
+                      newStaged[i].description = e.target.value;
+                      setStagedQualifications(newStaged);
+                    }}
+                    sx={{ flexGrow: 1 }}
+                  />
+                  <IconButton color="error" onClick={() => {
+                      const newStaged = [...stagedQualifications];
+                      newStaged.splice(i, 1);
+                      setStagedQualifications(newStaged);
+                  }}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
+              <Button size="small" startIcon={<AddIcon />} onClick={() => setStagedQualifications([...stagedQualifications, { file: null, description: '' }])}>
+                Add Qualification
+              </Button>
+            </Grid>
+
             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
               <Button onClick={() => setOpen(false)}>Cancel</Button>
-              <Button variant="contained" onClick={handleSave} disabled={saving || !form.name.trim()}>
+              <Button 
+                variant="contained" 
+                onClick={handleSave} 
+                disabled={saving || !form.name.trim() || !form.email.trim() || stagedQualifications.some(sq => sq.file && !sq.description.trim()) || editingQualifications.some(eq => !eq.description?.trim())}
+              >
                 {saving ? <CircularProgress size={20} /> : editing ? 'Save Changes' : 'Create'}
               </Button>
             </Grid>
@@ -154,7 +340,9 @@ export default function ProvidersPage() {
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#f5f7fa' } }}>
                 <TableCell>Name</TableCell>
-                <TableCell>Information</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Address</TableCell>
+                <TableCell>Qualifications</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -174,8 +362,46 @@ export default function ProvidersPage() {
                       <Typography fontWeight={600}>{p.name}</Typography>
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ maxWidth: 300 }}>
-                    <Typography variant="body2" color="text.secondary" noWrap>{p.info || '—'}</Typography>
+                  <TableCell>
+                    {p.email ? (
+                      <Typography variant="body2" color="text.secondary">{p.email}</Typography>
+                    ) : (
+                      <Typography variant="body2" color="text.disabled">—</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell sx={{ maxWidth: 200 }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>{p.address || '—'}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {p.qualifications.length === 0 && (
+                        <Typography variant="caption" color="text.disabled">None</Typography>
+                      )}
+                      {p.qualifications.map((q) => (
+                        <Box key={q._id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Chip
+                            label={q.description ? `${q.description} (${q.fileName})` : q.fileName}
+                            size="small"
+                            variant="outlined"
+                            clickable
+                            component="a"
+                            href={q.driveWebViewLink}
+                            target="_blank"
+                            icon={<OpenInNewIcon style={{ fontSize: 12 }} />}
+                            onDelete={() => handleDeleteQual(q._id)}
+                          />
+                        </Box>
+                      ))}
+                      <Button
+                        size="small"
+                        startIcon={<UploadFileIcon />}
+                        onClick={() => handleGridUploadClick(p._id)}
+                        sx={{ mt: 0.5, width: 'fit-content' }}
+                        disabled={uploadProgress}
+                      >
+                        Upload
+                      </Button>
+                    </Box>
                   </TableCell>
                   <TableCell align="right">
                     <Tooltip title="Edit">
@@ -190,6 +416,45 @@ export default function ProvidersPage() {
             </TableBody>
           </Table>
         </Paper>
+      )}
+
+      {gridUploadState && (
+        <Dialog open={true} onClose={() => setGridUploadState(null)} fullWidth maxWidth="sm">
+          <DialogTitle>Upload Qualification</DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+              <Button variant="outlined" component="label" fullWidth sx={{ py: 1.5 }}>
+                {gridUploadState.file ? gridUploadState.file.name : 'Select File'}
+                <input 
+                  type="file" 
+                  hidden 
+                  accept=".pdf,.txt,.doc,.docx,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setGridUploadState({ ...gridUploadState, file: e.target.files[0] });
+                    }
+                  }} />
+              </Button>
+              <TextField
+                label="Description *"
+                fullWidth
+                value={gridUploadState.description}
+                onChange={(e) => setGridUploadState({ ...gridUploadState, description: e.target.value })}
+                placeholder="e.g. CPR Certification"
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setGridUploadState(null)}>Cancel</Button>
+            <Button 
+              variant="contained" 
+              onClick={handleGridUploadSubmit} 
+              disabled={!gridUploadState.file || !gridUploadState.description.trim() || uploadProgress}
+            >
+              {uploadProgress ? <CircularProgress size={20} /> : 'Upload'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
     </Box>
   );

@@ -61,6 +61,7 @@ export default function AssignmentsPage() {
     clientId: '',
     providerId: '',
     clientCharge: '',
+    providerHourlyRate: '',
     providerPay: '',
     description: '',
     serviceDate: new Date().toISOString().split('T')[0],
@@ -87,17 +88,18 @@ export default function AssignmentsPage() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleSave = async () => {
-    if (!form.clientId || !form.providerId || !form.clientCharge || !form.providerPay) return;
+    if (!form.clientId || !form.providerId || !form.clientCharge) return;
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/assignments', {
+        const res = await fetch('/api/admin/assignments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           clientId: form.clientId,
           providerId: form.providerId,
           clientChargeCents: Math.round(parseFloat(form.clientCharge) * 100),
-          providerPayCents: Math.round(parseFloat(form.providerPay) * 100),
+          providerHourlyRateCents: Math.round(parseFloat(form.providerHourlyRate || '0') * 100),
+          providerPayCents: form.providerPay ? Math.round(parseFloat(form.providerPay) * 100) : 0,
           description: form.description,
           serviceDate: form.serviceDate,
         }),
@@ -105,7 +107,7 @@ export default function AssignmentsPage() {
       if (!res.ok) throw new Error(await res.text());
       await fetchAll();
       setOpen(false);
-      setForm({ clientId: '', providerId: '', clientCharge: '', providerPay: '', description: '', serviceDate: new Date().toISOString().split('T')[0] });
+      setForm({ clientId: '', providerId: '', clientCharge: '', providerHourlyRate: '', providerPay: '', description: '', serviceDate: new Date().toISOString().split('T')[0] });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Save failed');
     } finally {
@@ -185,7 +187,7 @@ export default function AssignmentsPage() {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Service Date *"
@@ -196,7 +198,7 @@ export default function AssignmentsPage() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Charge to Client *"
@@ -208,10 +210,22 @@ export default function AssignmentsPage() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Pay to Provider *"
+                label="Provider Hourly Rate *"
+                type="number"
+                value={form.providerHourlyRate}
+                onChange={(e) => setForm((f) => ({ ...f, providerHourlyRate: e.target.value }))}
+                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                inputProps={{ min: 0, step: 0.01 }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Pay to Provider"
                 type="number"
                 value={form.providerPay}
                 onChange={(e) => setForm((f) => ({ ...f, providerPay: e.target.value }))}
@@ -236,7 +250,7 @@ export default function AssignmentsPage() {
               <Button
                 variant="contained"
                 onClick={handleSave}
-                disabled={saving || !form.clientId || !form.providerId || !form.clientCharge || !form.providerPay}
+                disabled={saving || !form.clientId || !form.providerId || !form.clientCharge}
               >
                 {saving ? <CircularProgress size={20} /> : 'Create'}
               </Button>
