@@ -19,12 +19,16 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { name, address } = body;
+  const { name, address, phoneNumbers } = body;
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   if (!address?.trim()) return NextResponse.json({ error: 'Address is required' }, { status: 400 });
 
   await connectDB();
-  const client = await Client.create({ name: name.trim(), address: address.trim() });
+  const client = await Client.create({ 
+    name: name.trim(), 
+    address: address.trim(),
+    phoneNumbers: phoneNumbers || []
+  });
   return NextResponse.json(client, { status: 201 });
 }
 
@@ -33,13 +37,18 @@ export async function PUT(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { id, name, address } = body;
+  const { id, name, address, phoneNumbers } = body;
   if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
   await connectDB();
+  const updateData: any = {};
+  if (name !== undefined) updateData.name = name.trim();
+  if (address !== undefined) updateData.address = address.trim();
+  if (phoneNumbers !== undefined) updateData.phoneNumbers = phoneNumbers;
+
   const client = await Client.findByIdAndUpdate(
     id,
-    { name: name?.trim(), address: address?.trim() },
+    updateData,
     { new: true }
   );
   if (!client) return NextResponse.json({ error: 'Not found' }, { status: 404 });

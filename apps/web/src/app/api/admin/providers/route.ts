@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { name, address, email } = body;
+  const { name, address, email, phoneNumbers } = body;
   if (!name?.trim()) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   }
@@ -144,6 +144,7 @@ export async function POST(req: NextRequest) {
     name: name.trim(), 
     address: address?.trim(),
     email: email.trim().toLowerCase(),
+    phoneNumbers: phoneNumbers || [],
   });
 
   await assignProviderAccessAndNotify(email, auth.admin);
@@ -156,7 +157,7 @@ export async function PUT(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { id, name, address, email } = body;
+  const { id, name, address, email, phoneNumbers } = body;
   if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
   await connectDB();
@@ -170,13 +171,15 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Email is already in use by another provider' }, { status: 400 });
   }
 
+  const updateData: any = {};
+  if (name !== undefined) updateData.name = name.trim();
+  if (address !== undefined) updateData.address = address.trim();
+  if (email !== undefined) updateData.email = email.trim().toLowerCase();
+  if (phoneNumbers !== undefined) updateData.phoneNumbers = phoneNumbers;
+
   const provider = await Provider.findByIdAndUpdate(
     id,
-    { 
-      name: name?.trim(), 
-      address: address?.trim(),
-      email: email.trim().toLowerCase(),
-    },
+    updateData,
     { new: true }
   );
   

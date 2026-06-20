@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import Providers from '@/components/providers/Providers';
 import AppShell from '@/components/layout/AppShell';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
+import Script from 'next/script';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -153,6 +154,15 @@ export default function RootLayout({
   return (
     <html lang="en-JM" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
+        <Script id="clarity-script" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "xa1jkadmyr");
+          `}
+        </Script>
         {/* JSON-LD in body (valid for Google); avoids head mutations from browser extensions that cause hydration mismatches. */}
         <script
           id="weir-here-schema-jsonld"

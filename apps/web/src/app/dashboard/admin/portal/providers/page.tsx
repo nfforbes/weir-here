@@ -23,6 +23,8 @@ import {
   Chip,
   LinearProgress,
   Grid,
+  Radio,
+  FormControlLabel,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -45,6 +47,7 @@ interface Provider {
   name: string;
   email?: string;
   address: string;
+  phoneNumbers?: { number: string; isBest: boolean }[];
   qualifications: Qualification[];
 }
 
@@ -54,7 +57,7 @@ export default function ProvidersPage() {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Provider | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', address: '' });
+  const [form, setForm] = useState<{ name: string; email: string; address: string; phoneNumbers: { number: string; isBest: boolean }[] }>({ name: '', email: '', address: '', phoneNumbers: [] });
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [gridUploadState, setGridUploadState] = useState<{ providerId: string; file: File | null; description: string } | null>(null);
@@ -81,11 +84,11 @@ export default function ProvidersPage() {
   const handleOpen = (provider?: Provider) => {
     if (provider) {
       setEditing(provider);
-      setForm({ name: provider.name, email: provider.email || '', address: provider.address });
+      setForm({ name: provider.name, email: provider.email || '', address: provider.address, phoneNumbers: provider.phoneNumbers || [] });
       setEditingQualifications([...provider.qualifications]);
     } else {
       setEditing(null);
-      setForm({ name: '', email: '', address: '' });
+      setForm({ name: '', email: '', address: '', phoneNumbers: [] });
       setEditingQualifications([]);
     }
     setStagedQualifications([]);
@@ -251,6 +254,50 @@ export default function ProvidersPage() {
                 onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
               />
             </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Phone Numbers</Typography>
+              {form.phoneNumbers.map((phone, index) => (
+                <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                  <TextField
+                    size="small"
+                    label="Phone Number"
+                    value={phone.number}
+                    onChange={(e) => {
+                      const newPhones = [...form.phoneNumbers];
+                      newPhones[index].number = e.target.value;
+                      setForm((f) => ({ ...f, phoneNumbers: newPhones }));
+                    }}
+                    sx={{ flexGrow: 1 }}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Radio
+                        checked={phone.isBest}
+                        onChange={() => {
+                          const newPhones = form.phoneNumbers.map((p, i) => ({ ...p, isBest: i === index }));
+                          setForm((f) => ({ ...f, phoneNumbers: newPhones }));
+                        }}
+                      />
+                    }
+                    label="Best Number"
+                  />
+                  <IconButton color="error" onClick={() => {
+                    const newPhones = form.phoneNumbers.filter((_, i) => i !== index);
+                    if (phone.isBest && newPhones.length > 0) {
+                      newPhones[0].isBest = true;
+                    }
+                    setForm((f) => ({ ...f, phoneNumbers: newPhones }));
+                  }}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
+              <Button size="small" startIcon={<AddIcon />} onClick={() => {
+                setForm(f => ({ ...f, phoneNumbers: [...f.phoneNumbers, { number: '', isBest: f.phoneNumbers.length === 0 }] }));
+              }}>
+                Add Phone
+              </Button>
+            </Grid>
             
             <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight={600} mb={1}>Qualifications</Typography>
@@ -340,6 +387,7 @@ export default function ProvidersPage() {
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#f5f7fa' } }}>
                 <TableCell>Name</TableCell>
+                <TableCell>Phone</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Address</TableCell>
                 <TableCell>Qualifications</TableCell>
@@ -360,6 +408,16 @@ export default function ProvidersPage() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Chip label={p.name.charAt(0).toUpperCase()} size="small" sx={{ bgcolor: ELECTRIC_BLUE, color: 'white', fontWeight: 700 }} />
                       <Typography fontWeight={600}>{p.name}</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {p.phoneNumbers?.map((ph, i) => (
+                        <Typography key={i} variant="body2" sx={{ fontWeight: ph.isBest ? 600 : 400, color: ph.isBest ? 'text.primary' : 'text.secondary' }}>
+                          {ph.number} {ph.isBest && <Chip label="Best" size="small" sx={{ height: 16, fontSize: '0.65rem', ml: 1 }} />}
+                        </Typography>
+                      ))}
+                      {(!p.phoneNumbers || p.phoneNumbers.length === 0) && <Typography variant="body2" color="text.disabled">—</Typography>}
                     </Box>
                   </TableCell>
                   <TableCell>

@@ -23,6 +23,8 @@ import {
   Chip,
   LinearProgress,
   Grid,
+  Radio,
+  FormControlLabel,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -36,6 +38,7 @@ interface Client {
   _id: string;
   name: string;
   address: string;
+  phoneNumbers?: { number: string; isBest: boolean }[];
 }
 
 export default function ClientsPage() {
@@ -44,7 +47,7 @@ export default function ClientsPage() {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
-  const [form, setForm] = useState({ name: '', address: '' });
+  const [form, setForm] = useState<{ name: string; address: string; phoneNumbers: { number: string; isBest: boolean }[] }>({ name: '', address: '', phoneNumbers: [] });
   const [saving, setSaving] = useState(false);
 
   const fetchClients = useCallback(async () => {
@@ -65,10 +68,10 @@ export default function ClientsPage() {
   const handleOpen = (client?: Client) => {
     if (client) {
       setEditing(client);
-      setForm({ name: client.name, address: client.address });
+      setForm({ name: client.name, address: client.address, phoneNumbers: client.phoneNumbers || [] });
     } else {
       setEditing(null);
-      setForm({ name: '', address: '' });
+      setForm({ name: '', address: '', phoneNumbers: [] });
     }
     setOpen(true);
   };
@@ -143,6 +146,50 @@ export default function ClientsPage() {
                 onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
               />
             </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Phone Numbers</Typography>
+              {form.phoneNumbers.map((phone, index) => (
+                <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                  <TextField
+                    size="small"
+                    label="Phone Number"
+                    value={phone.number}
+                    onChange={(e) => {
+                      const newPhones = [...form.phoneNumbers];
+                      newPhones[index].number = e.target.value;
+                      setForm((f) => ({ ...f, phoneNumbers: newPhones }));
+                    }}
+                    sx={{ flexGrow: 1 }}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Radio
+                        checked={phone.isBest}
+                        onChange={() => {
+                          const newPhones = form.phoneNumbers.map((p, i) => ({ ...p, isBest: i === index }));
+                          setForm((f) => ({ ...f, phoneNumbers: newPhones }));
+                        }}
+                      />
+                    }
+                    label="Best Number"
+                  />
+                  <IconButton color="error" onClick={() => {
+                    const newPhones = form.phoneNumbers.filter((_, i) => i !== index);
+                    if (phone.isBest && newPhones.length > 0) {
+                      newPhones[0].isBest = true;
+                    }
+                    setForm((f) => ({ ...f, phoneNumbers: newPhones }));
+                  }}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
+              <Button size="small" startIcon={<AddIcon />} onClick={() => {
+                setForm(f => ({ ...f, phoneNumbers: [...f.phoneNumbers, { number: '', isBest: f.phoneNumbers.length === 0 }] }));
+              }}>
+                Add Phone
+              </Button>
+            </Grid>
             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
               <Button onClick={() => setOpen(false)}>Cancel</Button>
               <Button variant="contained" onClick={handleSave} disabled={saving || !form.name.trim() || !form.address.trim()}>
@@ -157,6 +204,7 @@ export default function ClientsPage() {
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#f5f7fa' } }}>
                 <TableCell>Name</TableCell>
+                <TableCell>Phone</TableCell>
                 <TableCell>Address</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -175,6 +223,16 @@ export default function ClientsPage() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Chip label={c.name.charAt(0).toUpperCase()} size="small" sx={{ bgcolor: ELECTRIC_BLUE, color: 'white', fontWeight: 700 }} />
                       <Typography fontWeight={600}>{c.name}</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {c.phoneNumbers?.map((p, i) => (
+                        <Typography key={i} variant="body2" sx={{ fontWeight: p.isBest ? 600 : 400, color: p.isBest ? 'text.primary' : 'text.secondary' }}>
+                          {p.number} {p.isBest && <Chip label="Best" size="small" sx={{ height: 16, fontSize: '0.65rem', ml: 1 }} />}
+                        </Typography>
+                      ))}
+                      {(!c.phoneNumbers || c.phoneNumbers.length === 0) && <Typography variant="body2" color="text.disabled">—</Typography>}
                     </Box>
                   </TableCell>
                   <TableCell>
