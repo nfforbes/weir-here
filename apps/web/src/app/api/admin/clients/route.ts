@@ -4,8 +4,8 @@ import Client from '@/models/Client';
 import Qualification from '@/models/Qualification';
 import { requireAdministrator } from '@/lib/adminAuth';
 
-export async function GET() {
-  const auth = await requireAdministrator();
+export async function GET(req: NextRequest) {
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   await connectDB();
@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
@@ -56,7 +56,7 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const { searchParams } = new URL(req.url);
@@ -67,3 +67,4 @@ export async function DELETE(req: NextRequest) {
   await Client.findByIdAndDelete(id);
   return NextResponse.json({ success: true });
 }
+

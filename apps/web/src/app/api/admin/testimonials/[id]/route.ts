@@ -7,7 +7,7 @@ const MAX_LEN = { quote: 8000, name: 200, title: 300, context: 300, avatar: 2000
 
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const gate = await requireAdministrator();
+    const gate = await requireAdministrator(request);
     if (!gate.ok) {
       return NextResponse.json({ error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' }, { status: gate.status });
     }
@@ -68,9 +68,9 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
   }
 }
 
-export async function DELETE(_request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const gate = await requireAdministrator();
+    const gate = await requireAdministrator(request);
     if (!gate.ok) {
       return NextResponse.json({ error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' }, { status: gate.status });
     }

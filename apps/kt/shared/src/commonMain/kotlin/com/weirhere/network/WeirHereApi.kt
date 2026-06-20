@@ -8,6 +8,7 @@ import com.weirhere.model.JobUpsertPayload
 import com.weirhere.model.UserBootstrap
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -34,6 +35,9 @@ private data class SingleUserResponse(val user: com.weirhere.model.AdminUserDto)
 @kotlinx.serialization.Serializable
 data class SimpleMessageDto(val message: String)
 
+/** Thrown when the API returns HTTP 401 (invalid or expired Bearer token). */
+class ApiUnauthorizedException(message: String = "Not authenticated") : Exception(message)
+
 class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine()) {
     private val apiRoot = Env.apiBaseUrl().trimEnd('/') + '/'
 
@@ -59,11 +63,20 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
         }
 
     suspend fun bootstrap(bearerAccessToken: String): UserBootstrap? {
-        val res: BootstrapResponse =
-            client.post("api/users/bootstrap") {
-                header(HttpHeaders.Authorization, bearer(bearerAccessToken))
-            }.body()
-        return res.user
+        try {
+            val res: BootstrapResponse =
+                client.post("api/users/bootstrap") {
+                    header(HttpHeaders.Authorization, bearer(bearerAccessToken))
+                }.body()
+            return res.user
+        } catch (e: ClientRequestException) {
+            if (e.response.status.value == 401) {
+                throw ApiUnauthorizedException(
+                    e.response.status.description.ifBlank { "Not authenticated" },
+                )
+            }
+            throw e
+        }
     }
 
     suspend fun listJobs(
@@ -160,6 +173,17 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
             header(HttpHeaders.Authorization, bearer(accessToken))
         }
     }
+
+    suspend fun inviteAdminUser(
+        accessToken: String,
+        email: String,
+        roles: List<String>,
+    ): com.weirhere.model.InviteUserResponse =
+        client.post("api/admin/users/invite") {
+            header(HttpHeaders.Authorization, bearer(accessToken))
+            contentType(ContentType.Application.Json)
+            setBody(com.weirhere.model.InviteUserPayload(email = email.trim(), roles = roles))
+        }.body()
 
     suspend fun listApplications(
         accessToken: String,

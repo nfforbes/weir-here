@@ -5,7 +5,7 @@ import { requireAdministrator } from '@/lib/adminAuth';
 import ExcelJS from 'exceljs';
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const { searchParams } = new URL(req.url);
@@ -111,3 +111,4 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ month, rows, total: rows.reduce((s, r) => s + r.chargeAmount, 0) });
 }
+

@@ -118,6 +118,17 @@ data class UpdatePersonasPayload(
 )
 
 @Serializable
+data class InviteUserPayload(
+    val email: String,
+    val roles: List<String>,
+)
+
+@Serializable
+data class InviteUserResponse(
+    val message: String = "",
+)
+
+@Serializable
 data class ApplicationDto(
     @SerialName("_id") val id: String? = null,
     val jobId: String = "",
@@ -163,11 +174,18 @@ data class QualificationDto(
 )
 
 @Serializable
+data class PhoneNumberDto(
+    val number: String,
+    val isBest: Boolean = false
+)
+
+@Serializable
 data class ProviderDto(
     @SerialName("_id") val id: String,
     val name: String,
     val email: String? = null,
     val address: String,
+    val phoneNumbers: List<PhoneNumberDto> = emptyList(),
     val qualifications: List<QualificationDto> = emptyList()
 )
 
@@ -176,14 +194,16 @@ data class ProviderUpsertPayload(
     val id: String? = null,
     val name: String,
     val email: String? = null,
-    val address: String
+    val address: String,
+    val phoneNumbers: List<PhoneNumberDto> = emptyList()
 )
 
 @Serializable
 data class ClientDto(
     @SerialName("_id") val id: String? = null,
     val name: String = "",
-    val address: String = ""
+    val address: String = "",
+    val phoneNumbers: List<PhoneNumberDto> = emptyList()
 )
 
 @Serializable
@@ -191,6 +211,7 @@ data class ClientUpsertPayload(
     val id: String? = null,
     val name: String,
     val address: String,
+    val phoneNumbers: List<PhoneNumberDto> = emptyList()
 )
 
 @Serializable

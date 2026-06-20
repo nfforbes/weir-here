@@ -5,8 +5,9 @@
 # weir_here.api.url=http://10.0.2.2:3000
 weir_here.api.url=http://10.0.2.2:3000
 
-# Auth0 Native app (SPA / Native Application) credentials — align with `.env.example` in repo root:
+# Auth0 Native app credentials — align with `.env.example` in repo root:
 # Same audience as AUTH0_AUDIENCE for Bearer JWT verification on `/api/*`.
+# When audience is set, login uses accessToken; otherwise ID token (mobile client id as aud).
 weir_here.auth0.domain=
 weir_here.auth0.clientId=
 weir_here.auth0.audience=

@@ -4,7 +4,7 @@ import Assignment from '@/models/Assignment';
 import { requireAdministrator } from '@/lib/adminAuth';
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const { searchParams } = new URL(req.url);
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const { searchParams } = new URL(req.url);
@@ -72,3 +72,4 @@ export async function DELETE(req: NextRequest) {
   await Assignment.findByIdAndDelete(id);
   return NextResponse.json({ success: true });
 }
+

@@ -8,3 +8,11 @@ expect fun PlatformLoginButton(
     onAccessToken: (String) -> Unit,
     onError: (String) -> Unit,
 )
+
+/** Logs out from Auth0 (clears the browser session) then calls [onLogout]. */
+@Composable
+expect fun PlatformLogoutButton(
+    label: String,
+    onLogout: () -> Unit,
+)
+

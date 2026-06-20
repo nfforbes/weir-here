@@ -34,9 +34,9 @@ function trimBody(input: {
   return { quote, authorName, authorTitle, context, avatarUrl, published, sortOrder };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const gate = await requireAdministrator();
+    const gate = await requireAdministrator(req);
     if (!gate.ok) {
       return NextResponse.json({ error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' }, { status: gate.status });
     }
@@ -63,7 +63,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const gate = await requireAdministrator();
+    const gate = await requireAdministrator(request);
     if (!gate.ok) {
       return NextResponse.json({ error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' }, { status: gate.status });
     }
@@ -102,3 +102,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+

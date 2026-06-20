@@ -29,3 +29,10 @@ actual fun PlatformLoginButton(
         }
     }
 }
+
+@Composable
+actual fun PlatformLogoutButton(label: String, onLogout: () -> Unit) {
+    androidx.compose.material.TextButton(onClick = onLogout) {
+        Text(label)
+    }
+}

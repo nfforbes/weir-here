@@ -7,7 +7,7 @@ import { requireAdministrator } from '@/lib/adminAuth';
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   try {
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
@@ -66,7 +66,7 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const { searchParams } = new URL(req.url);
@@ -77,3 +77,4 @@ export async function DELETE(req: NextRequest) {
   await Qualification.findByIdAndDelete(id);
   return NextResponse.json({ success: true });
 }
+

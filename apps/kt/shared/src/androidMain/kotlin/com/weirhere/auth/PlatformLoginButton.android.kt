@@ -11,11 +11,15 @@ import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.provider.WebAuthProvider
 import com.auth0.android.result.Credentials
+import com.weirhere.env.Env
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+
+private const val SCHEME = "weirhere"
+private const val REDIRECT_URI = "weirhere://callback"
 
 @Composable
 actual fun PlatformLoginButton(
@@ -25,8 +29,7 @@ actual fun PlatformLoginButton(
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-    val activity =
-        rememberActivity(ctx)
+    val activity = rememberActivity(ctx)
     Button(onClick = {
         if (activity == null) {
             onError("Missing Activity context.")
@@ -61,29 +64,49 @@ private tailrec fun unwrap(c: android.content.Context): Activity? =
         else -> null
     }
 
-const val AUTH0_DOMAIN = "n4consulting.us.auth0.com"
-const val AUTH0_CLIENT_ID = "7gvIVgyZkkGlws8kMjhzS47mmoBnXaFb"
-val AUTH0_CUSTOM_API_AUDIENCE: String? = null
-const val REDIRECT_URI = "weirhere://callback"
-const val PREFS_NAME = "weirhere_auth"
-const val KEY_ACCESS_TOKEN = "access_token"
-const val KEY_ID_TOKEN = "id_token"
-const val KEY_REFRESH_TOKEN = "refresh_token"
+private fun buildAuth0(): Auth0 {
+    val domain = Env.auth0Domain()
+    val clientId = Env.auth0ClientId()
+    if (domain.isBlank() || clientId.isBlank()) {
+        throw IllegalArgumentException(
+            "Set weir_here.auth0.domain and weir_here.auth0.clientId in apps/kt/local.properties",
+        )
+    }
+    return Auth0(clientId, domain)
+}
+
+/**
+ * Returns a JWT suitable for Bearer API calls.
+ * With [Env.auth0Audience], uses access token; otherwise falls back to ID token
+ * (backend accepts mobile client id as audience when no custom API is configured).
+ */
+private fun pickBearerToken(result: Credentials): String {
+    val audience = Env.auth0Audience().trim()
+    if (audience.isNotBlank()) {
+        val access = result.accessToken?.trim().orEmpty()
+        if (access.isNotEmpty()) return access
+    }
+    val id = result.idToken?.trim().orEmpty()
+    if (id.isNotEmpty()) return id
+    throw IllegalStateException(
+        if (audience.isNotBlank()) {
+            "No access token received. Check Auth0 API audience: $audience"
+        } else {
+            "No ID token received from Auth0. Ensure openid scope is enabled."
+        },
+    )
+}
 
 private suspend fun login(activity: Activity): String =
     suspendCancellableCoroutine { cont ->
-        val auth0 =
-            Auth0(
-                AUTH0_CLIENT_ID,
-                AUTH0_DOMAIN,
-            )
-
+        val audience = Env.auth0Audience().trim()
         var req =
-            WebAuthProvider.login(auth0)
-                .withScheme("weirhere")
-                .withRedirectUri("weirhere://callback")
+            WebAuthProvider.login(buildAuth0())
+                .withScheme(SCHEME)
+                .withRedirectUri(REDIRECT_URI)
                 .withScope("openid profile email offline_access")
-        val audience = AUTH0_CUSTOM_API_AUDIENCE ?: ""
+                .withParameters(mapOf("prompt" to "login"))
+
         if (audience.isNotBlank()) {
             req = req.withAudience(audience)
         }
@@ -96,13 +119,49 @@ private suspend fun login(activity: Activity): String =
                 }
 
                 override fun onSuccess(result: Credentials) {
-                    val token = result.idToken ?: result.accessToken
-                    if (token.isNullOrBlank()) {
-                        if (cont.isActive) cont.resumeWithException(IllegalStateException("No token"))
-                    } else {
-                        if (cont.isActive) cont.resume(token)
-                    }
+                    runCatching { pickBearerToken(result) }
+                        .onSuccess { token ->
+                            if (cont.isActive) cont.resume(token)
+                        }
+                        .onFailure { e ->
+                            if (cont.isActive) cont.resumeWithException(e)
+                        }
                 }
             },
         )
     }
+
+suspend fun logoutAuth0(activity: Activity) =
+    suspendCancellableCoroutine<Unit> { cont ->
+        WebAuthProvider.logout(buildAuth0())
+            .withScheme(SCHEME)
+            .start(
+                activity,
+                object : Callback<Void?, AuthenticationException> {
+                    override fun onFailure(error: AuthenticationException) {
+                        if (cont.isActive) cont.resume(Unit)
+                    }
+
+                    override fun onSuccess(result: Void?) {
+                        if (cont.isActive) cont.resume(Unit)
+                    }
+                },
+            )
+    }
+
+@Composable
+actual fun PlatformLogoutButton(label: String, onLogout: () -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val activity = rememberActivity(ctx)
+    androidx.compose.material.TextButton(onClick = {
+        scope.launch(Dispatchers.Main) {
+            if (activity != null) {
+                runCatching { logoutAuth0(activity) }
+            }
+            onLogout()
+        }
+    }) {
+        Text(label)
+    }
+}

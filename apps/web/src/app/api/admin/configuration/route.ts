@@ -10,8 +10,8 @@ const ALLOWED_KEYS = [
   'gdrive_folder_id',
 ];
 
-export async function GET() {
-  const auth = await requireAdministrator();
+export async function GET(req: NextRequest) {
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   await connectDB();
@@ -31,7 +31,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdministrator();
+  const auth = await requireAdministrator(req);
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
@@ -49,3 +49,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+

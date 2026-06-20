@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.Settings
 import com.weirhere.auth.PlatformLoginButton
+import com.weirhere.auth.PlatformLogoutButton
 import com.weirhere.data.SessionStore
 import com.weirhere.model.AdminUserDto
 import com.weirhere.model.JobJson
@@ -65,6 +66,7 @@ import com.weirhere.model.JobUpsertPayload
 import com.weirhere.model.ScreeningQuestionDto
 import com.weirhere.model.SalaryRangeDto
 import com.weirhere.network.WeirHereApi
+import com.weirhere.network.ApiUnauthorizedException
 import com.weirhere.rbac.hasAdministrator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -127,7 +129,14 @@ fun WeirHereApp() {
             }
             .onFailure {
                 if (it is kotlinx.coroutines.CancellationException) throw it
-                message = "Bootstrap failed: ${it.message ?: it}"
+                if (it is ApiUnauthorizedException) {
+                    SessionStore.setAccess(null)
+                    personas = emptyList()
+                    bootEmail = null
+                    message = "Session expired. Please sign in again."
+                } else {
+                    message = "Bootstrap failed: ${it.message ?: it}"
+                }
             }
     }
 
@@ -705,9 +714,7 @@ private fun ProfileUi(
                 Text("Save changes", color = Color.White, fontSize = 16.sp)
             }
             Spacer(Modifier.height(16.dp))
-            TextButton(onClick = onLogout) {
-                Text("Logout")
-            }
+            PlatformLogoutButton(label = "Logout", onLogout = onLogout)
         } else {
             Text("Logged out", color = Color.Gray, style = MaterialTheme.typography.subtitle1)
             Spacer(Modifier.height(16.dp))
@@ -925,16 +932,24 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
     var users by remember { mutableStateOf<List<com.weirhere.model.AdminUserDto>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    var success by remember { mutableStateOf<String?>(null) }
     var search by remember { mutableStateOf("") }
+    var page by remember { mutableStateOf(0) }
+    val rowsPerPage = 10
 
-    // Edit dialog state
     var editTarget by remember { mutableStateOf<com.weirhere.model.AdminUserDto?>(null) }
     var editIsAdmin by remember { mutableStateOf(false) }
     var editIsUser by remember { mutableStateOf(false) }
+    var editIsProvider by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
 
-    // Delete dialog state
     var deleteTarget by remember { mutableStateOf<com.weirhere.model.AdminUserDto?>(null) }
+
+    var inviteOpen by remember { mutableStateOf(false) }
+    var inviteEmail by remember { mutableStateOf("") }
+    var inviteUser by remember { mutableStateOf(true) }
+    var inviteProvider by remember { mutableStateOf(false) }
+    var inviteAdmin by remember { mutableStateOf(false) }
 
     fun reload() {
         scope.launch {
@@ -952,14 +967,10 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
 
     LaunchedEffect(tok) { reload() }
 
+    LaunchedEffect(search) { page = 0 }
+
     if (loading) {
         CircularProgressIndicator(Modifier.padding(24.dp))
-        return
-    }
-
-    error?.let {
-        Text("Error: $it", color = MaterialTheme.colors.error)
-        TextButton(onClick = { reload() }) { Text("Retry") }
         return
     }
 
@@ -969,12 +980,37 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
             val q = search.trim().lowercase()
             users.filter {
                 it.email.lowercase().contains(q) ||
-                it.name.lowercase().contains(q)
+                    it.name.lowercase().contains(q) ||
+                    it.auth0Id.lowercase().contains(q)
             }
         }
     }
 
-    // Edit dialog
+    val pageCount = remember(filtered.size, rowsPerPage) {
+        if (filtered.isEmpty()) 1 else ((filtered.size - 1) / rowsPerPage) + 1
+    }
+    val safePage = page.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
+    if (safePage != page) page = safePage
+
+    val paginated = remember(filtered, page, rowsPerPage) {
+        val start = page * rowsPerPage
+        filtered.drop(start).take(rowsPerPage)
+    }
+
+    fun personaChipLabel(persona: String): String =
+        when (persona) {
+            "administrator" -> "Admin"
+            "provider" -> "Provider"
+            else -> "User"
+        }
+
+    fun personaChipColor(persona: String): Color =
+        when (persona) {
+            "administrator" -> Color(0xFF2D1E5A)
+            "provider" -> Color(0xFF1565C0)
+            else -> Color(0xFF757575)
+        }
+
     editTarget?.let { target ->
         androidx.compose.material.AlertDialog(
             onDismissRequest = { if (!saving) editTarget = null },
@@ -988,15 +1024,23 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
                         androidx.compose.material.Checkbox(
                             checked = editIsUser,
                             onCheckedChange = { editIsUser = it },
-                            enabled = !saving
+                            enabled = !saving,
                         )
                         Text("User")
                     }
                     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         androidx.compose.material.Checkbox(
+                            checked = editIsProvider,
+                            onCheckedChange = { editIsProvider = it },
+                            enabled = !saving,
+                        )
+                        Text("Provider")
+                    }
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        androidx.compose.material.Checkbox(
                             checked = editIsAdmin,
                             onCheckedChange = { editIsAdmin = it },
-                            enabled = !saving
+                            enabled = !saving,
                         )
                         Text("Administrator")
                     }
@@ -1007,13 +1051,21 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
                     onClick = {
                         val personas = buildList<String> {
                             if (editIsUser) add("user")
+                            if (editIsProvider) add("provider")
                             if (editIsAdmin) add("administrator")
                         }
-                        if (personas.isEmpty()) { error = "Select at least one role."; return@Button }
+                        if (personas.isEmpty()) {
+                            error = "Select at least one role."
+                            return@Button
+                        }
                         scope.launch {
                             saving = true
                             runCatching { api.updateUserPersonas(tok, target.id, personas) }
-                                .onSuccess { editTarget = null; reload() }
+                                .onSuccess {
+                                    editTarget = null
+                                    success = "Saved roles."
+                                    reload()
+                                }
                                 .onFailure {
                                     if (it is kotlinx.coroutines.CancellationException) throw it
                                     error = it.message ?: it.toString()
@@ -1021,16 +1073,98 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
                             saving = false
                         }
                     },
-                    enabled = !saving
+                    enabled = !saving,
                 ) { Text("Save") }
             },
             dismissButton = {
                 TextButton(onClick = { if (!saving) editTarget = null }) { Text("Cancel") }
-            }
+            },
         )
     }
 
-    // Delete dialog
+    if (inviteOpen) {
+        androidx.compose.material.AlertDialog(
+            onDismissRequest = { if (!saving) inviteOpen = false },
+            title = { Text("Invite User") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = inviteEmail,
+                        onValueChange = { inviteEmail = it },
+                        label = { Text("Email") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        androidx.compose.material.Checkbox(
+                            checked = inviteUser,
+                            onCheckedChange = { inviteUser = it },
+                            enabled = !saving,
+                        )
+                        Text("User")
+                    }
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        androidx.compose.material.Checkbox(
+                            checked = inviteProvider,
+                            onCheckedChange = { inviteProvider = it },
+                            enabled = !saving,
+                        )
+                        Text("Provider")
+                    }
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        androidx.compose.material.Checkbox(
+                            checked = inviteAdmin,
+                            onCheckedChange = { inviteAdmin = it },
+                            enabled = !saving,
+                        )
+                        Text("Administrator")
+                    }
+                }
+            },
+            confirmButton = {
+                androidx.compose.material.Button(
+                    onClick = {
+                        if (inviteEmail.isBlank()) {
+                            error = "Email is required"
+                            return@Button
+                        }
+                        val roles = buildList<String> {
+                            if (inviteUser) add("user")
+                            if (inviteProvider) add("provider")
+                            if (inviteAdmin) add("administrator")
+                        }
+                        if (roles.isEmpty()) {
+                            error = "Select at least one role."
+                            return@Button
+                        }
+                        scope.launch {
+                            saving = true
+                            runCatching { api.inviteAdminUser(tok, inviteEmail, roles) }
+                                .onSuccess {
+                                    inviteOpen = false
+                                    inviteEmail = ""
+                                    inviteUser = true
+                                    inviteProvider = false
+                                    inviteAdmin = false
+                                    success = "Invite sent successfully."
+                                }
+                                .onFailure {
+                                    if (it is kotlinx.coroutines.CancellationException) throw it
+                                    error = it.message ?: it.toString()
+                                }
+                            saving = false
+                        }
+                    },
+                    enabled = !saving,
+                ) { Text("Send Invite") }
+            },
+            dismissButton = {
+                TextButton(onClick = { if (!saving) inviteOpen = false }) { Text("Cancel") }
+            },
+        )
+    }
+
     deleteTarget?.let { target ->
         androidx.compose.material.AlertDialog(
             onDismissRequest = { if (!saving) deleteTarget = null },
@@ -1042,7 +1176,11 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
                         scope.launch {
                             saving = true
                             runCatching { api.deleteAdminUser(tok, target.id) }
-                                .onSuccess { deleteTarget = null; reload() }
+                                .onSuccess {
+                                    deleteTarget = null
+                                    success = "User removed."
+                                    reload()
+                                }
                                 .onFailure {
                                     if (it is kotlinx.coroutines.CancellationException) throw it
                                     error = it.message ?: it.toString()
@@ -1053,110 +1191,154 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
                     enabled = !saving,
                     colors = androidx.compose.material.ButtonDefaults.buttonColors(
                         backgroundColor = MaterialTheme.colors.error,
-                        contentColor = Color.White
-                    )
+                        contentColor = Color.White,
+                    ),
                 ) { Text("Delete") }
             },
             dismissButton = {
                 TextButton(onClick = { if (!saving) deleteTarget = null }) { Text("Cancel") }
+            },
+        )
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        error?.let {
+            Text("Error: $it", color = MaterialTheme.colors.error, modifier = Modifier.padding(bottom = 4.dp))
+            TextButton(onClick = { error = null; reload() }) { Text("Retry") }
+        }
+
+        success?.let {
+            Card(Modifier.padding(bottom = 8.dp)) {
+                Row(
+                    Modifier.fillMaxWidth().padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Text(it, color = Color(0xFF388E3C))
+                    TextButton(onClick = { success = null }) { Text("Dismiss") }
+                }
             }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            OutlinedTextField(
+                value = search,
+                onValueChange = { search = it },
+                label = { Text("Search name, email, or Auth0 id") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+            )
+            TextButton(onClick = { inviteOpen = true }) { Text("Invite") }
+            TextButton(onClick = { reload() }) { Text("Refresh") }
+        }
+
+        Text(
+            "${filtered.size} user(s) · page ${page + 1} of $pageCount",
+            style = MaterialTheme.typography.caption,
+            modifier = Modifier.padding(bottom = 4.dp),
         )
-    }
 
-    // Search bar + refresh
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        OutlinedTextField(
-            value = search,
-            onValueChange = { search = it },
-            label = { Text("Search name or email") },
-            modifier = Modifier.weight(1f),
-            singleLine = true
-        )
-        TextButton(onClick = { reload() }) { Text("Refresh") }
-    }
-
-    Text(
-        "${filtered.size} user(s)",
-        style = MaterialTheme.typography.caption,
-        modifier = Modifier.padding(bottom = 4.dp)
-    )
-
-    LazyColumn(Modifier.fillMaxSize()) {
-        itemsIndexed(filtered, key = { _, u -> u.id }) { index, user ->
-            val bgColor = if (index % 2 == 0) MaterialTheme.colors.surface
-                          else androidx.compose.ui.graphics.Color(0xFFEEEEEE)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 3.dp),
-                backgroundColor = bgColor,
-                elevation = 1.dp
-            ) {
-                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                user.name.ifBlank { "(no name)" },
-                                fontWeight = FontWeight.SemiBold,
-                                style = MaterialTheme.typography.body1
-                            )
-                            Text(
-                                user.email,
-                                style = MaterialTheme.typography.caption,
-                                color = Color.Gray
-                            )
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                user.personas.forEach { persona ->
-                                    val label = if (persona == "administrator") "Admin" else "User"
-                                    val chipColor = if (persona == "administrator")
-                                        androidx.compose.ui.graphics.Color(0xFF2D1E5A)
-                                    else MaterialTheme.colors.secondary
-                                    Box(
-                                        modifier = Modifier
-                                            .background(chipColor, shape = RoundedCornerShape(4.dp))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(label, color = Color.White, style = MaterialTheme.typography.overline)
-                                    }
-                                }
-                                if (user.emailVerified) {
-                                    Box(
-                                        modifier = Modifier
-                                            .background(
-                                                androidx.compose.ui.graphics.Color(0xFF388E3C),
-                                                shape = RoundedCornerShape(4.dp)
+        LazyColumn(Modifier.weight(1f)) {
+            itemsIndexed(paginated, key = { _, u -> u.id }) { index, user ->
+                val bgColor =
+                    if (index % 2 == 0) MaterialTheme.colors.surface
+                    else Color(0xFFEEEEEE)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp),
+                    backgroundColor = bgColor,
+                    elevation = 1.dp,
+                ) {
+                    Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    user.name.ifBlank { "(no name)" },
+                                    fontWeight = FontWeight.SemiBold,
+                                    style = MaterialTheme.typography.body1,
+                                )
+                                Text(
+                                    user.email,
+                                    style = MaterialTheme.typography.caption,
+                                    color = Color.Gray,
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    user.personas.forEach { persona ->
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    personaChipColor(persona),
+                                                    shape = RoundedCornerShape(4.dp),
+                                                )
+                                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                                        ) {
+                                            Text(
+                                                personaChipLabel(persona),
+                                                color = Color.White,
+                                                style = MaterialTheme.typography.overline,
                                             )
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text("Verified", color = Color.White, style = MaterialTheme.typography.overline)
+                                        }
+                                    }
+                                    if (user.emailVerified) {
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    Color(0xFF388E3C),
+                                                    shape = RoundedCornerShape(4.dp),
+                                                )
+                                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                                        ) {
+                                            Text(
+                                                "Verified",
+                                                color = Color.White,
+                                                style = MaterialTheme.typography.overline,
+                                            )
+                                        }
                                     }
                                 }
                             }
-                        }
-                        Row {
-                            TextButton(
-                                onClick = {
-                                    editTarget = user
-                                    editIsAdmin = user.personas.contains("administrator")
-                                    editIsUser = user.personas.contains("user")
+                            Row {
+                                TextButton(
+                                    onClick = {
+                                        editTarget = user
+                                        editIsAdmin = user.personas.contains("administrator")
+                                        editIsUser = user.personas.contains("user")
+                                        editIsProvider = user.personas.contains("provider")
+                                    },
+                                ) { Text("Edit") }
+                                TextButton(onClick = { deleteTarget = user }) {
+                                    Text("Del", color = MaterialTheme.colors.error)
                                 }
-                            ) { Text("Edit") }
-                            TextButton(
-                                onClick = { deleteTarget = user }
-                            ) {
-                                Text("Del", color = MaterialTheme.colors.error)
                             }
                         }
                     }
                 }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        ) {
+            TextButton(onClick = { page = (page - 1).coerceAtLeast(0) }, enabled = page > 0) {
+                Text("Previous")
+            }
+            Text("${page + 1} / $pageCount")
+            TextButton(
+                onClick = { page = (page + 1).coerceAtMost(pageCount - 1) },
+                enabled = page < pageCount - 1,
+            ) {
+                Text("Next")
             }
         }
     }
@@ -1425,6 +1607,7 @@ private fun AdminProvidersUi(api: WeirHereApi, accessToken: String?) {
             var name by remember { mutableStateOf("") }
             var email by remember { mutableStateOf("") }
             var address by remember { mutableStateOf("") }
+            var phoneNumbers by remember { mutableStateOf<List<com.weirhere.model.PhoneNumberDto>>(emptyList()) }
             var saving by remember { mutableStateOf(false) }
 
             Card(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
@@ -1433,12 +1616,42 @@ private fun AdminProvidersUi(api: WeirHereApi, accessToken: String?) {
                     OutlinedTextField(name, { name = it }, label = { Text("Name *") }, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(email, { email = it }, label = { Text("Email *") }, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(address, { address = it }, label = { Text("Address") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+
+                    Spacer(Modifier.height(8.dp))
+                    Text("Phone Numbers", fontWeight = FontWeight.SemiBold)
+                    phoneNumbers.forEachIndexed { idx, p ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Text(p.number, modifier = Modifier.weight(1f))
+                            Text(p.number, modifier = Modifier.weight(1f))
+                            if (p.isBest) Text("(Best)", color = MaterialTheme.colors.primary, style = MaterialTheme.typography.caption)
+                            androidx.compose.material.TextButton(onClick = { phoneNumbers = phoneNumbers.filterIndexed { i, _ -> i != idx } }) {
+                                androidx.compose.material.Text("X", color = MaterialTheme.colors.error, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                    var newPhone by remember { mutableStateOf("") }
+                    var newPhoneIsBest by remember { mutableStateOf(false) }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        OutlinedTextField(newPhone, { newPhone = it }, label = { Text("New Phone") }, modifier = Modifier.weight(1f))
+                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            androidx.compose.material.Checkbox(checked = newPhoneIsBest, onCheckedChange = { newPhoneIsBest = it })
+                            Text("Best", style = MaterialTheme.typography.caption)
+                        }
+                        androidx.compose.material.TextButton(onClick = {
+                            if (newPhone.isNotBlank()) {
+                                phoneNumbers = phoneNumbers + com.weirhere.model.PhoneNumberDto(newPhone, newPhoneIsBest)
+                                newPhone = ""
+                                newPhoneIsBest = false
+                            }
+                        }) { Text("Add") }
+                    }
+
                     Row(Modifier.padding(top = 8.dp)) {
                         androidx.compose.material.Button(
                             onClick = {
                                 scope.launch {
                                     saving = true
-                                    runCatching { api.createProvider(tok, com.weirhere.model.ProviderUpsertPayload(name = name, email = email, addrxxxxxx   x`ess = address)) }
+                                    runCatching { api.createProvider(tok, com.weirhere.model.ProviderUpsertPayload(name = name, email = email, address = address, phoneNumbers = phoneNumbers)) }
                                         .onSuccess { 
                                             showAdd = false
                                             reload()
@@ -1469,6 +1682,9 @@ private fun AdminProvidersUi(api: WeirHereApi, accessToken: String?) {
                             Text(prov.name, fontWeight = FontWeight.Bold)
                             if (!prov.email.isNullOrBlank()) Text(prov.email, style = MaterialTheme.typography.body2, color = MaterialTheme.colors.primary)
                             if (prov.address.isNotBlank()) Text(prov.address, style = MaterialTheme.typography.body2)
+                            if (prov.phoneNumbers.isNotEmpty()) {
+                                Text("Phones: " + prov.phoneNumbers.joinToString { if (it.isBest) "${it.number} (Best)" else it.number }, style = MaterialTheme.typography.body2)
+                            }
                             if (prov.qualifications.isNotEmpty()) {
                                 Text(prov.qualifications.joinToString { 
                                     if (!it.description.isNullOrBlank()) "${it.description} (${it.fileName})" else it.fileName 
@@ -1530,6 +1746,7 @@ private fun AdminClientsUi(api: WeirHereApi, accessToken: String?) {
         if (showAdd) {
             var name by remember { mutableStateOf("") }
             var address by remember { mutableStateOf("") }
+            var phoneNumbers by remember { mutableStateOf<List<com.weirhere.model.PhoneNumberDto>>(emptyList()) }
             var saving by remember { mutableStateOf(false) }
 
             Card(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
@@ -1537,12 +1754,41 @@ private fun AdminClientsUi(api: WeirHereApi, accessToken: String?) {
                     Text("Add Client", style = MaterialTheme.typography.h6)
                     OutlinedTextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(address, { address = it }, label = { Text("Address") }, modifier = Modifier.fillMaxWidth())
+
+                    Spacer(Modifier.height(8.dp))
+                    Text("Phone Numbers", fontWeight = FontWeight.SemiBold)
+                    phoneNumbers.forEachIndexed { idx, p ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Text(p.number, modifier = Modifier.weight(1f))
+                            if (p.isBest) Text("(Best)", color = MaterialTheme.colors.primary, style = MaterialTheme.typography.caption)
+                            androidx.compose.material.TextButton(onClick = { phoneNumbers = phoneNumbers.filterIndexed { i, _ -> i != idx } }) {
+                                androidx.compose.material.Text("X", color = MaterialTheme.colors.error, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                    var newPhone by remember { mutableStateOf("") }
+                    var newPhoneIsBest by remember { mutableStateOf(false) }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        OutlinedTextField(newPhone, { newPhone = it }, label = { Text("New Phone") }, modifier = Modifier.weight(1f))
+                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            androidx.compose.material.Checkbox(checked = newPhoneIsBest, onCheckedChange = { newPhoneIsBest = it })
+                            Text("Best", style = MaterialTheme.typography.caption)
+                        }
+                        androidx.compose.material.TextButton(onClick = {
+                            if (newPhone.isNotBlank()) {
+                                phoneNumbers = phoneNumbers + com.weirhere.model.PhoneNumberDto(newPhone, newPhoneIsBest)
+                                newPhone = ""
+                                newPhoneIsBest = false
+                            }
+                        }) { Text("Add") }
+                    }
+
                     Row(Modifier.padding(top = 8.dp)) {
                         androidx.compose.material.Button(
                             onClick = {
                                 scope.launch {
                                     saving = true
-                                    runCatching { api.createClient(tok, com.weirhere.model.ClientUpsertPayload(name = name, address = address)) }
+                                    runCatching { api.createClient(tok, com.weirhere.model.ClientUpsertPayload(name = name, address = address, phoneNumbers = phoneNumbers)) }
                                         .onSuccess { 
                                             showAdd = false
                                             reload()
@@ -1572,6 +1818,9 @@ private fun AdminClientsUi(api: WeirHereApi, accessToken: String?) {
                         Column(Modifier.padding(12.dp)) {
                             Text(cli.name, fontWeight = FontWeight.Bold)
                             Text(cli.address, style = MaterialTheme.typography.body2)
+                            if (cli.phoneNumbers.isNotEmpty()) {
+                                Text("Phones: " + cli.phoneNumbers.joinToString { if (it.isBest) "${it.number} (Best)" else it.number }, style = MaterialTheme.typography.body2)
+                            }
                             TextButton(onClick = {
                                 scope.launch {
                                     runCatching { api.deleteClient(tok, cli.id.orEmpty()) }

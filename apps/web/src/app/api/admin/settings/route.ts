@@ -1,26 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth0 } from '@/lib/auth0';
 import { connectDB } from '@/lib/mongodb';
-import User from '@/models/User';
 import SystemSetting from '@/models/SystemSetting';
+import { requireAdministrator } from '@/lib/adminAuth';
 
 const MASKED_KEYS = ['MS365_CLIENT_SECRET'];
 const MASK_VALUE = '********';
 
-async function requireAdmin(sub: string) {
-  const user = await User.findOne({ auth0Id: sub });
-  if (!user || !user.personas.includes('administrator')) return null;
-  return user;
-}
-
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await auth0.getSession();
-    if (!session) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const gate = await requireAdministrator(req);
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' },
+        { status: gate.status },
+      );
+    }
 
     await connectDB();
-    const admin = await requireAdmin(session.user.sub);
-    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const docs = await SystemSetting.find().lean();
     const settings: Record<string, string> = {};
@@ -36,26 +32,31 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
-    if (!session) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const gate = await requireAdministrator(request);
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? 'Not authenticated' : 'Forbidden' },
+        { status: gate.status },
+      );
+    }
 
     await connectDB();
-    const admin = await requireAdmin(session.user.sub);
-    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { settings } = (await request.json()) as { settings: Record<string, string> };
     if (!settings || typeof settings !== 'object') {
       return NextResponse.json({ error: 'settings object is required' }, { status: 400 });
     }
 
+    const updatedBy = gate.admin.auth0Id;
+
     const ops = Object.entries(settings)
       .filter(([key, value]) => !(MASKED_KEYS.includes(key) && value === MASK_VALUE))
       .map(([key, value]) =>
         SystemSetting.findOneAndUpdate(
           { key },
-          { key, value, updatedBy: session.user.sub },
-          { upsert: true, new: true }
-        )
+          { key, value, updatedBy },
+          { upsert: true, new: true },
+        ),
       );
 
     await Promise.all(ops);
