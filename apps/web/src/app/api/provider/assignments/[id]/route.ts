@@ -1,45 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
 import Assignment from '@/models/Assignment';
-import Provider from '@/models/Provider';
-import User from '@/models/User';
-import { getApiAuthUser } from '@/lib/apiAuth';
-import { auth0 } from '@/lib/auth0';
+import '@/models/Client';
+import '@/models/Provider';
+import { resolveProviderForRequest } from '@/lib/providerAuth';
 import mongoose from 'mongoose';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    let email: string | undefined;
-
-    // Try cookie session first
-    const session = await auth0.getSession();
-    if (session?.user?.email) {
-      email = session.user.email;
-    } else {
-      // Try Bearer token
-      const apiUser = await getApiAuthUser(req);
-      if (apiUser?.email) {
-        email = apiUser.email;
-      }
-    }
-
-    if (!email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    await connectDB();
-    const normalizedEmail = email.trim().toLowerCase();
-    let user = await User.findOne({ email: normalizedEmail });
-    if (!user) {
-      user = await User.findOne({ email: email.trim() });
-    }
-    if (!user || (!user.personas.includes('provider') && !user.personas.includes('administrator'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const provider = await Provider.findOne({ email: normalizedEmail });
-    if (!provider) {
-      return NextResponse.json({ error: 'Provider record not found' }, { status: 404 });
+    const auth = await resolveProviderForRequest(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const { id } = await params;
@@ -47,9 +17,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Invalid assignment ID' }, { status: 400 });
     }
 
-    const assignment = await Assignment.findOne({ _id: id, providerId: provider._id });
+    const assignment = await Assignment.findOne({ _id: id, providerId: auth.provider._id });
     if (!assignment) {
-      return NextResponse.json({ error: 'Assignment not found or you do not have permission to modify it' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Assignment not found or you do not have permission to modify it' },
+        { status: 404 },
+      );
     }
 
     const body = await req.json();
@@ -72,7 +45,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     await assignment.save();
-    return NextResponse.json(assignment);
+
+    const updated = await Assignment.findById(assignment._id)
+      .populate('clientId', 'name address')
+      .populate('providerId', 'name')
+      .lean();
+
+    return NextResponse.json(updated);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error';
     return NextResponse.json({ error: message }, { status: 500 });

@@ -1,10 +1,15 @@
 package com.weirhere.payment
 
 import android.annotation.SuppressLint
+import android.view.View
+import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -12,7 +17,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 actual fun PlatformPayPalHostedButton(modifier: Modifier) {
     val containerId = PaymentConstants.PAYPAL_CONTAINER_ID
     val buttonId = PaymentConstants.HOSTED_BUTTON_ID
-    val html =
+    val html = remember(containerId, buttonId) {
         """
         <!DOCTYPE html>
         <html>
@@ -42,11 +47,24 @@ actual fun PlatformPayPalHostedButton(modifier: Modifier) {
         </body>
         </html>
         """.trimIndent()
+    }
+
+    val density = LocalDensity.current
+    val heightPx = remember(density) { with(density) { 250.dp.roundToPx() } }
 
     AndroidView(
         modifier = modifier,
         factory = { context ->
             WebView(context).apply {
+                layoutParams =
+                    ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        heightPx,
+                    )
+                isNestedScrollingEnabled = false
+                overScrollMode = View.OVER_SCROLL_NEVER
+                isVerticalScrollBarEnabled = false
+                isHorizontalScrollBarEnabled = false
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 webViewClient =
@@ -70,6 +88,13 @@ actual fun PlatformPayPalHostedButton(modifier: Modifier) {
                     }
                 loadDataWithBaseURL("https://www.paypal.com", html, "text/html", "UTF-8", null)
             }
+        },
+        update = { webView ->
+            webView.layoutParams =
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    heightPx,
+                )
         },
     )
 }

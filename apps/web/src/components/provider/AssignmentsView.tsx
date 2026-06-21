@@ -74,13 +74,17 @@ export default function AssignmentsView() {
 
   const fetchAssignments = async () => {
     setLoading(true);
+    setError('');
     try {
       const res = await fetch('/api/provider/assignments');
-      if (!res.ok) throw new Error('Failed to fetch assignments');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Failed to fetch assignments (${res.status})`);
+      }
       const data = await res.json();
       setAssignments(data);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to fetch assignments');
     } finally {
       setLoading(false);
     }
@@ -106,8 +110,8 @@ export default function AssignmentsView() {
         body: JSON.stringify({ action }),
       });
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to update assignment');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to update assignment (${res.status})`);
       }
       const updated = await res.json();
       setAssignments((prev) =>

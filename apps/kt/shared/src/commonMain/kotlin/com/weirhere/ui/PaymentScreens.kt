@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -35,144 +34,143 @@ import com.weirhere.payment.PlatformPayPalHostedButton
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
+private val PayPalSectionHeight = 250.dp
+
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun PaymentUi() {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-    ) {
-        Card(
-            Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            elevation = 0.dp,
-            backgroundColor = Color.White,
+    Column(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
         ) {
-            Column {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 200.dp),
-                ) {
-                    Image(
-                        painter = painterResource("secure_payment_portal.png"),
-                        contentDescription = "Secure Payment Portal",
-                        modifier = Modifier.fillMaxWidth().height(220.dp),
-                        contentScale = ContentScale.Crop,
-                    )
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(220.dp)
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, Color(0xB3000000)),
-                                    startY = 110f,
-                                ),
+            Card(
+                Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                elevation = 0.dp,
+                backgroundColor = Color.White,
+            ) {
+                Column {
+                    Box(Modifier.fillMaxWidth()) {
+                        Image(
+                            painter = painterResource("secure_payment_portal.png"),
+                            contentDescription = "Secure Payment Portal",
+                            modifier = Modifier.fillMaxWidth().height(220.dp),
+                            contentScale = ContentScale.Crop,
+                        )
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(220.dp)
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(Color.Transparent, Color(0xB3000000)),
+                                        startY = 110f,
+                                    ),
+                                )
+                                .padding(16.dp),
+                            contentAlignment = Alignment.BottomStart,
+                        ) {
+                            Text(
+                                "Secure Payment Portal",
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 28.sp,
                             )
-                            .padding(16.dp),
-                        contentAlignment = Alignment.BottomStart,
-                    ) {
+                        }
+                    }
+
+                    Column(Modifier.padding(horizontal = 20.dp, vertical = 24.dp)) {
                         Text(
-                            "Secure Payment Portal",
-                            color = Color.White,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 28.sp,
+                            "Welcome to the Weir-Here Staffing Solutions secure payment gateway. We are committed to providing a seamless and professional experience, ensuring that managing your account is as efficient as the staffing services we provide.",
+                            style = MaterialTheme.typography.body1,
+                            color = Color(0xFF616161),
+                            lineHeight = 26.sp,
+                            modifier = Modifier.padding(bottom = 16.dp),
                         )
-                    }
-                }
-
-                Column(Modifier.padding(horizontal = 20.dp, vertical = 24.dp)) {
-                    Text(
-                        "Welcome to the Weir-Here Staffing Solutions secure payment gateway. We are committed to providing a seamless and professional experience, ensuring that managing your account is as efficient as the staffing services we provide.",
-                        style = MaterialTheme.typography.body1,
-                        color = Color(0xFF616161),
-                        lineHeight = 26.sp,
-                        modifier = Modifier.padding(bottom = 16.dp),
-                    )
-                    Text(
-                        "This portal allows our clients to settle invoices quickly and securely. Whether you are funding a new staffing contract, paying for specialized caregiving services, or settling recurring administrative fees, your transaction is protected by industry-standard encryption.",
-                        style = MaterialTheme.typography.body1,
-                        color = Color(0xFF616161),
-                        lineHeight = 26.sp,
-                        modifier = Modifier.padding(bottom = 24.dp),
-                    )
-
-                    Text(
-                        "How to Complete Your Payment",
-                        style = MaterialTheme.typography.h6,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp),
-                    )
-                    Divider(Modifier.padding(bottom = 12.dp))
-
-                    PaymentStep(
-                        number = "1",
-                        title = "Enter Invoice Details",
-                        detail = "Please provide your Invoice Number and Client ID to ensure funds are credited to the correct account.",
-                    )
-                    PaymentStep(
-                        number = "2",
-                        title = "Verify Amount",
-                        detail = "Enter the total amount as specified on your billing statement.",
-                    )
-                    PaymentStep(
-                        number = "3",
-                        title = "Choose Payment Method",
-                        detail = "We accept all major credit and debit cards, as well as verified electronic bank transfers.",
-                    )
-                    PaymentStep(
-                        number = "4",
-                        title = "Confirmation",
-                        detail = "Once your transaction is processed, a digital receipt will be sent immediately to your registered email address.",
-                    )
-
-                    Spacer(Modifier.height(24.dp))
-
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFFF0F4FF), RoundedCornerShape(8.dp))
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Text("ℹ", color = MaterialTheme.colors.primary, fontWeight = FontWeight.Bold)
                         Text(
-                            "Note: For international transactions or custom billing inquiries, please contact our accounts department directly at accounts@weirheresolutions.com.",
-                            style = MaterialTheme.typography.body2,
-                            fontStyle = FontStyle.Italic,
+                            "This portal allows our clients to settle invoices quickly and securely. Whether you are funding a new staffing contract, paying for specialized caregiving services, or settling recurring administrative fees, your transaction is protected by industry-standard encryption.",
+                            style = MaterialTheme.typography.body1,
+                            color = Color(0xFF616161),
+                            lineHeight = 26.sp,
+                            modifier = Modifier.padding(bottom = 24.dp),
+                        )
+
+                        Text(
+                            "How to Complete Your Payment",
+                            style = MaterialTheme.typography.h6,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        Divider(Modifier.padding(bottom = 12.dp))
+
+                        PaymentStep(
+                            number = "1",
+                            title = "Enter Invoice Details",
+                            detail = "Please provide your Invoice Number and Client ID to ensure funds are credited to the correct account.",
+                        )
+                        PaymentStep(
+                            number = "2",
+                            title = "Verify Amount",
+                            detail = "Enter the total amount as specified on your billing statement.",
+                        )
+                        PaymentStep(
+                            number = "3",
+                            title = "Choose Payment Method",
+                            detail = "We accept all major credit and debit cards, as well as verified electronic bank transfers.",
+                        )
+                        PaymentStep(
+                            number = "4",
+                            title = "Confirmation",
+                            detail = "Once your transaction is processed, a digital receipt will be sent immediately to your registered email address.",
+                        )
+
+                        Spacer(Modifier.height(24.dp))
+
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFF0F4FF), RoundedCornerShape(8.dp))
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text("ℹ", color = MaterialTheme.colors.primary, fontWeight = FontWeight.Bold)
+                            Text(
+                                "Note: For international transactions or custom billing inquiries, please contact our accounts department directly at accounts@weirheresolutions.com.",
+                                style = MaterialTheme.typography.body2,
+                                fontStyle = FontStyle.Italic,
+                            )
+                        }
+
+                        Spacer(Modifier.height(24.dp))
+
+                        Text(
+                            "Your trust is our priority. Thank you for choosing Weir-Here Staffing Solutions for your professional staffing needs.",
+                            textAlign = TextAlign.Center,
+                            color = Color(0xFF616161),
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
-
-                    Spacer(Modifier.height(24.dp))
-
-                    Text(
-                        "Your trust is our priority. Thank you for choosing Weir-Here Staffing Solutions for your professional staffing needs.",
-                        textAlign = TextAlign.Center,
-                        color = Color(0xFF616161),
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-                    )
-
-                    Divider(Modifier.padding(bottom = 24.dp))
-
-                    Box(
-                        Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        PlatformPayPalHostedButton(
-                            modifier =
-                                Modifier
-                                    .widthIn(max = 400.dp)
-                                    .fillMaxWidth()
-                                    .heightIn(min = 220.dp),
-                        )
-                    }
-
-                    Spacer(Modifier.height(16.dp))
                 }
             }
+        }
+
+        Divider()
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            PlatformPayPalHostedButton(
+                modifier =
+                    Modifier
+                        .widthIn(max = 400.dp)
+                        .fillMaxWidth()
+                        .height(PayPalSectionHeight),
+            )
         }
     }
 }

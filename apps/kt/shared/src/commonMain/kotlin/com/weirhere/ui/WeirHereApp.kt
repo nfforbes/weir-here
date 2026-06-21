@@ -68,7 +68,7 @@ import com.weirhere.model.SalaryRangeDto
 import com.weirhere.network.WeirHereApi
 import com.weirhere.network.ApiUnauthorizedException
 import com.weirhere.rbac.hasAdministrator
-import com.weirhere.rbac.hasProvider
+import com.weirhere.rbac.canAccessProviderPortal
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -179,7 +179,7 @@ fun WeirHereApp() {
     }
 
     LaunchedEffect(personas, tab) {
-        if (tab == Tab.PROVIDER && !hasProvider(personas)) {
+        if (tab == Tab.PROVIDER && !canAccessProviderPortal(personas)) {
             tab = Tab.JOBS
         }
     }
@@ -248,7 +248,7 @@ fun WeirHereApp() {
                         selected = tab == Tab.PROVIDER,
                         onClick = { tab = Tab.PROVIDER },
                         label = { Text("Provider") },
-                        enabled = hasProvider(personas),
+                        enabled = canAccessProviderPortal(personas),
                         icon = {},
                     )
                 }
@@ -293,8 +293,13 @@ fun WeirHereApp() {
                         }
 
                     Tab.PROVIDER ->
-                        if (hasProvider(personas)) {
-                            ProviderUi(api = api, accessToken = accessToken, onRefresh = {})
+                        if (canAccessProviderPortal(personas)) {
+                            ProviderUi(
+                                api = api,
+                                accessToken = accessToken,
+                                userEmail = bootEmail,
+                                onRefresh = {},
+                            )
                         } else {
                             Text("Only providers can access the provider portal.")
                         }

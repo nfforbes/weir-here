@@ -30,6 +30,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.SerializationException
 
 @kotlinx.serialization.Serializable
 private data class BootstrapResponse(val user: UserBootstrap? = null)
@@ -485,6 +486,11 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
             }.body()
         } catch (e: ClientRequestException) {
             throwProviderApiException(e)
+        } catch (e: SerializationException) {
+            throw Exception(
+                "Could not read assignments from server (response format mismatch). Try updating the app or contact support.",
+                e,
+            )
         }
 
     suspend fun providerAssignmentAction(
@@ -500,6 +506,11 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
             }.body()
         } catch (e: ClientRequestException) {
             throwProviderApiException(e)
+        } catch (e: SerializationException) {
+            throw Exception(
+                "Could not read assignment update from server (response format mismatch). Try updating the app or contact support.",
+                e,
+            )
         }
 
     private suspend fun throwProviderApiException(e: ClientRequestException): Nothing {

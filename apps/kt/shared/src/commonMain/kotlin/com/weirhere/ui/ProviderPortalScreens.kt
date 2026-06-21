@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 fun ProviderUi(
     api: WeirHereApi,
     accessToken: String?,
+    userEmail: String? = null,
     onRefresh: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -77,7 +78,19 @@ fun ProviderUi(
             TextButton(onClick = { reload(); onRefresh() }) { Text("Refresh") }
         }
 
-        error?.let { Text(it, color = MaterialTheme.colors.error, modifier = Modifier.padding(vertical = 8.dp)) }
+        error?.let { msg ->
+            Column(Modifier.padding(vertical = 8.dp)) {
+                Text(msg, color = MaterialTheme.colors.error)
+                userEmail?.takeIf { it.isNotBlank() }?.let { email ->
+                    Text(
+                        "Signed in as: $email",
+                        style = MaterialTheme.typography.caption,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
+        }
 
         if (loading) {
             CircularProgressIndicator(Modifier.padding(16.dp))

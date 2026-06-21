@@ -1,49 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
 import Assignment from '@/models/Assignment';
-import Provider from '@/models/Provider';
-import User from '@/models/User';
-import { getApiAuthUser } from '@/lib/apiAuth';
-import { auth0 } from '@/lib/auth0';
+import '@/models/Client';
+import '@/models/Provider';
+import { resolveProviderForRequest } from '@/lib/providerAuth';
 
 export async function GET(req: NextRequest) {
-  let email: string | undefined;
-
-  // Try cookie session first
-  const session = await auth0.getSession();
-  if (session?.user?.email) {
-    email = session.user.email;
-  } else {
-    // Try Bearer token
-    const apiUser = await getApiAuthUser(req);
-    if (apiUser?.email) {
-      email = apiUser.email;
+  try {
+    const auth = await resolveProviderForRequest(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-  }
 
-  if (!email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+    const assignments = await Assignment.find({ providerId: auth.provider._id })
+      .populate('clientId', 'name address')
+      .populate('providerId', 'name')
+      .sort({ serviceDate: 1 })
+      .lean();
 
-  await connectDB();
-  const normalizedEmail = email.trim().toLowerCase();
-  let user = await User.findOne({ email: normalizedEmail });
-  if (!user) {
-    user = await User.findOne({ email: email.trim() });
+    return NextResponse.json(assignments);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-  if (!user || (!user.personas.includes('provider') && !user.personas.includes('administrator'))) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  const provider = await Provider.findOne({ email: normalizedEmail });
-  if (!provider) {
-    return NextResponse.json({ error: 'Provider record not found' }, { status: 404 });
-  }
-
-  const assignments = await Assignment.find({ providerId: provider._id })
-    .populate('clientId', 'name address')
-    .sort({ serviceDate: 1 })
-    .lean();
-
-  return NextResponse.json(assignments);
 }

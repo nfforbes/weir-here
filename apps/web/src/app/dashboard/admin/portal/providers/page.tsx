@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -10,6 +10,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TablePagination,
   Paper,
   Dialog,
   DialogTitle,
@@ -33,6 +34,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { ELECTRIC_BLUE } from '@/theme/theme';
+import { filterProviders, paginateList } from '@/lib/adminListHelpers';
 
 interface Qualification {
   _id: string;
@@ -65,6 +67,9 @@ export default function ProvidersPage() {
   const [stagedQualifications, setStagedQualifications] = useState<{ file: File | null; description: string }[]>([]);
   const [editingQualifications, setEditingQualifications] = useState<Qualification[]>([]);
   const [qualificationsToDelete, setQualificationsToDelete] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 25;
 
   const fetchProviders = useCallback(async () => {
     setLoading(true);
@@ -80,6 +85,14 @@ export default function ProvidersPage() {
   }, []);
 
   useEffect(() => { fetchProviders(); }, [fetchProviders]);
+
+  useEffect(() => { setPage(0); }, [search]);
+
+  const filteredProviders = useMemo(() => filterProviders(providers, search), [providers, search]);
+  const paginatedProviders = useMemo(
+    () => paginateList(filteredProviders, page, rowsPerPage),
+    [filteredProviders, page, rowsPerPage],
+  );
 
   const handleOpen = (provider?: Provider) => {
     if (provider) {
@@ -383,6 +396,15 @@ export default function ProvidersPage() {
         </Paper>
       ) : (
         <Paper>
+          <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <TextField
+              size="small"
+              fullWidth
+              label="Search name, email, address, phone, or qualification"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </Box>
           <Table>
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#f5f7fa' } }}>
@@ -397,12 +419,19 @@ export default function ProvidersPage() {
             <TableBody>
               {providers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     No providers yet. Click &quot;Add Provider&quot; to get started.
                   </TableCell>
                 </TableRow>
               )}
-              {providers.map((p) => (
+              {providers.length > 0 && filteredProviders.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                    No providers match your search.
+                  </TableCell>
+                </TableRow>
+              )}
+              {paginatedProviders.map((p) => (
                 <TableRow key={p._id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -473,6 +502,17 @@ export default function ProvidersPage() {
               ))}
             </TableBody>
           </Table>
+          {filteredProviders.length > 0 && (
+            <TablePagination
+              component="div"
+              count={filteredProviders.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              rowsPerPageOptions={[25]}
+              onPageChange={(_event, newPage) => setPage(newPage)}
+              onRowsPerPageChange={() => {}}
+            />
+          )}
         </Paper>
       )}
 

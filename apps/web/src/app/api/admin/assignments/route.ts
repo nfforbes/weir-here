@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Assignment from '@/models/Assignment';
+import '@/models/Client';
+import '@/models/Provider';
 import { requireAdministrator } from '@/lib/adminAuth';
 
 export async function GET(req: NextRequest) {

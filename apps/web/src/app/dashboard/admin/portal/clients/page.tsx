@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -10,6 +10,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TablePagination,
   Paper,
   Dialog,
   DialogTitle,
@@ -33,6 +34,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { ELECTRIC_BLUE } from '@/theme/theme';
+import { filterClients, paginateList } from '@/lib/adminListHelpers';
 
 interface Client {
   _id: string;
@@ -49,6 +51,9 @@ export default function ClientsPage() {
   const [editing, setEditing] = useState<Client | null>(null);
   const [form, setForm] = useState<{ name: string; address: string; phoneNumbers: { number: string; isBest: boolean }[] }>({ name: '', address: '', phoneNumbers: [] });
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 25;
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -64,6 +69,14 @@ export default function ClientsPage() {
   }, []);
 
   useEffect(() => { fetchClients(); }, [fetchClients]);
+
+  useEffect(() => { setPage(0); }, [search]);
+
+  const filteredClients = useMemo(() => filterClients(clients, search), [clients, search]);
+  const paginatedClients = useMemo(
+    () => paginateList(filteredClients, page, rowsPerPage),
+    [filteredClients, page, rowsPerPage],
+  );
 
   const handleOpen = (client?: Client) => {
     if (client) {
@@ -200,6 +213,15 @@ export default function ClientsPage() {
         </Paper>
       ) : (
         <Paper>
+          <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <TextField
+              size="small"
+              fullWidth
+              label="Search name, address, or phone"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </Box>
           <Table>
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#f5f7fa' } }}>
@@ -217,7 +239,14 @@ export default function ClientsPage() {
                   </TableCell>
                 </TableRow>
               )}
-              {clients.map((c) => (
+              {clients.length > 0 && filteredClients.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                    No clients match your search.
+                  </TableCell>
+                </TableRow>
+              )}
+              {paginatedClients.map((c) => (
                 <TableRow key={c._id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -250,6 +279,17 @@ export default function ClientsPage() {
               ))}
             </TableBody>
           </Table>
+          {filteredClients.length > 0 && (
+            <TablePagination
+              component="div"
+              count={filteredClients.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              rowsPerPageOptions={[25]}
+              onPageChange={(_event, newPage) => setPage(newPage)}
+              onRowsPerPageChange={() => {}}
+            />
+          )}
         </Paper>
       )}
 

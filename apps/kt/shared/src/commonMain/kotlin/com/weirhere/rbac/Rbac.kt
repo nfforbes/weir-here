@@ -5,3 +5,6 @@ package com.weirhere.rbac
 fun hasAdministrator(personas: List<String>): Boolean = personas.any { it == "administrator" }
 
 fun hasProvider(personas: List<String>): Boolean = personas.any { it == "provider" }
+
+fun canAccessProviderPortal(personas: List<String>): Boolean =
+    hasProvider(personas) || hasAdministrator(personas)
