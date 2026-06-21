@@ -60,7 +60,99 @@ data class UserBootstrap(
     val name: String = "",
     val personas: List<String> = emptyList(),
     val emailVerified: Boolean = false,
+    val updatedAt: String? = null,
 )
+
+@Serializable
+data class ReviewSubmitPayload(
+    val applicationId: String,
+    val rating: Int = 0,
+    val eliminated: Boolean = false,
+    val notes: String = "",
+)
+
+@Serializable
+data class ReviewSingleResponse(val review: ReviewDto)
+
+@Serializable
+data class TestimonialDto(
+    val id: String = "",
+    val quote: String = "",
+    val authorName: String = "",
+    val authorTitle: String = "",
+    val context: String = "",
+    val avatarUrl: String = "",
+    val published: Boolean = true,
+    val sortOrder: Int = 0,
+    val createdAt: String = "",
+    val updatedAt: String = "",
+)
+
+@Serializable
+data class TestimonialsResponse(val testimonials: List<TestimonialDto> = emptyList())
+
+@Serializable
+data class TestimonialUpsertPayload(
+    val quote: String,
+    val authorName: String,
+    val authorTitle: String = "",
+    val context: String = "",
+    val avatarUrl: String = "",
+    val published: Boolean = true,
+    val sortOrder: Int = 0,
+)
+
+@Serializable
+data class TestimonialSingleResponse(val testimonial: TestimonialDto)
+
+@Serializable
+data class AdminSettingsResponse(val settings: Map<String, String> = emptyMap())
+
+@Serializable
+data class AdminSettingsPutPayload(val settings: Map<String, String>)
+
+@Serializable
+data class AdminReportRowDto(
+    val client: String = "",
+    val address: String = "",
+    val provider: String = "",
+    val description: String = "",
+    val serviceDate: String = "",
+    val chargeAmount: Double = 0.0,
+    val providerPay: Double = 0.0,
+    val invoiced: Boolean = false,
+)
+
+@Serializable
+data class AdminReportResponse(
+    val month: String = "",
+    val rows: List<AdminReportRowDto> = emptyList(),
+    val total: Double = 0.0,
+)
+
+@Serializable
+data class QualificationUpdatePayload(val id: String, val description: String? = null)
+
+@Serializable
+data class PickedFilePayload(
+    val fileName: String,
+    val bytes: ByteArray,
+    val contentType: String,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+        other as PickedFilePayload
+        return fileName == other.fileName && bytes.contentEquals(other.bytes) && contentType == other.contentType
+    }
+
+    override fun hashCode(): Int {
+        var result = fileName.hashCode()
+        result = 31 * result + bytes.contentHashCode()
+        result = 31 * result + contentType.hashCode()
+        return result
+    }
+}
 
 /** POST /api/jobs body mirrors web [`JobPostForm`](web) flattened JSON. */
 @Serializable
@@ -237,12 +329,16 @@ data class AssignmentDto(
     val providerHourlyRateCents: Int = 0,
     val description: String = "",
     val serviceDate: String = "",
-    val isBilled: Boolean = false,
-    val isPaid: Boolean = false,
+    val status: String = "assigned",
+    val invoiced: Boolean = false,
 )
 
 @Serializable
+data class ProviderAssignmentActionPayload(val action: String)
+
+@Serializable
 data class AssignmentUpsertPayload(
+    val id: String? = null,
     val clientId: String,
     val providerId: String,
     val clientChargeCents: Int,
@@ -250,6 +346,7 @@ data class AssignmentUpsertPayload(
     val providerHourlyRateCents: Int,
     val description: String,
     val serviceDate: String,
+    val status: String? = null,
 )
 
 @Serializable

@@ -1,4 +1,4 @@
-package com.weirhere.ui
+﻿package com.weirhere.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -68,12 +68,13 @@ import com.weirhere.model.SalaryRangeDto
 import com.weirhere.network.WeirHereApi
 import com.weirhere.network.ApiUnauthorizedException
 import com.weirhere.rbac.hasAdministrator
+import com.weirhere.rbac.hasProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
-private enum class Tab { JOBS, MY, ADMIN, PROFILE }
+private enum class Tab { JOBS, PAYMENT, ADMIN, PROVIDER, PROFILE }
 
 private fun jobRouteId(job: JobJson): String? {
     val id = job.id?.trim().orEmpty()
@@ -94,16 +95,21 @@ fun WeirHereApp() {
 
     var tab by remember { mutableStateOf(Tab.JOBS) }
     var jobs by remember { mutableStateOf<List<JobJson>>(emptyList()) }
-    var myJobs by remember { mutableStateOf<List<JobJson>>(emptyList()) }
     var loadingJobs by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var personas by remember { mutableStateOf<List<String>>(emptyList()) }
     var emailVerified by remember { mutableStateOf(false) }
     var bootEmail by remember { mutableStateOf<String?>(null) }
+    var bootName by remember { mutableStateOf<String?>(null) }
+    var bootUpdatedAt by remember { mutableStateOf<String?>(null) }
     var showSplash by remember { mutableStateOf(true) }
     var publicJobsPage by remember { mutableStateOf(1) }
+    var applyJob by remember { mutableStateOf<JobJson?>(null) }
+    var showAlreadyApplied by remember { mutableStateOf(false) }
+    var returnToJobsAfterLogin by remember { mutableStateOf(false) }
 
     var accessToken by remember { mutableStateOf<String?>(SessionStore.readSync()) }
+    val bootstrapLoading = !accessToken.isNullOrBlank() && bootEmail == null
 
     LaunchedEffect(Unit) {
         SessionStore.accessToken.collect { accessToken = it }
@@ -114,6 +120,9 @@ fun WeirHereApp() {
         if (tok.isEmpty()) {
             personas = emptyList()
             bootEmail = null
+            bootName = null
+            bootUpdatedAt = null
+            returnToJobsAfterLogin = false
             return@LaunchedEffect
         }
         runCatching { api.bootstrap("Bearer ${tok}") }
@@ -122,8 +131,13 @@ fun WeirHereApp() {
                     personas = userBootstrap.personas
                     emailVerified = userBootstrap.emailVerified
                     bootEmail = userBootstrap.email
+                    bootName = userBootstrap.name
+                    bootUpdatedAt = userBootstrap.updatedAt
                     if (hasAdministrator(userBootstrap.personas) && tab == Tab.PROFILE) {
                         tab = Tab.ADMIN
+                    } else if (returnToJobsAfterLogin && tab == Tab.PROFILE) {
+                        tab = Tab.JOBS
+                        returnToJobsAfterLogin = false
                     }
                 }
             }
@@ -133,6 +147,8 @@ fun WeirHereApp() {
                     SessionStore.setAccess(null)
                     personas = emptyList()
                     bootEmail = null
+                    bootName = null
+                    bootUpdatedAt = null
                     message = "Session expired. Please sign in again."
                 } else {
                     message = "Bootstrap failed: ${it.message ?: it}"
@@ -153,19 +169,6 @@ fun WeirHereApp() {
         }
     }
 
-    fun reloadMine() {
-        val tok = accessToken?.trim().orEmpty()
-        if (tok.isEmpty()) return
-        scope.launch {
-            runCatching { api.listMyJobs("Bearer ${tok}") }
-                .onSuccess { myJobs = it.jobs }
-                .onFailure {
-                    if (it is kotlinx.coroutines.CancellationException) throw it
-                    message = it.message ?: it.toString()
-                }
-        }
-    }
-
     LaunchedEffect(publicJobsPage) {
         reloadPublic()
     }
@@ -175,8 +178,10 @@ fun WeirHereApp() {
         showSplash = false
     }
 
-    LaunchedEffect(accessToken, tab) {
-        if (tab == Tab.MY) reloadMine()
+    LaunchedEffect(personas, tab) {
+        if (tab == Tab.PROVIDER && !hasProvider(personas)) {
+            tab = Tab.JOBS
+        }
     }
 
     if (showSplash) {
@@ -227,9 +232,9 @@ fun WeirHereApp() {
                         icon = {},
                     )
                     BottomNavigationItem(
-                        selected = tab == Tab.MY,
-                        onClick = { tab = Tab.MY },
-                        label = { Text("Mine") },
+                        selected = tab == Tab.PAYMENT,
+                        onClick = { tab = Tab.PAYMENT },
+                        label = { Text("Payment") },
                         icon = {},
                     )
                     BottomNavigationItem(
@@ -240,9 +245,10 @@ fun WeirHereApp() {
                         icon = {},
                     )
                     BottomNavigationItem(
-                        selected = tab == Tab.PROFILE,
-                        onClick = { tab = Tab.PROFILE },
-                        label = { Text("Profile") },
+                        selected = tab == Tab.PROVIDER,
+                        onClick = { tab = Tab.PROVIDER },
+                        label = { Text("Provider") },
+                        enabled = hasProvider(personas),
                         icon = {},
                     )
                 }
@@ -270,34 +276,14 @@ fun WeirHereApp() {
                         page = publicJobsPage,
                         onPageChange = { publicJobsPage = it },
                         accessToken = accessToken,
-                        onLoginRequest = { tab = Tab.PROFILE },
-                        onApplyRequest = { job ->
-                            val tok = accessToken?.trim().orEmpty()
-                            if (tok.isEmpty()) return@JobListUi
-                            scope.launch {
-                                runCatching { 
-                                    api.applyToJob(
-                                        tok, 
-                                        com.weirhere.model.ApplicationPayload(job.id ?: job.slug)
-                                    ) 
-                                }
-                                .onSuccess { message = "Application submitted successfully!" }
-                                .onFailure {
-                                    if (it is kotlinx.coroutines.CancellationException) throw it
-                                    message = "Failed to apply: ${it.message ?: it.toString()}"
-                                }
-                            }
-                        }
+                        onLoginRequest = {
+                            returnToJobsAfterLogin = true
+                            tab = Tab.PROFILE
+                        },
+                        onApplyRequest = { job -> applyJob = job }
                     )
 
-                    Tab.MY ->
-                        MineUi(
-                            personas = personas,
-                            accessToken = accessToken,
-                            myJobs = myJobs,
-                            onRefresh = { reloadMine() },
-                            api = api,
-                        )
+                    Tab.PAYMENT -> PaymentUi()
 
                     Tab.ADMIN ->
                         if (hasAdministrator(personas)) {
@@ -306,12 +292,20 @@ fun WeirHereApp() {
                             Text("Only administrators can access the admin dashboard.")
                         }
 
+                    Tab.PROVIDER ->
+                        if (hasProvider(personas)) {
+                            ProviderUi(api = api, accessToken = accessToken, onRefresh = {})
+                        } else {
+                            Text("Only providers can access the provider portal.")
+                        }
+
                     Tab.PROFILE -> ProfileUi(
-                        personas = personas,
+                        bootstrapLoading = bootstrapLoading,
+                        name = bootName,
                         email = bootEmail,
-                        emailVerified = emailVerified,
+                        lastLogin = formatLastLogin(bootUpdatedAt, SessionStore.lastLoginAt()),
+                        onLoginError = { message = it },
                         onLogout = {
-                            val tok = accessToken?.trim().orEmpty()
                             scope.launch {
                                 SessionStore.setAccess(null)
                                 message = "Logged out"
@@ -319,6 +313,29 @@ fun WeirHereApp() {
                             }
                         },
                         onBack = { tab = Tab.JOBS }
+                    )
+                }
+
+                applyJob?.let { job ->
+                    ApplyJobDialog(
+                        job = job,
+                        api = api,
+                        accessToken = accessToken?.trim().orEmpty(),
+                        onDismiss = { applyJob = null },
+                        onSuccess = { message = "Application submitted successfully!" },
+                        onAlreadyApplied = { showAlreadyApplied = true },
+                        onError = { message = it },
+                    )
+                }
+
+                if (showAlreadyApplied) {
+                    androidx.compose.material.AlertDialog(
+                        onDismissRequest = { showAlreadyApplied = false },
+                        title = { Text("Already applied") },
+                        text = { Text("You have already applied for this job.") },
+                        confirmButton = {
+                            TextButton(onClick = { showAlreadyApplied = false }) { Text("OK") }
+                        },
                     )
                 }
             }
@@ -342,7 +359,7 @@ private fun JobListUi(
     if (selectedJobId != null && selectedJob != null) {
         Column(Modifier.fillMaxSize()) {
             TextButton(onClick = { selectedJobId = null }) {
-                Text("← Back to Jobs")
+                Text("â† Back to Jobs")
             }
             JobDetailsUi(selectedJob, accessToken, onLoginRequest, onApplyRequest)
         }
@@ -375,7 +392,7 @@ private fun JobListUi(
             ) {
                 Column(Modifier.padding(12.dp)) {
                     Text(it.title, style = MaterialTheme.typography.h6)
-                    Text("${it.location} · ${it.employmentType}")
+                    Text("${it.location} Â· ${it.employmentType}")
                     Text(it.description, maxLines = 3)
                 }
             }
@@ -405,87 +422,10 @@ private fun JobListUi(
 }
 
 @Composable
-private fun MineUi(
-    personas: List<String>,
-    accessToken: String?,
-    myJobs: List<JobJson>,
-    onRefresh: () -> Unit,
-    api: WeirHereApi,
-) {
-    var editTarget by remember { mutableStateOf<JobJson?>(null) }
-    val tok = accessToken?.trim().orEmpty()
-    val admin = remember(personas) { hasAdministrator(personas) }
-
-    if (tok.isEmpty()) {
-        Text("Sign in from the Profile tab to see jobs you posted.")
-        return
-    }
-
-    TextButton(onClick = onRefresh) { Text("Refresh") }
-
-    editTarget?.let { job ->
-        EditJobScreen(
-            job = job,
-            api = api,
-            bearerToken = tok,
-            onDismiss = { editTarget = null },
-            onSaved = {
-                editTarget = null
-                onRefresh()
-            },
-        )
-        Spacer(Modifier.height(8.dp))
-    }
-
-    LazyColumn {
-        itemsIndexed(myJobs, key = { _, it -> "${it.slug}-${it.id}" }) { index, it ->
-            val jobId = it.id ?: it.slug
-            val targetId = editTarget?.id ?: editTarget?.slug
-            val isSelected = targetId != null && targetId == jobId
-            val bgColor = if (isSelected) {
-                MaterialTheme.colors.primary.copy(alpha = 0.3f)
-            } else if (index % 2 == 0) {
-                MaterialTheme.colors.surface
-            } else {
-                androidx.compose.ui.graphics.Color(0xFFEEEEEE)
-            }
-
-            Card(
-                Modifier
-                    .padding(vertical = 4.dp)
-                    .clickable(enabled = admin) {
-                        if (admin) editTarget = it
-                    },
-                backgroundColor = bgColor
-            ) {
-                Column(Modifier.padding(12.dp)) {
-                    Text(it.title, style = MaterialTheme.typography.h6)
-                    Text(
-                        buildString {
-                            append("Poster: ${it.postedBy}")
-                            if (admin) append(" · tap to edit")
-                        },
-                    )
-                }
-            }
-        }
-        item {
-            if (!admin) {
-                Text(
-                    "(If you are not admin, Mine shows only postings you authored.)",
-                    Modifier.padding(top = 8.dp),
-                    style = MaterialTheme.typography.body2,
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
     val bearer = accessToken?.trim().orEmpty()
     if (bearer.isEmpty()) {
-        Text("Sign in from Profile before accessing the admin dashboard.")
+        Text("Sign in using the profile icon before accessing the admin dashboard.")
         return
     }
 
@@ -502,7 +442,6 @@ private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
                 "Clients" to "CLIENTS",
                 "Assignments" to "ASSIGNMENTS",
                 "Reports" to "REPORTS",
-                "Configuration" to "CONFIGURATION",
                 "Users" to "USERS",
                 "Settings" to "SETTINGS",
                 "Testimonials" to "TESTIMONIALS"
@@ -521,7 +460,7 @@ private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
     } else {
         Column(Modifier.fillMaxSize()) {
             TextButton(onClick = { currentView = "MENU" }, modifier = Modifier.padding(bottom = 8.dp)) {
-                Text("← Back to Menu")
+                Text("â† Back to Menu")
             }
             when (currentView) {
                 "JOBS" -> AdminJobsUi(api = api, accessToken = accessToken)
@@ -530,7 +469,9 @@ private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
                 "PROVIDERS" -> AdminProvidersUi(api = api, accessToken = accessToken)
                 "CLIENTS" -> AdminClientsUi(api = api, accessToken = accessToken)
                 "ASSIGNMENTS" -> AdminAssignmentsUi(api = api, accessToken = accessToken)
-                "CONFIGURATION" -> AdminConfigurationUi(api = api, accessToken = accessToken)
+                "REPORTS" -> AdminReportsUi(api = api, accessToken = accessToken)
+                "SETTINGS" -> AdminSettingsUi(api = api, accessToken = accessToken)
+                "TESTIMONIALS" -> AdminTestimonialsUi(api = api, accessToken = accessToken)
                 else -> {
                     Text("$currentView Dashboard")
                     Spacer(Modifier.height(8.dp))
@@ -548,7 +489,7 @@ private fun PostJobUi(
 ) {
     val bearer = accessToken?.trim().orEmpty()
     if (bearer.isEmpty()) {
-        Text("Sign in from Profile before posting.")
+        Text("Sign in using the profile icon before posting.")
         return
     }
 
@@ -562,7 +503,7 @@ private fun PostJobUi(
 }
 
 @Composable
-private fun EditJobScreen(
+internal fun EditJobScreen(
     job: JobJson,
     api: WeirHereApi,
     bearerToken: String,
@@ -602,128 +543,71 @@ private fun EditJobScreen(
 
 @Composable
 private fun ProfileUi(
-    personas: List<String>,
+    bootstrapLoading: Boolean,
+    name: String?,
     email: String?,
-    emailVerified: Boolean,
+    lastLogin: String,
+    onLoginError: (String) -> Unit,
     onLogout: () -> Unit,
     onBack: () -> Unit,
 ) {
     val isLoggedIn = email != null
 
+    if (!isLoggedIn) {
+        Box(
+            Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = androidx.compose.ui.Alignment.Center,
+        ) {
+            if (bootstrapLoading) {
+                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(12.dp))
+                    Text("Signing in…", style = MaterialTheme.typography.body1)
+                }
+            } else {
+                PlatformLoginButton(
+                    label = "Login",
+                    onAccessToken = { SessionStore.setAccess(it) },
+                    onError = onLoginError,
+                )
+            }
+        }
+        return
+    }
+
     Column(
         Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
     ) {
-        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         ) {
             androidx.compose.material.Icon(
                 imageVector = Icons.Filled.ArrowBack,
                 contentDescription = "Back",
-                modifier = Modifier.size(28.dp).clickable { onBack() }
+                modifier = Modifier.size(28.dp).clickable { onBack() },
             )
             Text("Profile", style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
-            if (isLoggedIn) {
-                androidx.compose.material.Icon(
-                    imageVector = Icons.Filled.Edit,
-                    contentDescription = "Edit",
-                    modifier = Modifier.size(28.dp).clickable { /* no op */ }
-                )
-            } else {
-                Spacer(modifier = Modifier.size(28.dp))
-            }
+            Spacer(modifier = Modifier.size(28.dp))
         }
         Spacer(Modifier.height(24.dp))
 
-        // Avatar
-        Box(contentAlignment = androidx.compose.ui.Alignment.BottomEnd) {
-            androidx.compose.material.Icon(
-                imageVector = Icons.Filled.AccountCircle,
-                contentDescription = "Avatar",
-                modifier = Modifier.size(120.dp),
-                tint = if (isLoggedIn) Color.Black else Color.LightGray
-            )
-            if (isLoggedIn) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .padding(4.dp)
-                        .background(Color.White, shape = CircleShape)
-                        .border(1.dp, Color.LightGray, shape = CircleShape),
-                    contentAlignment = androidx.compose.ui.Alignment.Center
-                ) {
-                    androidx.compose.material.Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = "Edit Avatar",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.Black
-                    )
-                }
-            }
-        }
-        
-        Spacer(Modifier.height(24.dp))
-
-        // Tabs (General / Location)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .background(Color(0xFFF0F0F0), shape = RoundedCornerShape(8.dp))
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(Color(0xFF2D1E5A), shape = RoundedCornerShape(8.dp)),
-                contentAlignment = androidx.compose.ui.Alignment.Center
-            ) {
-                Text("General", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                contentAlignment = androidx.compose.ui.Alignment.Center
-            ) {
-                Text("Location", color = Color.Gray, fontWeight = FontWeight.Bold)
-            }
-        }
+        androidx.compose.material.Icon(
+            imageVector = Icons.Filled.AccountCircle,
+            contentDescription = "Avatar",
+            modifier = Modifier.size(120.dp),
+            tint = Color.Black,
+        )
 
         Spacer(Modifier.height(24.dp))
-
-        // Fields
-        ProfileField("Name", if (isLoggedIn) "John Doe" else "", isLoggedIn)
-        ProfileField("Email", if (isLoggedIn) email ?: "" else "", isLoggedIn, trailingIcon = Icons.Filled.Email)
-        ProfileField("Roll Number", if (isLoggedIn) "202XXXXXX" else "", isLoggedIn)
-        ProfileField("Date of Birth", if (isLoggedIn) "23/05/19XX" else "", isLoggedIn, trailingIcon = Icons.Filled.ArrowDropDown)
-        ProfileField("Aadhaar Number", if (isLoggedIn) "3802 0999 XXXX" else "", isLoggedIn)
+        ProfileField("Name", name?.ifBlank { "â€”" } ?: "â€”", enabled = true)
+        ProfileField("Email", email ?: "", enabled = true, trailingIcon = Icons.Filled.Email)
+        ProfileField("Last login", lastLogin, enabled = true)
 
         Spacer(Modifier.height(24.dp))
-
-        if (isLoggedIn) {
-            androidx.compose.material.Button(
-                onClick = { /* Save changes no-op */ },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                colors = androidx.compose.material.ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2D1E5A)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("Save changes", color = Color.White, fontSize = 16.sp)
-            }
-            Spacer(Modifier.height(16.dp))
-            PlatformLogoutButton(label = "Logout", onLogout = onLogout)
-        } else {
-            Text("Logged out", color = Color.Gray, style = MaterialTheme.typography.subtitle1)
-            Spacer(Modifier.height(16.dp))
-            PlatformLoginButton(
-                label = "Login with Auth0",
-                onAccessToken = { SessionStore.setAccess(it) },
-                onError = { err -> println("login err: $err") },
-            )
-        }
+        PlatformLogoutButton(label = "Logout", onLogout = onLogout)
     }
 }
 
@@ -750,7 +634,7 @@ fun ProfileField(label: String, value: String, enabled: Boolean, trailingIcon: a
 }
 
 @Composable
-private fun JobUpsertForm(
+internal fun JobUpsertForm(
     heading: String,
     initial: JobJson?,
     submitLabel: String,
@@ -881,7 +765,7 @@ private fun JobUpsertForm(
             },
             enabled = !working,
         ) {
-            Text(if (working) "…" else submitLabel)
+            Text(if (working) "â€¦" else submitLabel)
         }
     }
 }
@@ -895,7 +779,7 @@ private fun JobDetailsUi(
 ) {
     Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
         Text(job.title, style = MaterialTheme.typography.h4)
-        Text("${job.location} · ${job.employmentType}", style = MaterialTheme.typography.subtitle1)
+        Text("${job.location} Â· ${job.employmentType}", style = MaterialTheme.typography.subtitle1)
         Spacer(Modifier.height(16.dp))
         Text("Description", style = MaterialTheme.typography.h6)
         Text(job.description)
@@ -1237,7 +1121,7 @@ private fun AdminUsersUi(api: WeirHereApi, accessToken: String?) {
         }
 
         Text(
-            "${filtered.size} user(s) · page ${page + 1} of $pageCount",
+            "${filtered.size} user(s) Â· page ${page + 1} of $pageCount",
             style = MaterialTheme.typography.caption,
             modifier = Modifier.padding(bottom = 4.dp),
         )
@@ -1379,7 +1263,7 @@ private fun AdminJobsUi(api: WeirHereApi, accessToken: String?) {
     if (selectedJob != null) {
         Column(Modifier.fillMaxSize()) {
             TextButton(onClick = { selectedJob = null }, modifier = Modifier.padding(bottom = 8.dp)) {
-                Text("← Back to Jobs")
+                Text("â† Back to Jobs")
             }
             AdminJobDetailUi(api = api, accessToken = tok, job = selectedJob!!)
         }
@@ -1418,7 +1302,7 @@ private fun AdminJobsUi(api: WeirHereApi, accessToken: String?) {
                     ) {
                         Column(Modifier.padding(16.dp)) {
                             Text(job.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.subtitle1)
-                            Text("${job.location} • ${job.employmentType}", style = MaterialTheme.typography.body2, color = Color.Gray)
+                            Text("${job.location} â€¢ ${job.employmentType}", style = MaterialTheme.typography.body2, color = Color.Gray)
                         }
                     }
                 }
@@ -1446,629 +1330,3 @@ private fun AdminJobsUi(api: WeirHereApi, accessToken: String?) {
         }
     }
 }
-
-@Composable
-private fun AdminJobDetailUi(api: WeirHereApi, accessToken: String, job: JobJson) {
-    val scope = rememberCoroutineScope()
-    var applications by remember { mutableStateOf<List<com.weirhere.model.ApplicationDto>>(emptyList()) }
-    var reviewsByApp by remember { mutableStateOf<Map<String, List<com.weirhere.model.ReviewDto>>>(emptyMap()) }
-    var loadingApps by remember { mutableStateOf(true) }
-    var expandedAppId by remember { mutableStateOf<String?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(job.id) {
-        loadingApps = true
-        error = null
-        job.id?.let { jid ->
-            runCatching { api.listApplications(accessToken, jid) }
-                .onSuccess { applications = it.applications }
-                .onFailure {
-                    if (it !is kotlinx.coroutines.CancellationException) {
-                        error = it.message ?: it.toString()
-                    }
-                }
-        }
-        loadingApps = false
-    }
-
-    LaunchedEffect(expandedAppId) {
-        val appId = expandedAppId
-        if (appId != null && !reviewsByApp.containsKey(appId)) {
-            runCatching { api.listReviews(accessToken, appId) }
-                .onSuccess { resp ->
-                    reviewsByApp = reviewsByApp + (appId to resp.reviews)
-                }
-        }
-    }
-
-    Column(Modifier.fillMaxSize()) {
-        Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), elevation = 2.dp) {
-            Column(Modifier.padding(16.dp)) {
-                Text(job.title, style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
-                Text("${job.location} • ${job.employmentType}", color = Color.Gray)
-                Spacer(Modifier.height(8.dp))
-                Text("Total Applicants: ${applications.size}")
-            }
-        }
-
-        if (loadingApps) {
-            CircularProgressIndicator(Modifier.padding(16.dp))
-        } else if (error != null) {
-            Text("Error loading applications: $error", color = MaterialTheme.colors.error, modifier = Modifier.padding(16.dp))
-        } else if (applications.isEmpty()) {
-            Text("No applications yet for this job.", modifier = Modifier.padding(16.dp))
-        } else {
-            LazyColumn(Modifier.fillMaxSize()) {
-                items(applications, key = { it.id.orEmpty() }) { app ->
-                    val isExpanded = expandedAppId == app.id
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { 
-                            expandedAppId = if (isExpanded) null else app.id 
-                        },
-                        elevation = 1.dp
-                    ) {
-                        Column(Modifier.padding(16.dp)) {
-                            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                                Column {
-                                    Text(app.applicantName, fontWeight = FontWeight.Bold)
-                                    Text(app.applicantEmail, style = MaterialTheme.typography.body2, color = Color.Gray)
-                                }
-                                Box(
-                                    modifier = Modifier.background(androidx.compose.ui.graphics.Color(0xFFE3F2FD), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(app.status, color = androidx.compose.ui.graphics.Color(0xFF1565C0), style = MaterialTheme.typography.caption)
-                                }
-                            }
-                            
-                            if (isExpanded) {
-                                Spacer(Modifier.height(16.dp))
-                                Text("Screening Answers", fontWeight = FontWeight.SemiBold)
-                                if (app.answers.isEmpty()) {
-                                    Text("No screening answers.", style = MaterialTheme.typography.body2, color = Color.Gray)
-                                } else {
-                                    app.answers.forEach { ans ->
-                                        val qText = job.screeningQuestions.find { it.id == ans.questionId }?.question ?: ans.questionId
-                                        Text("Q: $qText", style = MaterialTheme.typography.caption, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 4.dp))
-                                        Text("A: ${ans.answer}", style = MaterialTheme.typography.body2)
-                                    }
-                                }
-
-                                Spacer(Modifier.height(16.dp))
-                                Text("Reviews", fontWeight = FontWeight.SemiBold)
-                                val reviews = reviewsByApp[app.id.orEmpty()]
-                                if (reviews == null) {
-                                    CircularProgressIndicator(Modifier.size(20.dp).padding(top = 8.dp))
-                                } else if (reviews.isEmpty()) {
-                                    Text("No reviews yet.", style = MaterialTheme.typography.body2, color = Color.Gray)
-                                } else {
-                                    reviews.forEach { rev ->
-                                        Column(Modifier.padding(top = 4.dp).background(Color(0xFFFAFAFA)).padding(8.dp).fillMaxWidth()) {
-                                            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                                                Text("Rating: ${rev.rating}/10", style = MaterialTheme.typography.body2, fontWeight = FontWeight.Medium)
-                                                if (rev.eliminated) {
-                                                    Text("Eliminated", style = MaterialTheme.typography.body2, color = MaterialTheme.colors.error)
-                                                }
-                                            }
-                                            if (rev.notes.isNotBlank()) {
-                                                Text(rev.notes, style = MaterialTheme.typography.caption)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AdminProvidersUi(api: WeirHereApi, accessToken: String?) {
-    val scope = rememberCoroutineScope()
-    val tok = accessToken?.trim().orEmpty()
-    var providers by remember { mutableStateOf<List<com.weirhere.model.ProviderDto>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var showAdd by remember { mutableStateOf(false) }
-
-    fun reload() {
-        if (tok.isEmpty()) return
-        scope.launch {
-            loading = true
-            error = null
-            runCatching { api.listProviders(tok) }
-                .onSuccess { providers = it }
-                .onFailure {
-                    if (it is kotlinx.coroutines.CancellationException) throw it
-                    error = it.message ?: it.toString()
-                }
-            loading = false
-        }
-    }
-
-    LaunchedEffect(tok) { reload() }
-
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text("Providers", style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
-            androidx.compose.material.IconButton(onClick = { showAdd = true }) {
-                androidx.compose.material.Icon(Icons.Filled.Add, "Add Provider")
-            }
-        }
-
-        if (error != null) {
-            Text("Error: $error", color = MaterialTheme.colors.error)
-            TextButton(onClick = { reload() }) { Text("Retry") }
-        }
-
-        if (showAdd) {
-            var name by remember { mutableStateOf("") }
-            var email by remember { mutableStateOf("") }
-            var address by remember { mutableStateOf("") }
-            var phoneNumbers by remember { mutableStateOf<List<com.weirhere.model.PhoneNumberDto>>(emptyList()) }
-            var saving by remember { mutableStateOf(false) }
-
-            Card(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Add Provider", style = MaterialTheme.typography.h6)
-                    OutlinedTextField(name, { name = it }, label = { Text("Name *") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(email, { email = it }, label = { Text("Email *") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(address, { address = it }, label = { Text("Address") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
-
-                    Spacer(Modifier.height(8.dp))
-                    Text("Phone Numbers", fontWeight = FontWeight.SemiBold)
-                    phoneNumbers.forEachIndexed { idx, p ->
-                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                            Text(p.number, modifier = Modifier.weight(1f))
-                            Text(p.number, modifier = Modifier.weight(1f))
-                            if (p.isBest) Text("(Best)", color = MaterialTheme.colors.primary, style = MaterialTheme.typography.caption)
-                            androidx.compose.material.TextButton(onClick = { phoneNumbers = phoneNumbers.filterIndexed { i, _ -> i != idx } }) {
-                                androidx.compose.material.Text("X", color = MaterialTheme.colors.error, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                    var newPhone by remember { mutableStateOf("") }
-                    var newPhoneIsBest by remember { mutableStateOf(false) }
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                        OutlinedTextField(newPhone, { newPhone = it }, label = { Text("New Phone") }, modifier = Modifier.weight(1f))
-                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                            androidx.compose.material.Checkbox(checked = newPhoneIsBest, onCheckedChange = { newPhoneIsBest = it })
-                            Text("Best", style = MaterialTheme.typography.caption)
-                        }
-                        androidx.compose.material.TextButton(onClick = {
-                            if (newPhone.isNotBlank()) {
-                                phoneNumbers = phoneNumbers + com.weirhere.model.PhoneNumberDto(newPhone, newPhoneIsBest)
-                                newPhone = ""
-                                newPhoneIsBest = false
-                            }
-                        }) { Text("Add") }
-                    }
-
-                    Row(Modifier.padding(top = 8.dp)) {
-                        androidx.compose.material.Button(
-                            onClick = {
-                                scope.launch {
-                                    saving = true
-                                    runCatching { api.createProvider(tok, com.weirhere.model.ProviderUpsertPayload(name = name, email = email, address = address, phoneNumbers = phoneNumbers)) }
-                                        .onSuccess { 
-                                            showAdd = false
-                                            reload()
-                                        }
-                                        .onFailure {
-                                            if (it !is kotlinx.coroutines.CancellationException) {
-                                                error = it.message ?: it.toString()
-                                            }
-                                        }
-                                    saving = false
-                                }
-                            },
-                            enabled = !saving && name.isNotBlank() && email.isNotBlank()
-                        ) { Text("Create") }
-                        TextButton(onClick = { showAdd = false }) { Text("Cancel") }
-                    }
-                }
-            }
-        }
-
-        if (loading) {
-            CircularProgressIndicator(Modifier.padding(16.dp))
-        } else {
-            LazyColumn {
-                items(providers) { prov ->
-                    Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(prov.name, fontWeight = FontWeight.Bold)
-                            if (!prov.email.isNullOrBlank()) Text(prov.email, style = MaterialTheme.typography.body2, color = MaterialTheme.colors.primary)
-                            if (prov.address.isNotBlank()) Text(prov.address, style = MaterialTheme.typography.body2)
-                            if (prov.phoneNumbers.isNotEmpty()) {
-                                Text("Phones: " + prov.phoneNumbers.joinToString { if (it.isBest) "${it.number} (Best)" else it.number }, style = MaterialTheme.typography.body2)
-                            }
-                            if (prov.qualifications.isNotEmpty()) {
-                                Text(prov.qualifications.joinToString { 
-                                    if (!it.description.isNullOrBlank()) "${it.description} (${it.fileName})" else it.fileName 
-                                }, style = MaterialTheme.typography.body2)
-                            }
-                            TextButton(onClick = {
-                                scope.launch {
-                                    runCatching { api.deleteProvider(tok, prov.id.orEmpty()) }
-                                        .onSuccess { reload() }
-                                }
-                            }) { Text("Delete", color = MaterialTheme.colors.error) }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AdminClientsUi(api: WeirHereApi, accessToken: String?) {
-    val scope = rememberCoroutineScope()
-    val tok = accessToken?.trim().orEmpty()
-    var clients by remember { mutableStateOf<List<com.weirhere.model.ClientDto>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var showAdd by remember { mutableStateOf(false) }
-
-    fun reload() {
-        if (tok.isEmpty()) return
-        scope.launch {
-            loading = true
-            error = null
-            runCatching { api.listClients(tok) }
-                .onSuccess { clients = it }
-                .onFailure {
-                    if (it is kotlinx.coroutines.CancellationException) throw it
-                    error = it.message ?: it.toString()
-                }
-            loading = false
-        }
-    }
-
-    LaunchedEffect(tok) { reload() }
-
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text("Clients", style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
-            androidx.compose.material.IconButton(onClick = { showAdd = true }) {
-                androidx.compose.material.Icon(Icons.Filled.Add, "Add Client")
-            }
-        }
-
-        if (error != null) {
-            Text("Error: $error", color = MaterialTheme.colors.error)
-            TextButton(onClick = { reload() }) { Text("Retry") }
-        }
-
-        if (showAdd) {
-            var name by remember { mutableStateOf("") }
-            var address by remember { mutableStateOf("") }
-            var phoneNumbers by remember { mutableStateOf<List<com.weirhere.model.PhoneNumberDto>>(emptyList()) }
-            var saving by remember { mutableStateOf(false) }
-
-            Card(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Add Client", style = MaterialTheme.typography.h6)
-                    OutlinedTextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(address, { address = it }, label = { Text("Address") }, modifier = Modifier.fillMaxWidth())
-
-                    Spacer(Modifier.height(8.dp))
-                    Text("Phone Numbers", fontWeight = FontWeight.SemiBold)
-                    phoneNumbers.forEachIndexed { idx, p ->
-                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                            Text(p.number, modifier = Modifier.weight(1f))
-                            if (p.isBest) Text("(Best)", color = MaterialTheme.colors.primary, style = MaterialTheme.typography.caption)
-                            androidx.compose.material.TextButton(onClick = { phoneNumbers = phoneNumbers.filterIndexed { i, _ -> i != idx } }) {
-                                androidx.compose.material.Text("X", color = MaterialTheme.colors.error, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                    var newPhone by remember { mutableStateOf("") }
-                    var newPhoneIsBest by remember { mutableStateOf(false) }
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                        OutlinedTextField(newPhone, { newPhone = it }, label = { Text("New Phone") }, modifier = Modifier.weight(1f))
-                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                            androidx.compose.material.Checkbox(checked = newPhoneIsBest, onCheckedChange = { newPhoneIsBest = it })
-                            Text("Best", style = MaterialTheme.typography.caption)
-                        }
-                        androidx.compose.material.TextButton(onClick = {
-                            if (newPhone.isNotBlank()) {
-                                phoneNumbers = phoneNumbers + com.weirhere.model.PhoneNumberDto(newPhone, newPhoneIsBest)
-                                newPhone = ""
-                                newPhoneIsBest = false
-                            }
-                        }) { Text("Add") }
-                    }
-
-                    Row(Modifier.padding(top = 8.dp)) {
-                        androidx.compose.material.Button(
-                            onClick = {
-                                scope.launch {
-                                    saving = true
-                                    runCatching { api.createClient(tok, com.weirhere.model.ClientUpsertPayload(name = name, address = address, phoneNumbers = phoneNumbers)) }
-                                        .onSuccess { 
-                                            showAdd = false
-                                            reload()
-                                        }
-                                        .onFailure {
-                                            if (it !is kotlinx.coroutines.CancellationException) {
-                                                error = it.message ?: it.toString()
-                                            }
-                                        }
-                                    saving = false
-                                }
-                            },
-                            enabled = !saving && name.isNotBlank() && address.isNotBlank()
-                        ) { Text("Create") }
-                        TextButton(onClick = { showAdd = false }) { Text("Cancel") }
-                    }
-                }
-            }
-        }
-
-        if (loading) {
-            CircularProgressIndicator(Modifier.padding(16.dp))
-        } else {
-            LazyColumn {
-                items(clients) { cli ->
-                    Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(cli.name, fontWeight = FontWeight.Bold)
-                            Text(cli.address, style = MaterialTheme.typography.body2)
-                            if (cli.phoneNumbers.isNotEmpty()) {
-                                Text("Phones: " + cli.phoneNumbers.joinToString { if (it.isBest) "${it.number} (Best)" else it.number }, style = MaterialTheme.typography.body2)
-                            }
-                            TextButton(onClick = {
-                                scope.launch {
-                                    runCatching { api.deleteClient(tok, cli.id.orEmpty()) }
-                                        .onSuccess { reload() }
-                                }
-                            }) { Text("Delete", color = MaterialTheme.colors.error) }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AdminAssignmentsUi(api: WeirHereApi, accessToken: String?) {
-    val scope = rememberCoroutineScope()
-    val tok = accessToken?.trim().orEmpty()
-    var assignments by remember { mutableStateOf<List<com.weirhere.model.AssignmentDto>>(emptyList()) }
-    var clients by remember { mutableStateOf<List<com.weirhere.model.ClientDto>>(emptyList()) }
-    var providers by remember { mutableStateOf<List<com.weirhere.model.ProviderDto>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var showAdd by remember { mutableStateOf(false) }
-
-    fun reload() {
-        if (tok.isEmpty()) return
-        scope.launch {
-            loading = true
-            error = null
-            runCatching { 
-                val asgs = api.listAssignments(tok)
-                val cls = api.listClients(tok)
-                val prvs = api.listProviders(tok)
-                assignments = asgs
-                clients = cls
-                providers = prvs
-            }.onFailure {
-                if (it is kotlinx.coroutines.CancellationException) throw it
-                error = it.message ?: it.toString()
-            }
-            loading = false
-        }
-    }
-
-    LaunchedEffect(tok) { reload() }
-
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text("Assignments", style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
-            androidx.compose.material.IconButton(onClick = { showAdd = true }) {
-                androidx.compose.material.Icon(Icons.Filled.Add, "Add Assignment")
-            }
-        }
-
-        if (error != null) {
-            Text("Error: $error", color = MaterialTheme.colors.error)
-            TextButton(onClick = { reload() }) { Text("Retry") }
-        }
-
-        if (showAdd) {
-            var selectedClientId by remember { mutableStateOf("") }
-            var selectedProviderId by remember { mutableStateOf("") }
-            var desc by remember { mutableStateOf("") }
-            var clientChargeStr by remember { mutableStateOf("0") }
-            var providerPayStr by remember { mutableStateOf("0") }
-            var providerHourlyRateStr by remember { mutableStateOf("0") }
-            var serviceDate by remember { mutableStateOf("") }
-            var saving by remember { mutableStateOf(false) }
-
-            Card(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Add Assignment", style = MaterialTheme.typography.h6)
-                    
-                    Text("Client ID (copy from clients)", style = MaterialTheme.typography.caption)
-                    OutlinedTextField(selectedClientId, { selectedClientId = it }, label = { Text("Client ID") }, modifier = Modifier.fillMaxWidth())
-                    
-                    Text("Provider ID (copy from providers)", style = MaterialTheme.typography.caption)
-                    OutlinedTextField(selectedProviderId, { selectedProviderId = it }, label = { Text("Provider ID") }, modifier = Modifier.fillMaxWidth())
-
-                    OutlinedTextField(desc, { desc = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(clientChargeStr, { clientChargeStr = it }, label = { Text("Client Charge (Cents)") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(providerPayStr, { providerPayStr = it }, label = { Text("Provider Pay (Cents)") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(providerHourlyRateStr, { providerHourlyRateStr = it }, label = { Text("Provider Hourly Rate (Cents)") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(serviceDate, { serviceDate = it }, label = { Text("Service Date (YYYY-MM-DD)") }, modifier = Modifier.fillMaxWidth())
-                    
-                    Row(Modifier.padding(top = 8.dp)) {
-                        androidx.compose.material.Button(
-                            onClick = {
-                                scope.launch {
-                                    saving = true
-                                    val payload = com.weirhere.model.AssignmentUpsertPayload(
-                                        clientId = selectedClientId.trim(),
-                                        providerId = selectedProviderId.trim(),
-                                        clientChargeCents = clientChargeStr.toIntOrNull() ?: 0,
-                                        providerPayCents = providerPayStr.toIntOrNull() ?: 0,
-                                        providerHourlyRateCents = providerHourlyRateStr.toIntOrNull() ?: 0,
-                                        description = desc,
-                                        serviceDate = serviceDate.trim().ifEmpty { "2026-01-01T00:00:00Z" }
-                                    )
-                                    runCatching { api.createAssignment(tok, payload) }
-                                        .onSuccess { 
-                                            showAdd = false
-                                            reload()
-                                        }
-                                        .onFailure {
-                                            if (it !is kotlinx.coroutines.CancellationException) {
-                                                error = it.message ?: it.toString()
-                                            }
-                                        }
-                                    saving = false
-                                }
-                            },
-                            enabled = !saving && selectedClientId.isNotBlank() && selectedProviderId.isNotBlank()
-                        ) { Text("Create") }
-                        TextButton(onClick = { showAdd = false }) { Text("Cancel") }
-                    }
-                }
-            }
-        }
-
-        if (loading) {
-            CircularProgressIndicator(Modifier.padding(16.dp))
-        } else {
-            LazyColumn {
-                items(assignments) { asg ->
-                    Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text("Client: ${asg.clientId?.name ?: "Unknown"}", fontWeight = FontWeight.Bold)
-                            Text("Provider: ${asg.providerId?.name ?: "Unknown"}", fontWeight = FontWeight.SemiBold)
-                            Text("Service Date: ${asg.serviceDate}", style = MaterialTheme.typography.body2)
-                            Text("Desc: ${asg.description}", style = MaterialTheme.typography.body2)
-                            Text("Hourly Rate: ${asg.providerHourlyRateCents / 100.0}", style = MaterialTheme.typography.body2)
-                            TextButton(onClick = {
-                                scope.launch {
-                                    runCatching { api.deleteAssignment(tok, asg.id.orEmpty()) }
-                                        .onSuccess { reload() }
-                                }
-                            }) { Text("Delete", color = MaterialTheme.colors.error) }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AdminConfigurationUi(api: WeirHereApi, accessToken: String?) {
-    val scope = rememberCoroutineScope()
-    val tok = accessToken?.trim().orEmpty()
-    var values by remember { mutableStateOf(com.weirhere.model.ConfigValuesDto()) }
-    var loading by remember { mutableStateOf(true) }
-    var saving by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var success by remember { mutableStateOf<String?>(null) }
-
-    fun reload() {
-        if (tok.isEmpty()) return
-        scope.launch {
-            loading = true
-            error = null
-            runCatching { api.getConfiguration(tok) }
-                .onSuccess { values = it }
-                .onFailure {
-                    if (it is kotlinx.coroutines.CancellationException) throw it
-                    error = it.message ?: it.toString()
-                }
-            loading = false
-        }
-    }
-
-    LaunchedEffect(tok) { reload() }
-
-    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
-        Text("Configuration", style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
-
-        if (error != null) {
-            Text("Error: $error", color = MaterialTheme.colors.error, modifier = Modifier.padding(bottom = 8.dp))
-        }
-        if (success != null) {
-            Text(success.orEmpty(), color = MaterialTheme.colors.primary, modifier = Modifier.padding(bottom = 8.dp))
-        }
-
-        if (loading) {
-            CircularProgressIndicator(Modifier.align(androidx.compose.ui.Alignment.CenterHorizontally))
-        } else {
-            Card(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Google Drive Integration", style = MaterialTheme.typography.h6, modifier = Modifier.padding(bottom = 8.dp))
-                    Text("Configure OAuth2 credentials to enable document uploads.", style = MaterialTheme.typography.body2, color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 16.dp))
-
-                    OutlinedTextField(
-                        value = values.gdrive_client_id,
-                        onValueChange = { values = values.copy(gdrive_client_id = it) },
-                        label = { Text("OAuth Client ID") },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = values.gdrive_client_secret,
-                        onValueChange = { values = values.copy(gdrive_client_secret = it) },
-                        label = { Text("OAuth Client Secret") },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = values.gdrive_refresh_token,
-                        onValueChange = { values = values.copy(gdrive_refresh_token = it) },
-                        label = { Text("OAuth Refresh Token") },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = values.gdrive_folder_id,
-                        onValueChange = { values = values.copy(gdrive_folder_id = it) },
-                        label = { Text("Target Folder ID (optional)") },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                    )
-                }
-            }
-
-            androidx.compose.material.Button(
-                onClick = {
-                    scope.launch {
-                        saving = true
-                        error = null
-                        success = null
-                        runCatching { api.updateConfiguration(tok, values) }
-                            .onSuccess { success = "Configuration saved successfully" }
-                            .onFailure {
-                                if (it !is kotlinx.coroutines.CancellationException) {
-                                    error = it.message ?: it.toString()
-                                }
-                            }
-                        saving = false
-                    }
-                },
-                enabled = !saving,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (saving) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colors.onPrimary)
-                } else {
-                    Text("Save Configuration")
-                }
-            }
-        }
-    }
-}
-

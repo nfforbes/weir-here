@@ -28,12 +28,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     await connectDB();
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    let user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      user = await User.findOne({ email: email.trim() });
+    }
     if (!user || (!user.personas.includes('provider') && !user.personas.includes('administrator'))) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const provider = await Provider.findOne({ email });
+    const provider = await Provider.findOne({ email: normalizedEmail });
     if (!provider) {
       return NextResponse.json({ error: 'Provider record not found' }, { status: 404 });
     }

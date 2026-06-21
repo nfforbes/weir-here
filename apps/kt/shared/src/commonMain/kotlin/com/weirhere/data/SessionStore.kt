@@ -24,12 +24,18 @@ object SessionStore {
         _accessToken.value = token
         if (token == null || token.isBlank()) {
             settings.remove(KEY_AT)
+            settings.remove(KEY_LAST_LOGIN)
         } else {
             settings.putString(KEY_AT, token)
+            settings.putString(KEY_LAST_LOGIN, epochMillis().toString())
         }
     }
 
     fun readSync(): String? = if (::settings.isInitialized) settings.getStringOrNull(KEY_AT) else null
 
+    fun lastLoginAt(): String? =
+        if (::settings.isInitialized) settings.getStringOrNull(KEY_LAST_LOGIN) else null
+
     private const val KEY_AT = "weir_here_access_token"
+    private const val KEY_LAST_LOGIN = "weir_here_last_login_at"
 }

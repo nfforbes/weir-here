@@ -32,7 +32,7 @@ actual fun PlatformLoginButton(
     val activity = rememberActivity(ctx)
     Button(onClick = {
         if (activity == null) {
-            onError("Missing Activity context.")
+            onError("Could not find Activity for Auth0 login.")
             return@Button
         }
         scope.launch(Dispatchers.Main) {

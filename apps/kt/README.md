@@ -33,6 +33,7 @@ The Next.js backend under `apps/web` accepts **cookies** from the browser and **
 ## App behavior (aligned with web)
 
 - **Browse** — public job list (`GET /api/jobs`).
-- **Mine** — `GET /api/jobs?mine=true` with Bearer (`/api/users/bootstrap` informs personas).
-- **Post** — administrators only (`hasAdministrator`).
-- **Profile** — Auth0 login (Android), logout, bootstrap-driven email/personas.
+- **Payment** — secure payment portal with PayPal Hosted Button (mirrors web `/payment`).
+- **Admin** — administrators only (`hasAdministrator`); job/provider/client management.
+- **Provider** — providers only (`hasProvider`); assignments portal.
+- **Profile** — Auth0 login (Android), logout, bootstrap-driven email/personas (top-bar icon).

@@ -26,6 +26,7 @@ function serializeUser(u: {
   name: string;
   personas: Persona[];
   emailVerified: boolean;
+  updatedAt?: Date;
 }) {
   return {
     auth0Id: u.auth0Id,
@@ -33,6 +34,7 @@ function serializeUser(u: {
     name: u.name,
     personas: [...u.personas],
     emailVerified: u.emailVerified,
+    updatedAt: u.updatedAt ? u.updatedAt.toISOString() : undefined,
   };
 }
 
@@ -98,6 +100,7 @@ export async function POST(req: NextRequest) {
         name: user.name,
         personas: user.personas as Persona[],
         emailVerified: user.emailVerified,
+        updatedAt: user.updatedAt,
       }),
     });
   } catch (err: unknown) {
