@@ -270,55 +270,65 @@ fun WeirHereApp() {
                 }
 
                 when (tab) {
-                    Tab.JOBS -> JobListUi(
-                        loading = loadingJobs, 
-                        jobs = jobs,
-                        page = publicJobsPage,
-                        onPageChange = { publicJobsPage = it },
-                        accessToken = accessToken,
-                        onLoginRequest = {
-                            returnToJobsAfterLogin = true
-                            tab = Tab.PROFILE
-                        },
-                        onApplyRequest = { job -> applyJob = job }
-                    )
+                    Tab.JOBS ->
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            JobListUi(
+                                loading = loadingJobs,
+                                jobs = jobs,
+                                page = publicJobsPage,
+                                onPageChange = { publicJobsPage = it },
+                                accessToken = accessToken,
+                                onLoginRequest = {
+                                    returnToJobsAfterLogin = true
+                                    tab = Tab.PROFILE
+                                },
+                                onApplyRequest = { job -> applyJob = job },
+                            )
+                        }
 
-                    Tab.PAYMENT -> PaymentUi()
+                    Tab.PAYMENT -> PaymentUi(Modifier.weight(1f).fillMaxWidth())
 
                     Tab.ADMIN ->
-                        if (hasAdministrator(personas)) {
-                            AdminDashboardUi(api = api, accessToken = accessToken)
-                        } else {
-                            Text("Only administrators can access the admin dashboard.")
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            if (hasAdministrator(personas)) {
+                                AdminDashboardUi(api = api, accessToken = accessToken)
+                            } else {
+                                Text("Only administrators can access the admin dashboard.")
+                            }
                         }
 
                     Tab.PROVIDER ->
-                        if (canAccessProviderPortal(personas)) {
-                            ProviderUi(
-                                api = api,
-                                accessToken = accessToken,
-                                userEmail = bootEmail,
-                                onRefresh = {},
-                            )
-                        } else {
-                            Text("Only providers can access the provider portal.")
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            if (canAccessProviderPortal(personas)) {
+                                ProviderUi(
+                                    api = api,
+                                    accessToken = accessToken,
+                                    userEmail = bootEmail,
+                                    onRefresh = {},
+                                )
+                            } else {
+                                Text("Only providers can access the provider portal.")
+                            }
                         }
 
-                    Tab.PROFILE -> ProfileUi(
-                        bootstrapLoading = bootstrapLoading,
-                        name = bootName,
-                        email = bootEmail,
-                        lastLogin = formatLastLogin(bootUpdatedAt, SessionStore.lastLoginAt()),
-                        onLoginError = { message = it },
-                        onLogout = {
-                            scope.launch {
-                                SessionStore.setAccess(null)
-                                message = "Logged out"
-                                tab = Tab.JOBS
-                            }
-                        },
-                        onBack = { tab = Tab.JOBS }
-                    )
+                    Tab.PROFILE ->
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            ProfileUi(
+                                bootstrapLoading = bootstrapLoading,
+                                name = bootName,
+                                email = bootEmail,
+                                lastLogin = formatLastLogin(bootUpdatedAt, SessionStore.lastLoginAt()),
+                                onLoginError = { message = it },
+                                onLogout = {
+                                    scope.launch {
+                                        SessionStore.setAccess(null)
+                                        message = "Logged out"
+                                        tab = Tab.JOBS
+                                    }
+                                },
+                                onBack = { tab = Tab.JOBS },
+                            )
+                        }
                 }
 
                 applyJob?.let { job ->

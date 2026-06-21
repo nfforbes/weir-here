@@ -23,6 +23,7 @@ import ViewDayIcon from '@mui/icons-material/ViewDay';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import MapIcon from '@mui/icons-material/Map';
 import {
   format,
   addDays,
@@ -100,6 +101,11 @@ export default function AssignmentsView() {
   const handleNextDay = () => setCurrentDate((prev) => addDays(prev, 1));
   const handlePrevMonth = () => setCurrentDate((prev) => subMonths(prev, 1));
   const handleNextMonth = () => setCurrentDate((prev) => addMonths(prev, 1));
+
+  const openInGoogleMaps = (address: string) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.trim())}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const handleAction = async (assignmentId: string, action: 'arrive' | 'checkout') => {
     setActionLoading(true);
@@ -278,9 +284,19 @@ export default function AssignmentsView() {
             </DialogTitle>
             <DialogContent sx={{ mt: 2 }}>
               <Typography variant="h6" fontWeight="bold">{selectedAssignment.clientId?.name || 'Unknown Client'}</Typography>
-              <Typography variant="body1" sx={{ mb: 2 }}>
+              <Typography variant="body1" sx={{ mb: 1 }}>
                 <strong>Address:</strong> {selectedAssignment.clientId?.address || 'No address provided'}
               </Typography>
+              {selectedAssignment.clientId?.address?.trim() && (
+                <Button
+                  variant="outlined"
+                  startIcon={<MapIcon />}
+                  onClick={() => openInGoogleMaps(selectedAssignment.clientId!.address!)}
+                  sx={{ mb: 2 }}
+                >
+                  Open in Google Maps
+                </Button>
+              )}
               
               <Typography variant="body1" sx={{ mb: 1 }}>
                 <strong>Date & Time:</strong> {format(new Date(selectedAssignment.serviceDate), 'PPpp')}

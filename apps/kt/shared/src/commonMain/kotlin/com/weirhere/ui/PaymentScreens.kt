@@ -1,6 +1,5 @@
 package com.weirhere.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,8 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Card
@@ -24,25 +25,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weirhere.payment.PlatformPayPalHostedButton
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.painterResource
 
 private val PayPalSectionHeight = 250.dp
+private val PayPalFooterHeight = PayPalSectionHeight + 12.dp
 
-@OptIn(ExperimentalResourceApi::class)
+private val BannerGradient = Brush.linearGradient(
+    colors = listOf(Color(0xFF1565C0), Color(0xFF0D47A1), Color(0xFF1B5E20)),
+)
+
 @Composable
-fun PaymentUi() {
-    Column(Modifier.fillMaxSize()) {
+fun PaymentUi(modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxSize()) {
         Column(
             Modifier
-                .weight(1f)
+                .fillMaxSize()
+                .padding(bottom = PayPalFooterHeight)
                 .verticalScroll(rememberScrollState()),
         ) {
             Card(
@@ -52,31 +55,35 @@ fun PaymentUi() {
                 backgroundColor = Color.White,
             ) {
                 Column {
-                    Box(Modifier.fillMaxWidth()) {
-                        Image(
-                            painter = painterResource("secure_payment_portal.png"),
-                            contentDescription = "Secure Payment Portal",
-                            modifier = Modifier.fillMaxWidth().height(220.dp),
-                            contentScale = ContentScale.Crop,
-                        )
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(220.dp)
-                                .background(
-                                    Brush.verticalGradient(
-                                        colors = listOf(Color.Transparent, Color(0xB3000000)),
-                                        startY = 110f,
-                                    ),
-                                )
-                                .padding(16.dp),
-                            contentAlignment = Alignment.BottomStart,
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .background(BannerGradient),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
+                            Box(
+                                Modifier
+                                    .size(64.dp)
+                                    .background(Color.White.copy(alpha = 0.15f), CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "\uD83D\uDD12",
+                                    fontSize = 32.sp,
+                                )
+                            }
                             Text(
                                 "Secure Payment Portal",
                                 color = Color.White,
                                 fontWeight = FontWeight.ExtraBold,
-                                fontSize = 28.sp,
+                                fontSize = 24.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 16.dp),
                             )
                         }
                     }
@@ -135,7 +142,7 @@ fun PaymentUi() {
                                 .padding(12.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text("ℹ", color = MaterialTheme.colors.primary, fontWeight = FontWeight.Bold)
+                            Text("\u2139", color = MaterialTheme.colors.primary, fontWeight = FontWeight.Bold)
                             Text(
                                 "Note: For international transactions or custom billing inquiries, please contact our accounts department directly at accounts@weirheresolutions.com.",
                                 style = MaterialTheme.typography.body2,
@@ -157,20 +164,26 @@ fun PaymentUi() {
             }
         }
 
-        Divider()
-        Box(
+        Column(
             Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            contentAlignment = Alignment.Center,
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(),
         ) {
-            PlatformPayPalHostedButton(
-                modifier =
-                    Modifier
-                        .widthIn(max = 400.dp)
-                        .fillMaxWidth()
-                        .height(PayPalSectionHeight),
-            )
+            Divider()
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                PlatformPayPalHostedButton(
+                    modifier =
+                        Modifier
+                            .widthIn(max = 400.dp)
+                            .fillMaxWidth()
+                            .height(PayPalSectionHeight),
+                )
+            }
         }
     }
 }
@@ -182,7 +195,7 @@ private fun PaymentStep(number: String, title: String, detail: String) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            "✓",
+            "\u2713",
             color = MaterialTheme.colors.primary,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(top = 2.dp),
