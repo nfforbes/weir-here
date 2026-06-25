@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import Client, { buildClientAddressPayload } from '@/models/Client';
+import Client, { buildClientAddressPayload, type AddressDetails } from '@/models/Client';
 import { formatAddress } from '@weir-here/shared';
 import { requireAdministrator } from '@/lib/adminAuth';
 
@@ -58,7 +58,10 @@ export async function PUT(req: NextRequest) {
   if (email !== undefined) updateData.email = email.trim().toLowerCase();
   if (phoneNumbers !== undefined) updateData.phoneNumbers = phoneNumbers;
   if (address !== undefined || addressDetails !== undefined) {
-    const existingClient = await Client.findById(id).lean();
+    const existingClient = await Client.findById(id).lean<{
+      address?: string;
+      addressDetails?: AddressDetails;
+    }>();
     const addressPayload = buildClientAddressPayload({
       address: address ?? existingClient?.address,
       addressDetails: addressDetails ?? existingClient?.addressDetails,

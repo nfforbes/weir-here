@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import Provider, { buildProviderAddressPayload } from '@/models/Provider';
+import Provider, { buildProviderAddressPayload, type ProviderAddressDetails } from '@/models/Provider';
 import Qualification from '@/models/Qualification';
 import { requireAdministrator } from '@/lib/adminAuth';
 import User from '@/models/User';
@@ -178,7 +178,11 @@ export async function PUT(req: NextRequest) {
   if (email !== undefined) updateData.email = email.trim().toLowerCase();
   if (phoneNumbers !== undefined) updateData.phoneNumbers = phoneNumbers;
   if (address !== undefined || addressDetails !== undefined || preferredParishes !== undefined) {
-    const existingProvider = await Provider.findById(id).lean();
+    const existingProvider = await Provider.findById(id).lean<{
+      address?: string;
+      addressDetails?: ProviderAddressDetails;
+      preferredParishes?: string[];
+    }>();
     const addressPayload = buildProviderAddressPayload({
       address: address ?? existingProvider?.address,
       addressDetails: addressDetails ?? existingProvider?.addressDetails,
