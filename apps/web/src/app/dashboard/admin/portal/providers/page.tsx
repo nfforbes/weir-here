@@ -511,7 +511,12 @@ export default function ProvidersPage() {
                   <TableCell>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                       {p.phoneNumbers?.map((ph, i) => (
-                        <Typography key={i} variant="body2" sx={{ fontWeight: ph.isBest ? 600 : 400, color: ph.isBest ? 'text.primary' : 'text.secondary' }}>
+                        <Typography
+                          key={i}
+                          variant="body2"
+                          component="div"
+                          sx={{ fontWeight: ph.isBest ? 600 : 400, color: ph.isBest ? 'text.primary' : 'text.secondary' }}
+                        >
                           {ph.number} {ph.isBest && <Chip label="Best" size="small" sx={{ height: 16, fontSize: '0.65rem', ml: 1 }} />}
                         </Typography>
                       ))}

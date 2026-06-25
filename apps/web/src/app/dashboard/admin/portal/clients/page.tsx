@@ -310,7 +310,12 @@ export default function ClientsPage() {
                   <TableCell>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                       {c.phoneNumbers?.map((p, i) => (
-                        <Typography key={i} variant="body2" sx={{ fontWeight: p.isBest ? 600 : 400, color: p.isBest ? 'text.primary' : 'text.secondary' }}>
+                        <Typography
+                          key={i}
+                          variant="body2"
+                          component="div"
+                          sx={{ fontWeight: p.isBest ? 600 : 400, color: p.isBest ? 'text.primary' : 'text.secondary' }}
+                        >
                           {p.number} {p.isBest && <Chip label="Best" size="small" sx={{ height: 16, fontSize: '0.65rem', ml: 1 }} />}
                         </Typography>
                       ))}
