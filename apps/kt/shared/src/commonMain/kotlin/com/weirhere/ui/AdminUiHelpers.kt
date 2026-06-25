@@ -88,6 +88,12 @@ fun filterProviders(providers: List<ProviderDto>, search: String): List<Provider
         containsQuery(prov.name, query) ||
             containsQuery(prov.email, query) ||
             containsQuery(prov.address, query) ||
+            containsQuery(prov.addressDetails.streetLine1, query) ||
+            containsQuery(prov.addressDetails.streetLine2, query) ||
+            containsQuery(prov.addressDetails.city, query) ||
+            containsQuery(prov.addressDetails.parish, query) ||
+            containsQuery(prov.addressDetails.postalCode, query) ||
+            prov.preferredParishes.any { containsQuery(it, query) } ||
             prov.phoneNumbers.any { containsQuery(it.number, query) } ||
             prov.qualifications.any {
                 containsQuery(it.description, query) || containsQuery(it.fileName, query)
@@ -99,8 +105,14 @@ fun filterClients(clients: List<ClientDto>, search: String): List<ClientDto> {
     val query = search.trim().lowercase()
     if (query.isEmpty()) return clients
     return clients.filter { cli ->
-        containsQuery(cli.name, query) ||
+            containsQuery(cli.name, query) ||
+            containsQuery(cli.email, query) ||
             containsQuery(cli.address, query) ||
+            containsQuery(cli.addressDetails.streetLine1, query) ||
+            containsQuery(cli.addressDetails.streetLine2, query) ||
+            containsQuery(cli.addressDetails.city, query) ||
+            containsQuery(cli.addressDetails.parish, query) ||
+            containsQuery(cli.addressDetails.postalCode, query) ||
             cli.phoneNumbers.any { containsQuery(it.number, query) }
     }
 }

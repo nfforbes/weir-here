@@ -30,6 +30,8 @@ import ChildCareIcon from '@mui/icons-material/ChildCare';
 import TuneIcon from '@mui/icons-material/Tune';
 import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
+import PaymentIcon from '@mui/icons-material/Payment';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 
 const iconMap: Record<string, ReactElement> = {
   Home: <HomeIcon fontSize="small" />,
@@ -61,6 +63,8 @@ const iconMap: Record<string, ReactElement> = {
   Tune: <TuneIcon fontSize="small" />,
   Group: <GroupIcon fontSize="small" />,
   Settings: <SettingsIcon fontSize="small" />,
+  Payment: <PaymentIcon fontSize="small" />,
+  AccountBalance: <AccountBalanceIcon fontSize="small" />,
 };
 
 export function getMenuIcon(name: string): ReactElement | null {

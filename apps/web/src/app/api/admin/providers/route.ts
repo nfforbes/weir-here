@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import Provider from '@/models/Provider';
+import Provider, { buildProviderAddressPayload } from '@/models/Provider';
 import Qualification from '@/models/Qualification';
 import { requireAdministrator } from '@/lib/adminAuth';
 import User from '@/models/User';
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { name, address, email, phoneNumbers } = body;
+  const { name, address, addressDetails, preferredParishes, email, phoneNumbers } = body;
   if (!name?.trim()) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   }
@@ -140,11 +140,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email is already in use by another provider' }, { status: 400 });
   }
 
+  const addressPayload = buildProviderAddressPayload({ address, addressDetails, preferredParishes });
+
   const provider = await Provider.create({ 
     name: name.trim(), 
-    address: address?.trim(),
     email: email.trim().toLowerCase(),
     phoneNumbers: phoneNumbers || [],
+    ...addressPayload,
   });
 
   await assignProviderAccessAndNotify(email, auth.admin);
@@ -157,7 +159,7 @@ export async function PUT(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { id, name, address, email, phoneNumbers } = body;
+  const { id, name, address, addressDetails, preferredParishes, email, phoneNumbers } = body;
   if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
   await connectDB();
@@ -171,11 +173,19 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Email is already in use by another provider' }, { status: 400 });
   }
 
-  const updateData: any = {};
+  const updateData: Record<string, unknown> = {};
   if (name !== undefined) updateData.name = name.trim();
-  if (address !== undefined) updateData.address = address.trim();
   if (email !== undefined) updateData.email = email.trim().toLowerCase();
   if (phoneNumbers !== undefined) updateData.phoneNumbers = phoneNumbers;
+  if (address !== undefined || addressDetails !== undefined || preferredParishes !== undefined) {
+    const existingProvider = await Provider.findById(id).lean();
+    const addressPayload = buildProviderAddressPayload({
+      address: address ?? existingProvider?.address,
+      addressDetails: addressDetails ?? existingProvider?.addressDetails,
+      preferredParishes: preferredParishes ?? existingProvider?.preferredParishes,
+    });
+    Object.assign(updateData, addressPayload);
+  }
 
   const provider = await Provider.findByIdAndUpdate(
     id,

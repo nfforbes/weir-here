@@ -10,10 +10,12 @@ import {
   CardContent,
 } from '@mui/material';
 import WorkIcon from '@mui/icons-material/Work';
+import PersonIcon from '@mui/icons-material/Person';
 import { ELECTRIC_BLUE, DEEP_NAVY } from '@/theme/theme';
 
 const TILES = [
   { label: 'Assignments', icon: <WorkIcon sx={{ fontSize: 48 }} />, href: '/dashboard/provider/portal/assignments', desc: 'View and manage your assignments' },
+  { label: 'My Profile', icon: <PersonIcon sx={{ fontSize: 48 }} />, href: '/dashboard/provider/portal/profile', desc: 'Update your address, parishes, and contact details' },
 ];
 
 export default function ProviderPortalPage() {

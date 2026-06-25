@@ -35,6 +35,15 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { ELECTRIC_BLUE } from '@/theme/theme';
 import { filterProviders, paginateList } from '@/lib/adminListHelpers';
+import {
+  EMPTY_PROVIDER_ADDRESS,
+  formatProviderAddress,
+  hydrateProviderAddressDetails,
+  normalizePreferredParishes,
+  type ProviderAddressDetails,
+} from '@weir-here/shared';
+import ProviderAddressFields from '@/components/providers/ProviderAddressFields';
+import PreferredParishesField from '@/components/providers/PreferredParishesField';
 
 interface Qualification {
   _id: string;
@@ -49,9 +58,27 @@ interface Provider {
   name: string;
   email?: string;
   address: string;
+  addressDetails?: ProviderAddressDetails;
+  preferredParishes?: string[];
   phoneNumbers?: { number: string; isBest: boolean }[];
   qualifications: Qualification[];
 }
+
+type ProviderFormState = {
+  name: string;
+  email: string;
+  addressDetails: ProviderAddressDetails;
+  preferredParishes: string[];
+  phoneNumbers: { number: string; isBest: boolean }[];
+};
+
+const emptyForm = (): ProviderFormState => ({
+  name: '',
+  email: '',
+  addressDetails: { ...EMPTY_PROVIDER_ADDRESS },
+  preferredParishes: [],
+  phoneNumbers: [],
+});
 
 export default function ProvidersPage() {
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -59,7 +86,7 @@ export default function ProvidersPage() {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Provider | null>(null);
-  const [form, setForm] = useState<{ name: string; email: string; address: string; phoneNumbers: { number: string; isBest: boolean }[] }>({ name: '', email: '', address: '', phoneNumbers: [] });
+  const [form, setForm] = useState<ProviderFormState>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [gridUploadState, setGridUploadState] = useState<{ providerId: string; file: File | null; description: string } | null>(null);
@@ -97,11 +124,24 @@ export default function ProvidersPage() {
   const handleOpen = (provider?: Provider) => {
     if (provider) {
       setEditing(provider);
-      setForm({ name: provider.name, email: provider.email || '', address: provider.address, phoneNumbers: provider.phoneNumbers || [] });
+      const addressDetails = hydrateProviderAddressDetails(
+        provider.addressDetails,
+        provider.address,
+      );
+      setForm({
+        name: provider.name,
+        email: provider.email || '',
+        addressDetails,
+        preferredParishes: normalizePreferredParishes(
+          addressDetails.parish,
+          provider.preferredParishes,
+        ),
+        phoneNumbers: provider.phoneNumbers || [],
+      });
       setEditingQualifications([...provider.qualifications]);
     } else {
       setEditing(null);
-      setForm({ name: '', email: '', address: '', phoneNumbers: [] });
+      setForm(emptyForm());
       setEditingQualifications([]);
     }
     setStagedQualifications([]);
@@ -116,7 +156,17 @@ export default function ProvidersPage() {
       const res = await fetch('/api/admin/providers', {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...(editing ? { id: editing._id } : {}), ...form }),
+        body: JSON.stringify({
+          ...(editing ? { id: editing._id } : {}),
+          name: form.name,
+          email: form.email,
+          addressDetails: form.addressDetails,
+          preferredParishes: normalizePreferredParishes(
+            form.addressDetails.parish,
+            form.preferredParishes,
+          ),
+          phoneNumbers: form.phoneNumbers,
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       const savedProvider = await res.json();
@@ -258,13 +308,31 @@ export default function ProvidersPage() {
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={2}
-                label="Address"
-                value={form.address}
-                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                Address
+              </Typography>
+              <ProviderAddressFields
+                value={form.addressDetails}
+                onChange={(addressDetails) =>
+                  setForm((f) => ({
+                    ...f,
+                    addressDetails,
+                    preferredParishes: normalizePreferredParishes(
+                      addressDetails.parish,
+                      f.preferredParishes,
+                    ),
+                  }))
+                }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <PreferredParishesField
+                homeParish={form.addressDetails.parish}
+                value={normalizePreferredParishes(
+                  form.addressDetails.parish,
+                  form.preferredParishes,
+                )}
+                onChange={(preferredParishes) => setForm((f) => ({ ...f, preferredParishes }))}
               />
             </Grid>
             <Grid item xs={12}>
@@ -412,6 +480,7 @@ export default function ProvidersPage() {
                 <TableCell>Phone</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Address</TableCell>
+                <TableCell>Preferred Parishes</TableCell>
                 <TableCell>Qualifications</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -419,14 +488,14 @@ export default function ProvidersPage() {
             <TableBody>
               {providers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     No providers yet. Click &quot;Add Provider&quot; to get started.
                   </TableCell>
                 </TableRow>
               )}
               {providers.length > 0 && filteredProviders.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     No providers match your search.
                   </TableCell>
                 </TableRow>
@@ -456,8 +525,20 @@ export default function ProvidersPage() {
                       <Typography variant="body2" color="text.disabled">—</Typography>
                     )}
                   </TableCell>
-                  <TableCell sx={{ maxWidth: 200 }}>
-                    <Typography variant="body2" color="text.secondary" noWrap>{p.address || '—'}</Typography>
+                  <TableCell sx={{ maxWidth: 220 }}>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                      {formatProviderAddress(p.addressDetails, p.address) || '—'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ maxWidth: 180 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(p.preferredParishes ?? []).length === 0 && (
+                        <Typography variant="body2" color="text.disabled">—</Typography>
+                      )}
+                      {(p.preferredParishes ?? []).map((parish) => (
+                        <Chip key={parish} label={parish} size="small" variant="outlined" />
+                      ))}
+                    </Box>
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>

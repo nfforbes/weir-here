@@ -31,8 +31,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.OutlinedTextField
+import com.weirhere.data.JamaicaParishes
 import com.weirhere.maps.rememberMapsOpener
 import com.weirhere.model.AssignmentDto
+import com.weirhere.model.PhoneNumberDto
+import com.weirhere.model.ProviderAddressDetailsDto
+import com.weirhere.model.ProviderProfileDto
+import com.weirhere.model.ProviderProfileUpdatePayload
 import com.weirhere.network.WeirHereApi
 import kotlinx.coroutines.launch
 
@@ -41,6 +50,60 @@ fun ProviderUi(
     api: WeirHereApi,
     accessToken: String?,
     userEmail: String? = null,
+    onRefresh: () -> Unit,
+) {
+    var currentView by remember { mutableStateOf("MENU") }
+
+    if (accessToken?.trim().orEmpty().isEmpty()) {
+        Text("Sign in using the profile icon to view the provider portal.")
+        return
+    }
+
+    when (currentView) {
+        "MENU" -> ProviderPortalMenu(
+            onAssignments = { currentView = "ASSIGNMENTS" },
+            onProfile = { currentView = "PROFILE" },
+        )
+        "ASSIGNMENTS" -> Column(Modifier.fillMaxSize()) {
+            TextButton(onClick = { currentView = "MENU" }) { Text("← Back to Provider") }
+            ProviderAssignmentsContent(api, accessToken, userEmail, onRefresh)
+        }
+        "PROFILE" -> Column(Modifier.fillMaxSize()) {
+            TextButton(onClick = { currentView = "MENU" }) { Text("← Back to Provider") }
+            ProviderProfileContent(api, accessToken)
+        }
+    }
+}
+
+@Composable
+private fun ProviderPortalMenu(onAssignments: () -> Unit, onProfile: () -> Unit) {
+    LazyColumn(Modifier.fillMaxSize()) {
+        item {
+            Text("Provider", style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+        }
+        items(
+            listOf(
+                "Assignments" to onAssignments,
+                "My Profile" to onProfile,
+            ),
+        ) { (label, onClick) ->
+            Card(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clickable(onClick = onClick),
+            ) {
+                Text(label, Modifier.padding(16.dp), style = MaterialTheme.typography.subtitle1)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProviderAssignmentsContent(
+    api: WeirHereApi,
+    accessToken: String?,
+    userEmail: String?,
     onRefresh: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -156,6 +219,116 @@ fun ProviderUi(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ProviderProfileContent(api: WeirHereApi, accessToken: String?) {
+    val scope = rememberCoroutineScope()
+    val tok = accessToken?.trim().orEmpty()
+    var profile by remember { mutableStateOf<ProviderProfileDto?>(null) }
+    var loading by remember { mutableStateOf(true) }
+    var saving by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var success by remember { mutableStateOf<String?>(null) }
+
+    fun reload() {
+        scope.launch {
+            loading = true
+            error = null
+            runCatching { api.getProviderProfile(tok) }
+                .onSuccess { profile = it }
+                .onFailure {
+                    if (it !is kotlinx.coroutines.CancellationException) {
+                        error = it.message ?: it.toString()
+                    }
+                }
+            loading = false
+        }
+    }
+
+    LaunchedEffect(tok) { reload() }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 8.dp),
+    ) {
+        Text("My Profile", style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
+        error?.let { Text(it, color = MaterialTheme.colors.error, modifier = Modifier.padding(vertical = 8.dp)) }
+        success?.let { Text(it, color = Color(0xFF2E7D32), modifier = Modifier.padding(vertical = 8.dp)) }
+
+        if (loading) {
+            CircularProgressIndicator(Modifier.padding(16.dp))
+            return@Column
+        }
+
+        val current = profile ?: return@Column
+        var name by remember(current) { mutableStateOf(current.name) }
+        var addressDetails by remember(current) {
+            mutableStateOf(JamaicaParishes.hydrateAddressDetails(current.addressDetails, current.address))
+        }
+        var preferredParishes by remember(current) {
+            mutableStateOf(
+                JamaicaParishes.normalizePreferred(
+                    current.addressDetails.parish,
+                    current.preferredParishes,
+                ),
+            )
+        }
+        var phones by remember(current) { mutableStateOf(current.phoneNumbers) }
+
+        OutlinedTextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(current.email, {}, label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), enabled = false)
+        Spacer(Modifier.height(8.dp))
+        ProviderAddressFields(
+            value = addressDetails,
+            onChange = { updated ->
+                addressDetails = updated
+                preferredParishes = JamaicaParishes.normalizePreferred(updated.parish, preferredParishes)
+            },
+        )
+        PreferredParishesField(
+            homeParish = addressDetails.parish,
+            value = preferredParishes,
+            onChange = { preferredParishes = it },
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        PhoneNumberEditor(phones, { phones = it })
+        Spacer(Modifier.height(12.dp))
+        Button(
+            enabled = !saving && name.isNotBlank(),
+            onClick = {
+                scope.launch {
+                    saving = true
+                    error = null
+                    success = null
+                    val payload = ProviderProfileUpdatePayload(
+                        name = name.trim(),
+                        addressDetails = addressDetails,
+                        preferredParishes = JamaicaParishes.normalizePreferred(
+                            addressDetails.parish,
+                            preferredParishes,
+                        ),
+                        phoneNumbers = phones,
+                    )
+                    runCatching { api.updateProviderProfile(tok, payload) }
+                        .onSuccess {
+                            profile = it
+                            success = "Profile updated."
+                        }
+                        .onFailure {
+                            if (it !is kotlinx.coroutines.CancellationException) {
+                                error = it.message ?: it.toString()
+                            }
+                        }
+                    saving = false
+                }
+            },
+        ) {
+            Text(if (saving) "Saving…" else "Save Changes")
         }
     }
 }

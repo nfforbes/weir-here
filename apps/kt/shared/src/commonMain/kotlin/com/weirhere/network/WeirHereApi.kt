@@ -513,6 +513,29 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
             )
         }
 
+    suspend fun getProviderProfile(accessToken: String): com.weirhere.model.ProviderProfileDto =
+        try {
+            client.get("api/provider/profile") {
+                header(HttpHeaders.Authorization, bearer(accessToken))
+            }.body()
+        } catch (e: ClientRequestException) {
+            throwProviderApiException(e)
+        }
+
+    suspend fun updateProviderProfile(
+        accessToken: String,
+        payload: com.weirhere.model.ProviderProfileUpdatePayload,
+    ): com.weirhere.model.ProviderProfileDto =
+        try {
+            client.patch("api/provider/profile") {
+                header(HttpHeaders.Authorization, bearer(accessToken))
+                contentType(ContentType.Application.Json)
+                setBody(payload)
+            }.body()
+        } catch (e: ClientRequestException) {
+            throwProviderApiException(e)
+        }
+
     private suspend fun throwProviderApiException(e: ClientRequestException): Nothing {
         val apiError =
             runCatching { e.response.body<ApiErrorDto>().error }

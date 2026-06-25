@@ -35,13 +35,39 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { ELECTRIC_BLUE } from '@/theme/theme';
 import { filterClients, paginateList } from '@/lib/adminListHelpers';
+import {
+  EMPTY_ADDRESS_DETAILS,
+  formatAddress,
+  hydrateAddressDetails,
+  type AddressDetails,
+} from '@weir-here/shared';
+import ProviderAddressFields from '@/components/providers/ProviderAddressFields';
 
 interface Client {
   _id: string;
   name: string;
+  email?: string;
   address: string;
+  addressDetails?: AddressDetails;
   phoneNumbers?: { number: string; isBest: boolean }[];
 }
+
+type ClientFormState = {
+  name: string;
+  email: string;
+  addressDetails: AddressDetails;
+  phoneNumbers: { number: string; isBest: boolean }[];
+};
+
+const emptyForm = (): ClientFormState => ({
+  name: '',
+  email: '',
+  addressDetails: { ...EMPTY_ADDRESS_DETAILS },
+  phoneNumbers: [],
+});
+
+const hasClientAddress = (form: ClientFormState) =>
+  formatAddress(form.addressDetails).trim().length > 0;
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -49,7 +75,7 @@ export default function ClientsPage() {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
-  const [form, setForm] = useState<{ name: string; address: string; phoneNumbers: { number: string; isBest: boolean }[] }>({ name: '', address: '', phoneNumbers: [] });
+  const [form, setForm] = useState<ClientFormState>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
@@ -81,22 +107,33 @@ export default function ClientsPage() {
   const handleOpen = (client?: Client) => {
     if (client) {
       setEditing(client);
-      setForm({ name: client.name, address: client.address, phoneNumbers: client.phoneNumbers || [] });
+      setForm({
+        name: client.name,
+        email: client.email || '',
+        addressDetails: hydrateAddressDetails(client.addressDetails, client.address),
+        phoneNumbers: client.phoneNumbers || [],
+      });
     } else {
       setEditing(null);
-      setForm({ name: '', address: '', phoneNumbers: [] });
+      setForm(emptyForm());
     }
     setOpen(true);
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.address.trim()) return;
+    if (!form.name.trim() || !hasClientAddress(form)) return;
     setSaving(true);
     try {
       const res = await fetch('/api/admin/clients', {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...(editing ? { id: editing._id } : {}), ...form }),
+        body: JSON.stringify({
+          ...(editing ? { id: editing._id } : {}),
+          name: form.name,
+          email: form.email,
+          addressDetails: form.addressDetails,
+          phoneNumbers: form.phoneNumbers,
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       await fetchClients();
@@ -140,7 +177,7 @@ export default function ClientsPage() {
         <Paper sx={{ p: 4 }}>
           <Typography variant="h6" mb={3}>{editing ? 'Edit Client' : 'New Client'}</Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 autoFocus
                 fullWidth
@@ -149,14 +186,22 @@ export default function ClientsPage() {
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                multiline
-                rows={2}
-                label="Address *"
-                value={form.address}
-                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                Address *
+              </Typography>
+              <ProviderAddressFields
+                value={form.addressDetails}
+                onChange={(addressDetails) => setForm((f) => ({ ...f, addressDetails }))}
               />
             </Grid>
             <Grid item xs={12}>
@@ -205,7 +250,7 @@ export default function ClientsPage() {
             </Grid>
             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
               <Button onClick={() => setOpen(false)}>Cancel</Button>
-              <Button variant="contained" onClick={handleSave} disabled={saving || !form.name.trim() || !form.address.trim()}>
+              <Button variant="contained" onClick={handleSave} disabled={saving || !form.name.trim() || !hasClientAddress(form)}>
                 {saving ? <CircularProgress size={20} /> : editing ? 'Save Changes' : 'Create'}
               </Button>
             </Grid>
@@ -217,7 +262,7 @@ export default function ClientsPage() {
             <TextField
               size="small"
               fullWidth
-              label="Search name, address, or phone"
+              label="Search name, email, address, or phone"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -226,6 +271,7 @@ export default function ClientsPage() {
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#f5f7fa' } }}>
                 <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
                 <TableCell>Phone</TableCell>
                 <TableCell>Address</TableCell>
                 <TableCell align="right">Actions</TableCell>
@@ -234,14 +280,14 @@ export default function ClientsPage() {
             <TableBody>
               {clients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     No clients yet. Click &quot;Add Client&quot; to get started.
                   </TableCell>
                 </TableRow>
               )}
               {clients.length > 0 && filteredClients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     No clients match your search.
                   </TableCell>
                 </TableRow>
@@ -255,6 +301,13 @@ export default function ClientsPage() {
                     </Box>
                   </TableCell>
                   <TableCell>
+                    {c.email ? (
+                      <Typography variant="body2" color="text.secondary">{c.email}</Typography>
+                    ) : (
+                      <Typography variant="body2" color="text.disabled">—</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                       {c.phoneNumbers?.map((p, i) => (
                         <Typography key={i} variant="body2" sx={{ fontWeight: p.isBest ? 600 : 400, color: p.isBest ? 'text.primary' : 'text.secondary' }}>
@@ -265,7 +318,9 @@ export default function ClientsPage() {
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" color="text.secondary">{c.address}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {formatAddress(c.addressDetails, c.address)}
+                    </Typography>
                   </TableCell>
                   <TableCell align="right">
                     <Tooltip title="Edit">

@@ -54,6 +54,8 @@ import com.weirhere.model.ClientUpsertPayload
 import com.weirhere.model.JobJson
 import com.weirhere.model.PhoneNumberDto
 import com.weirhere.model.PickedFilePayload
+import com.weirhere.data.JamaicaParishes
+import com.weirhere.model.ProviderAddressDetailsDto
 import com.weirhere.model.ProviderDto
 import com.weirhere.model.ProviderUpsertPayload
 import com.weirhere.model.QualificationDto
@@ -431,7 +433,14 @@ fun AdminProvidersUi(api: WeirHereApi, accessToken: String?) {
                         Column(Modifier.padding(12.dp)) {
                             Text(prov.name, fontWeight = FontWeight.Bold)
                             prov.email?.let { Text(it, color = MaterialTheme.colors.primary, style = MaterialTheme.typography.body2) }
-                            if (prov.address.isNotBlank()) Text(prov.address, style = MaterialTheme.typography.body2)
+                            val displayAddress = JamaicaParishes.formatAddress(prov.addressDetails, prov.address)
+                            if (displayAddress.isNotBlank()) Text(displayAddress, style = MaterialTheme.typography.body2)
+                            if (prov.preferredParishes.isNotEmpty()) {
+                                Text(
+                                    "Preferred: ${prov.preferredParishes.joinToString(", ")}",
+                                    style = MaterialTheme.typography.caption,
+                                )
+                            }
                             prov.phoneNumbers.forEach { p ->
                                 Text(p.number + if (p.isBest) " (Best)" else "", style = MaterialTheme.typography.body2)
                             }
@@ -505,7 +514,22 @@ private fun ProviderFormScreen(
     val scope = rememberCoroutineScope()
     var name by remember(initial) { mutableStateOf(initial?.name ?: "") }
     var email by remember(initial) { mutableStateOf(initial?.email ?: "") }
-    var address by remember(initial) { mutableStateOf(initial?.address ?: "") }
+    var addressDetails by remember(initial) {
+        mutableStateOf(
+            JamaicaParishes.hydrateAddressDetails(
+                initial?.addressDetails ?: ProviderAddressDetailsDto(),
+                initial?.address.orEmpty(),
+            ),
+        )
+    }
+    var preferredParishes by remember(initial) {
+        mutableStateOf(
+            JamaicaParishes.normalizePreferred(
+                initial?.addressDetails?.parish.orEmpty(),
+                initial?.preferredParishes ?: emptyList(),
+            ),
+        )
+    }
     var phones by remember(initial) { mutableStateOf(initial?.phoneNumbers ?: emptyList()) }
     var staged by remember { mutableStateOf<List<StagedQualification>>(emptyList()) }
     var pendingFile by remember { mutableStateOf<PickedFilePayload?>(null) }
@@ -519,7 +543,20 @@ private fun ProviderFormScreen(
         Text(if (initial == null) "Add Provider" else "Edit Provider", style = MaterialTheme.typography.h6)
         OutlinedTextField(name, { name = it }, label = { Text("Name *") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(email, { email = it }, label = { Text("Email *") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(address, { address = it }, label = { Text("Address") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+        Text("Address", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
+        ProviderAddressFields(
+            value = addressDetails,
+            onChange = { updated ->
+                addressDetails = updated
+                preferredParishes = JamaicaParishes.normalizePreferred(updated.parish, preferredParishes)
+            },
+        )
+        PreferredParishesField(
+            homeParish = addressDetails.parish,
+            value = preferredParishes,
+            onChange = { preferredParishes = it },
+            modifier = Modifier.padding(top = 8.dp),
+        )
         PhoneNumberEditor(phones, { phones = it })
         Spacer(Modifier.height(8.dp))
         Text("New qualifications", fontWeight = FontWeight.SemiBold)
@@ -543,11 +580,14 @@ private fun ProviderFormScreen(
                     scope.launch {
                         saving = true
                         error = null
+                        val normalizedParishes =
+                            JamaicaParishes.normalizePreferred(addressDetails.parish, preferredParishes)
                         val payload = ProviderUpsertPayload(
                             id = initial?.id,
                             name = name.trim(),
                             email = email.trim(),
-                            address = address.trim(),
+                            addressDetails = addressDetails,
+                            preferredParishes = normalizedParishes,
                             phoneNumbers = phones,
                         )
                         runCatching {
@@ -633,7 +673,7 @@ fun AdminClientsUi(api: WeirHereApi, accessToken: String?) {
         AdminListSearchField(
             value = search,
             onValueChange = { search = it },
-            label = "Search name, address, or phone",
+            label = "Search name, email, address, or phone",
         )
         if (loading) CircularProgressIndicator(Modifier.padding(16.dp))
         else if (filtered.isEmpty()) {
@@ -649,7 +689,11 @@ fun AdminClientsUi(api: WeirHereApi, accessToken: String?) {
                     Card(Modifier.fillMaxWidth().padding(vertical = 4.dp).background(cardBackground(index))) {
                         Column(Modifier.padding(12.dp)) {
                             Text(cli.name, fontWeight = FontWeight.Bold)
-                            Text(cli.address, style = MaterialTheme.typography.body2)
+                            if (cli.email.isNotBlank()) {
+                                Text(cli.email, style = MaterialTheme.typography.body2)
+                            }
+                            val displayAddress = JamaicaParishes.formatAddress(cli.addressDetails, cli.address)
+                            if (displayAddress.isNotBlank()) Text(displayAddress, style = MaterialTheme.typography.body2)
                             cli.phoneNumbers.forEach { p ->
                                 Text(p.number + if (p.isBest) " (Best)" else "", style = MaterialTheme.typography.body2)
                             }
@@ -678,7 +722,15 @@ private fun ClientFormScreen(
 ) {
     val scope = rememberCoroutineScope()
     var name by remember(initial) { mutableStateOf(initial?.name ?: "") }
-    var address by remember(initial) { mutableStateOf(initial?.address ?: "") }
+    var email by remember(initial) { mutableStateOf(initial?.email ?: "") }
+    var addressDetails by remember(initial) {
+        mutableStateOf(
+            JamaicaParishes.hydrateAddressDetails(
+                initial?.addressDetails ?: ProviderAddressDetailsDto(),
+                initial?.address.orEmpty(),
+            ),
+        )
+    }
     var phones by remember(initial) { mutableStateOf(initial?.phoneNumbers ?: emptyList()) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -686,16 +738,27 @@ private fun ClientFormScreen(
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(8.dp)) {
         Text(if (initial == null) "Add Client" else "Edit Client", style = MaterialTheme.typography.h6)
         OutlinedTextField(name, { name = it }, label = { Text("Name *") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(address, { address = it }, label = { Text("Address *") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
+        Text("Address *", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
+        ProviderAddressFields(
+            value = addressDetails,
+            onChange = { addressDetails = it },
+        )
         PhoneNumberEditor(phones, { phones = it })
         error?.let { Text(it, color = MaterialTheme.colors.error) }
         Row(Modifier.padding(top = 8.dp)) {
             androidx.compose.material.Button(
-                enabled = !saving && name.isNotBlank() && address.isNotBlank(),
+                enabled = !saving && name.isNotBlank() && JamaicaParishes.formatAddress(addressDetails).isNotBlank(),
                 onClick = {
                     scope.launch {
                         saving = true
-                        val payload = ClientUpsertPayload(id = initial?.id, name = name.trim(), address = address.trim(), phoneNumbers = phones)
+                        val payload = ClientUpsertPayload(
+                            id = initial?.id,
+                            name = name.trim(),
+                            email = email.trim(),
+                            addressDetails = addressDetails,
+                            phoneNumbers = phones,
+                        )
                         runCatching {
                             if (initial == null) api.createClient(tok, payload) else api.updateClient(tok, payload)
                         }.onSuccess { onDone() }

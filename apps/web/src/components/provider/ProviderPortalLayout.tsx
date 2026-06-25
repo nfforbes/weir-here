@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import WorkIcon from '@mui/icons-material/Work';
+import PersonIcon from '@mui/icons-material/Person';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
@@ -31,6 +32,7 @@ const DRAWER_WIDTH = 260;
 const NAV_ITEMS = [
   { label: 'Back to Site', icon: <HomeIcon />, href: '/', external: false },
   { label: 'Assignments', icon: <WorkIcon />, href: '/dashboard/provider/portal/assignments', external: false },
+  { label: 'My Profile', icon: <PersonIcon />, href: '/dashboard/provider/portal/profile', external: false },
   { label: 'Logout', icon: <LogoutIcon />, href: '/auth/logout', external: true },
 ];
 

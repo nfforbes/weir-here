@@ -21,7 +21,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -51,7 +53,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -203,25 +207,31 @@ fun WeirHereApp() {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { 
-                        Text(
-                            "Weir Here", 
-                            modifier = Modifier.fillMaxWidth(), 
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        ) 
+                    modifier = Modifier.statusBarsPadding(),
+                    backgroundColor = MaterialTheme.colors.primary,
+                    title = {
+                        Box(
+                            Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("Weir Here", textAlign = TextAlign.Center)
+                        }
+                    },
+                    navigationIcon = {
+                        Spacer(Modifier.width(48.dp))
                     },
                     actions = {
                         androidx.compose.material.IconButton(onClick = { tab = Tab.PROFILE }) {
                             androidx.compose.material.Icon(
                                 imageVector = Icons.Filled.Person,
-                                contentDescription = "Login"
+                                contentDescription = "Profile",
                             )
                         }
-                    }
+                    },
                 )
             },
             bottomBar = {
-                BottomNavigation {
+                BottomNavigation(Modifier.navigationBarsPadding()) {
                     BottomNavigationItem(
                         selected = tab == Tab.JOBS,
                         onClick = {

@@ -272,11 +272,22 @@ data class PhoneNumberDto(
 )
 
 @Serializable
+data class ProviderAddressDetailsDto(
+    val streetLine1: String = "",
+    val streetLine2: String = "",
+    val city: String = "",
+    val parish: String = "",
+    val postalCode: String = "",
+)
+
+@Serializable
 data class ProviderDto(
     @SerialName("_id") val id: String,
     val name: String,
     val email: String? = null,
     val address: String,
+    val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
+    val preferredParishes: List<String> = emptyList(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList(),
     val qualifications: List<QualificationDto> = emptyList()
 )
@@ -286,15 +297,38 @@ data class ProviderUpsertPayload(
     val id: String? = null,
     val name: String,
     val email: String? = null,
-    val address: String,
+    val address: String = "",
+    val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
+    val preferredParishes: List<String> = emptyList(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList()
+)
+
+@Serializable
+data class ProviderProfileDto(
+    @SerialName("_id") val id: String? = null,
+    val name: String = "",
+    val email: String = "",
+    val address: String = "",
+    val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
+    val preferredParishes: List<String> = emptyList(),
+    val phoneNumbers: List<PhoneNumberDto> = emptyList(),
+)
+
+@Serializable
+data class ProviderProfileUpdatePayload(
+    val name: String,
+    val addressDetails: ProviderAddressDetailsDto,
+    val preferredParishes: List<String> = emptyList(),
+    val phoneNumbers: List<PhoneNumberDto> = emptyList(),
 )
 
 @Serializable
 data class ClientDto(
     @SerialName("_id") val id: String? = null,
     val name: String = "",
+    val email: String = "",
     val address: String = "",
+    val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList()
 )
 
@@ -302,7 +336,9 @@ data class ClientDto(
 data class ClientUpsertPayload(
     val id: String? = null,
     val name: String,
-    val address: String,
+    val email: String = "",
+    val address: String = "",
+    val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList()
 )
 
