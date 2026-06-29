@@ -12,4 +12,6 @@ iosApp/Pods/*
 iosApp/iosApp.xcworkspace/*
 iosApp/iosApp.xcodeproj/*
 !iosApp/iosApp.xcodeproj/project.pbxproj
+!iosApp/iosApp.xcodeproj/xcshareddata/
+!iosApp/iosApp.xcodeproj/xcshareddata/**
 shared/shared.podspec
