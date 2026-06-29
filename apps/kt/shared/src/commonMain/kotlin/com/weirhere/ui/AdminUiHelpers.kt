@@ -25,7 +25,9 @@ import androidx.compose.ui.unit.dp
 import com.weirhere.model.ClientDto
 import com.weirhere.model.PhoneNumberDto
 import com.weirhere.model.ProviderDto
+import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 @Composable
 fun ConfirmDeleteDialog(
@@ -209,8 +211,14 @@ fun formatDollars(cents: Int): String {
 fun cardBackground(index: Int): Color =
     if (index % 2 == 0) Color(0xFFF5F5F5) else Color.White
 
-fun formatDollarsAmount(amount: Double): String =
-    "$${"%.2f".format(amount)}"
+fun formatDollarsAmount(amount: Double): String {
+    val negative = amount < 0.0
+    val absCents = (abs(amount) * 100.0).roundToInt()
+    val dollars = absCents / 100
+    val cents = absCents % 100
+    val sign = if (negative) "-" else ""
+    return "${sign}$$dollars.${cents.toString().padStart(2, '0')}"
+}
 
 fun formatLastLogin(updatedAt: String?, sessionFallback: String?): String {
     val raw = updatedAt?.takeIf { it.isNotBlank() } ?: sessionFallback?.takeIf { it.isNotBlank() }
