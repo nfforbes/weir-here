@@ -1,5 +1,13 @@
 package com.weirhere.data
 
-internal expect fun epochMillis(): Long
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
-internal expect fun currentMonthYyyyMm(): String
+internal fun epochMillis(): Long = Clock.System.now().toEpochMilliseconds()
+
+internal fun currentMonthYyyyMm(): String {
+    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val month = now.monthNumber.toString().padStart(2, '0')
+    return "${now.year}-$month"
+}

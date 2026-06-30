@@ -1,5 +1,4 @@
 import java.util.Properties
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     kotlin("multiplatform")
@@ -38,12 +37,6 @@ kotlin {
         }
     }
 
-    targets.withType<KotlinNativeTarget>().configureEach {
-        compilations.getByName("main").kotlinOptions {
-            freeCompilerArgs += "-opt-in=kotlinx.cinterop.ExperimentalForeignApi"
-        }
-    }
-
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -55,6 +48,7 @@ kotlin {
                 implementation(compose.components.resources)
 
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
                 implementation("io.ktor:ktor-client-core:$ktorVersion")
