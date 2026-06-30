@@ -1,5 +1,5 @@
 # Copy to apps/kt/local.properties (not committed) and tune for your machine.
-# Used by Gradle to inject Android BuildConfig strings (see apps/kt/shared/build.gradle.kts).
+# Used by Gradle to inject Android BuildConfig and iOS Env.ios.kt (see apps/kt/shared/build.gradle.kts).
 
 # Web app URL (omit trailing slash). Production:
 weir_here.api.url=https://www.weirheresolutions.com

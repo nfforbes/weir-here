@@ -118,3 +118,32 @@ android {
         jvmToolchain(17)
     }
 }
+
+val iosEnvFile = file("src/iosMain/kotlin/com/weirhere/env/Env.ios.kt")
+
+val generateIosEnv by tasks.registering {
+    outputs.file(iosEnvFile)
+    doLast {
+        iosEnvFile.parentFile.mkdirs()
+        iosEnvFile.writeText(
+            """
+            package com.weirhere.env
+
+            // Generated from apps/kt/local.properties by Gradle. Do not edit by hand.
+
+            actual object Env {
+                actual fun apiBaseUrl(): String = ${quoted(apiUrl)}.trimEnd('/')
+                actual fun auth0Domain(): String = ${quoted(auth0Domain)}.trim()
+                actual fun auth0ClientId(): String = ${quoted(auth0ClientId)}.trim()
+                actual fun auth0Audience(): String = ${quoted(auth0Audience)}.trim()
+            }
+            """.trimIndent() + "\n",
+        )
+    }
+}
+
+tasks.configureEach {
+    if (name.startsWith("compileKotlinIos") || name == "embedAndSignAppleFrameworkForXcode") {
+        dependsOn(generateIosEnv)
+    }
+}

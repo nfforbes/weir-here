@@ -1,13 +1,10 @@
 package com.weirhere.env
 
-/**
- *Simulator default: localhost points to macOS Next dev server.
- * Override at build/run time via environment or Xcode scheme vars if supported.
- */
-actual object Env {
-    actual fun apiBaseUrl(): String = "https://weirheresolutions.com"
+// Generated from apps/kt/local.properties by Gradle. Do not edit by hand.
 
-    actual fun auth0Domain(): String = ""
-    actual fun auth0ClientId(): String = ""
-    actual fun auth0Audience(): String = ""
+actual object Env {
+    actual fun apiBaseUrl(): String = "https://www.weirheresolutions.com".trimEnd('/')
+    actual fun auth0Domain(): String = "n4consulting.us.auth0.com".trim()
+    actual fun auth0ClientId(): String = "7gvIVgyZkkGlws8kMjhzS47mmoBnXaFb".trim()
+    actual fun auth0Audience(): String = "".trim()
 }

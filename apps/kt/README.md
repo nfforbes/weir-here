@@ -1,6 +1,6 @@
 # Weir Here — Kotlin Multiplatform mobile app (`apps/kt`)
 
-Shared UI and networking target **Android** (Compose + Auth0 SDK) and **iOS** (Compose with a stub Auth0 login; see below).
+Shared UI and networking target **Android** (Compose + Auth0 SDK) and **iOS** (Compose + Auth0 PKCE via ASWebAuthenticationSession).
 
 The Next.js backend under `apps/web` accepts **cookies** from the browser and **`Authorization: Bearer`** from native clients (`src/lib/apiAuth.ts`). Tokens must satisfy Auth0 JWKS verification and **`aud`** expectations (`AUTH0_AUDIENCE`, and optionally `AUTH0_MOBILE_CLIENT_ID`).
 
@@ -26,9 +26,9 @@ The Next.js backend under `apps/web` accepts **cookies** from the browser and **
 
 ## iOS notes
 
-- **Env:** `Env.ios.kt` defaults to `http://127.0.0.1:3000` as the API base URL (Simulator can reach macOS localhost). Adjust for device testing.
-- **Auth:** **`PlatformLoginButton`** on `iosMain` is a scaffold (no PKCE Browser flow yet); see `shared/src/iosMain/kotlin/com/weirhere/auth/PlatformLoginButton.ios.kt`. Add Auth0 Swift + ASWebAuthenticationSession and pass the resulting access token into `SessionStore.setAccess(token)` once implemented.
-- **Info.plist** registers the **`weirhere`** URL scheme for future redirects and relaxes ATS for local debugging.
+- **Env:** `Env.ios.kt` is generated from `apps/kt/local.properties` (same keys as Android) on each iOS Gradle build.
+- **Auth:** Native Auth0 PKCE via `ASWebAuthenticationSession` in `iosApp/iosApp/Auth0Manager.swift`, wired to Compose through `IosAuthBridge.kt`. Callback: `weirhere://callback`.
+- **Info.plist** registers the **`weirhere`** URL scheme and relaxes ATS for local debugging.
 
 ## App behavior (aligned with web)
 
@@ -36,4 +36,4 @@ The Next.js backend under `apps/web` accepts **cookies** from the browser and **
 - **Payment** — secure payment portal with PayPal Hosted Button (mirrors web `/payment`).
 - **Admin** — administrators only (`hasAdministrator`); job/provider/client management.
 - **Provider** — providers only (`hasProvider`); assignments portal.
-- **Profile** — Auth0 login (Android), logout, bootstrap-driven email/personas (top-bar icon).
+- **Profile** — Auth0 login (Android + iOS), logout, bootstrap-driven email/personas (top-bar icon).
