@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     kotlin("multiplatform")
@@ -34,6 +35,12 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "shared"
             isStatic = true
+        }
+    }
+
+    targets.withType<KotlinNativeTarget>().configureEach {
+        compilations.getByName("main").kotlinOptions {
+            freeCompilerArgs += "-opt-in=kotlinx.cinterop.ExperimentalForeignApi"
         }
     }
 
