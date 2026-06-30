@@ -9,19 +9,60 @@ plugins {
 
 val ktorVersion = "2.3.12"
 
+val localPropertiesFile = rootProject.rootDir.resolve("local.properties")
 val localProps =
     Properties().apply {
-        val f = rootProject.rootDir.resolve("local.properties")
-        if (f.exists()) f.inputStream().use { load(it) }
+        if (localPropertiesFile.exists()) localPropertiesFile.inputStream().use { load(it) }
     }
+
+fun loadDotEnv(file: java.io.File): Map<String, String> {
+    if (!file.exists()) return emptyMap()
+    return file.readLines().mapNotNull { line ->
+        val trimmed = line.trim()
+        if (trimmed.isEmpty() || trimmed.startsWith("#")) return@mapNotNull null
+        val idx = trimmed.indexOf('=')
+        if (idx <= 0) return@mapNotNull null
+        val key = trimmed.substring(0, idx).trim()
+        val value =
+            trimmed.substring(idx + 1).trim()
+                .removePrefix("\"").removeSuffix("\"")
+                .removePrefix("'").removeSuffix("'")
+        key to value
+    }.toMap()
+}
+
+val repoRoot = rootProject.rootDir.parentFile?.parentFile
+val dotEnv = if (repoRoot != null) loadDotEnv(repoRoot.resolve(".env")) else emptyMap()
+
+fun configValue(
+    propertyKey: String,
+    envKey: String,
+    dotEnvKeys: List<String> = emptyList(),
+): String {
+    (localProps[propertyKey] as String?)?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+    System.getenv(envKey)?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+    for (key in dotEnvKeys) {
+        dotEnv[key]?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+    }
+    return ""
+}
+
+val apiUrl =
+    configValue("weir_here.api.url", "WEIR_HERE_API_URL", listOf("WEIR_HERE_API_URL"))
+        .ifBlank { "https://www.weirheresolutions.com" }
+val auth0Domain =
+    configValue("weir_here.auth0.domain", "WEIR_HERE_AUTH0_DOMAIN", listOf("AUTH0_DOMAIN"))
+val auth0ClientId =
+    configValue(
+        "weir_here.auth0.clientId",
+        "WEIR_HERE_AUTH0_CLIENT_ID",
+        listOf("AUTH0_MOBILE_CLIENT_ID", "AUTH0_CLIENT_ID"),
+    )
+val auth0Audience =
+    configValue("weir_here.auth0.audience", "WEIR_HERE_AUTH0_AUDIENCE", listOf("AUTH0_AUDIENCE"))
 
 fun quoted(s: String): String =
     '"' + s.replace("\\", "\\\\").replace("\"", "\\\"") + '"'
-
-val apiUrl = (localProps["weir_here.api.url"] as String?) ?: "https://www.weirheresolutions.com"
-val auth0Domain = (localProps["weir_here.auth0.domain"] as String?) ?: ""
-val auth0ClientId = (localProps["weir_here.auth0.clientId"] as String?) ?: ""
-val auth0Audience = (localProps["weir_here.auth0.audience"] as String?) ?: ""
 
 kotlin {
     androidTarget()
@@ -123,13 +164,23 @@ val iosEnvFile = file("src/iosMain/kotlin/com/weirhere/env/Env.ios.kt")
 
 val generateIosEnv by tasks.registering {
     outputs.file(iosEnvFile)
+
     doLast {
+        val hasAuth0Config = auth0Domain.isNotBlank() && auth0ClientId.isNotBlank()
+        if (!hasAuth0Config && iosEnvFile.exists()) {
+            logger.lifecycle(
+                "generateIosEnv: keeping existing Env.ios.kt " +
+                    "(set weir_here.auth0.* in apps/kt/local.properties, env vars, or repo .env)",
+            )
+            return@doLast
+        }
+
         iosEnvFile.parentFile.mkdirs()
         iosEnvFile.writeText(
             """
             package com.weirhere.env
 
-            // Generated from apps/kt/local.properties by Gradle. Do not edit by hand.
+            // Generated from apps/kt/local.properties / env / .env by Gradle. Do not edit by hand.
 
             actual object Env {
                 actual fun apiBaseUrl(): String = ${quoted(apiUrl)}.trimEnd('/')

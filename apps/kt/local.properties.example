@@ -6,10 +6,12 @@ weir_here.api.url=https://www.weirheresolutions.com
 # Local dev on emulator → host machine Next.js:
 # weir_here.api.url=http://10.0.2.2:3000
 
-# Auth0 Native app credentials — align with `.env.example` in repo root:
+# Auth0 Native app credentials — align with `.env` in repo root (AUTH0_DOMAIN, AUTH0_MOBILE_CLIENT_ID).
 # Same audience as AUTH0_AUDIENCE for Bearer JWT verification on `/api/*`.
 # When audience is set, login uses accessToken; otherwise ID token (mobile client id as aud).
 # Auth0 Dashboard → Native app → Allowed Callback URLs must include: weirhere://callback
+#
+# You can copy values from repo-root `.env` instead of filling these manually.
 weir_here.auth0.domain=
 weir_here.auth0.clientId=
 weir_here.auth0.audience=

@@ -46,6 +46,20 @@ jobs:
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
 
+      - name: Configure Auth0 for iOS build
+        run: |
+          if [ -n "${WEIR_HERE_AUTH0_DOMAIN:-}" ] && [ -n "${WEIR_HERE_AUTH0_CLIENT_ID:-}" ]; then
+            printf '%s\n' \
+              "weir_here.auth0.domain=${WEIR_HERE_AUTH0_DOMAIN}" \
+              "weir_here.auth0.clientId=${WEIR_HERE_AUTH0_CLIENT_ID}" \
+              "weir_here.auth0.audience=${WEIR_HERE_AUTH0_AUDIENCE:-}" \
+              >> local.properties
+          fi
+        env:
+          WEIR_HERE_AUTH0_DOMAIN: ${{ secrets.WEIR_HERE_AUTH0_DOMAIN }}
+          WEIR_HERE_AUTH0_CLIENT_ID: ${{ secrets.WEIR_HERE_AUTH0_CLIENT_ID }}
+          WEIR_HERE_AUTH0_AUDIENCE: ${{ secrets.WEIR_HERE_AUTH0_AUDIENCE }}
+
       - name: Build shared Kotlin framework (iOS Simulator)
         run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64 --no-daemon --stacktrace
 

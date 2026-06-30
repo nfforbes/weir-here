@@ -1,6 +1,6 @@
 package com.weirhere.env
 
-// Generated from apps/kt/local.properties by Gradle. Do not edit by hand.
+// Generated from apps/kt/local.properties / env / .env by Gradle. Do not edit by hand.
 
 actual object Env {
     actual fun apiBaseUrl(): String = "https://www.weirheresolutions.com".trimEnd('/')

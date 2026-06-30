@@ -44,7 +44,7 @@ final class Auth0Manager: NSObject {
 
         guard !domain.isEmpty, !clientId.isEmpty else {
             IosAuthBridgeKt.iosAuthOnLoginFailure(
-                message: "Set weir_here.auth0.domain and weir_here.auth0.clientId in apps/kt/local.properties"
+                message: "Auth0 not configured. Add weir_here.auth0.domain and weir_here.auth0.clientId to apps/kt/local.properties, then rebuild the shared framework."
             )
             return
         }

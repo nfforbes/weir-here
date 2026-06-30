@@ -15,7 +15,11 @@ internal fun beginIosAuthLogin(
     onError: (String) -> Unit,
 ) {
     if (Env.auth0Domain().isBlank() || Env.auth0ClientId().isBlank()) {
-        onError("Set weir_here.auth0.domain and weir_here.auth0.clientId in apps/kt/local.properties")
+        onError(
+            "Auth0 not configured. Add weir_here.auth0.domain and weir_here.auth0.clientId to " +
+                "apps/kt/local.properties (or AUTH0_DOMAIN / AUTH0_MOBILE_CLIENT_ID in repo .env), " +
+                "then rebuild the shared framework: ./gradlew :shared:embedAndSignAppleFrameworkForXcode",
+        )
         return
     }
     pendingLoginSuccess = onToken
