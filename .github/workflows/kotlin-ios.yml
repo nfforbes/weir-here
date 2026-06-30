@@ -34,8 +34,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # v5 uses Node 24; v4 triggers Node 20 deprecation warnings on current runners.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -64,17 +65,24 @@ jobs:
             DEVELOPMENT_TEAM="" \
             build
 
-      - name: Locate built .app
+      - name: Stage Simulator app for upload
         id: app
         run: |
-          APP_PATH=$(find iosApp/build/DerivedData -path '*Build/Products/Debug-iphonesimulator/*.app' -type d | head -n 1)
+          set -euo pipefail
+          APP_PATH=$(find iosApp/build/DerivedData -type d -name '*.app' -print -quit)
           if [ -z "$APP_PATH" ]; then
             echo "iOS .app bundle not found after xcodebuild"
             find iosApp/build -type d -name '*.app' || true
             exit 1
           fi
-          echo "path=$APP_PATH" >> "$GITHUB_OUTPUT"
+          STAGING_DIR="${GITHUB_WORKSPACE}/apps/kt/iosApp/build/ci-artifacts"
+          STAGED_APP="${STAGING_DIR}/WeirHere-ios-simulator.app"
+          rm -rf "$STAGED_APP"
+          mkdir -p "$STAGING_DIR"
+          cp -R "$APP_PATH" "$STAGED_APP"
+          echo "path=${STAGED_APP}" >> "$GITHUB_OUTPUT"
           echo "Built: $APP_PATH"
+          echo "Staged: $STAGED_APP"
 
       - name: Upload Simulator app artifact
         uses: actions/upload-artifact@v4
