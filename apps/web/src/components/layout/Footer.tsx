@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Box, Typography } from '@mui/material';
+import { BUSINESS_ADDRESS_LINE } from '@/lib/businessAddress';
 
 export default function Footer() {
   const linkSx = {
@@ -27,7 +28,7 @@ export default function Footer() {
           Weir Here Staffing Solutions
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.75 }}>
-          RoseDale Drive, Kingston, Jamaica
+          {BUSINESS_ADDRESS_LINE}
         </Typography>
         <Typography component="div" variant="body2" sx={{ opacity: 0.75 }}>
           <Box sx={{ color: 'rgba(207,175,91,0.75)', display: 'inline-flex', gap: 0.5 }}>

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import Providers from '@/components/providers/Providers';
 import AppShell from '@/components/layout/AppShell';
 import { getPublicSiteUrl } from '@/lib/siteUrl';
+import { BUSINESS_CITY, BUSINESS_COUNTRY, BUSINESS_GEO, BUSINESS_STREET, GOOGLE_BUSINESS_PROFILE_CID, GOOGLE_BUSINESS_PROFILE_URL } from '@/lib/businessAddress';
 import Script from 'next/script';
 import './globals.css';
 
@@ -10,15 +11,12 @@ const inter = Inter({ subsets: ['latin'] });
 
 const BASE_URL = getPublicSiteUrl();
 
-/** Google Business Profile Maps CID — links structured data to the verified listing. */
-const GOOGLE_BUSINESS_CID = '10951778937698477327';
-
-const GOOGLE_MAPS_SAME_AS = `https://www.google.com/maps?cid=${GOOGLE_BUSINESS_CID}`;
+const GOOGLE_MAPS_SAME_AS = GOOGLE_BUSINESS_PROFILE_URL;
 
 const postalAddress = {
   '@type': 'PostalAddress',
-  streetAddress: 'RoseDale Drive',
-  addressLocality: 'Kingston',
+  streetAddress: BUSINESS_STREET,
+  addressLocality: BUSINESS_CITY,
   addressCountry: 'JM',
 } as const;
 
@@ -46,19 +44,19 @@ const SCHEMA_GRAPH = {
       url: BASE_URL,
       telephone: ['+18765619970', '+18765619856'],
       email: 'info@weirheresolutions.com',
-      description: 'The premier staffing and care agency in Kingston, Jamaica, specializing in babysitting, academic tutoring, medical staffing, and domestic care.',
+      description: `The premier staffing and care agency in ${BUSINESS_CITY}, ${BUSINESS_COUNTRY}, specializing in babysitting, academic tutoring, medical staffing, and domestic care.`,
       parentOrganization: { '@id': organizationId },
       sameAs: [GOOGLE_MAPS_SAME_AS],
       identifier: {
         '@type': 'PropertyValue',
         propertyID: 'GoogleBusinessProfileCID',
-        value: GOOGLE_BUSINESS_CID,
+        value: GOOGLE_BUSINESS_PROFILE_CID,
       },
       address: { ...postalAddress },
       geo: {
         '@type': 'GeoCoordinates',
-        latitude: 17.997,
-        longitude: -76.7936,
+        latitude: BUSINESS_GEO.latitude,
+        longitude: BUSINESS_GEO.longitude,
       },
       hasOfferCatalog: {
         '@type': 'OfferCatalog',
