@@ -66,26 +66,28 @@ export default function TopBanner() {
       {/* Gold Info Bar */}
       
       <Box
-      
         sx={{
           bgcolor: '#cfaf5b',
           color: 'black',
           py: 0.5,
           px: 3,
           display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
           justifyContent: 'flex-end',
-          alignItems: 'center',
+          alignItems: { xs: 'flex-end', md: 'center' },
+          gap: { xs: 0.25, md: 0 },
         }}
       >
         <Typography variant="caption" sx={{ opacity: 0.9 }}>
-          info@weirheresolutions.com &nbsp;|
+          info@weirheresolutions.com
+          {!isMobile && ' |'}
         </Typography>
         <Box
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 0.5,
-            ml: 1,
+            ml: { xs: 0, md: 1 },
             color: 'inherit',
             textDecoration: 'none',
           }}

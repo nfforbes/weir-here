@@ -79,15 +79,19 @@ fun PaymentUi(modifier: Modifier = Modifier) {
                 onBankingInfo = { currentView = "BANKING" },
             )
             "PAY_NOW" -> Column(Modifier.weight(1f).fillMaxWidth()) {
-                TextButton(onClick = { currentView = "MENU" }, modifier = Modifier.padding(bottom = 4.dp)) {
-                    Text("← Back to Payment")
-                }
+                BackNavButton(
+                    label = "Back to Payment",
+                    onClick = { currentView = "MENU" },
+                    modifier = Modifier.padding(bottom = 4.dp),
+                )
                 PayNowContent(Modifier.weight(1f).fillMaxWidth())
             }
             "BANKING" -> Column(Modifier.weight(1f).fillMaxWidth()) {
-                TextButton(onClick = { currentView = "MENU" }, modifier = Modifier.padding(bottom = 4.dp)) {
-                    Text("← Back to Payment")
-                }
+                BackNavButton(
+                    label = "Back to Payment",
+                    onClick = { currentView = "MENU" },
+                    modifier = Modifier.padding(bottom = 4.dp),
+                )
                 BankingInformationContent(Modifier.weight(1f).fillMaxWidth())
             }
         }

@@ -65,11 +65,11 @@ fun ProviderUi(
             onProfile = { currentView = "PROFILE" },
         )
         "ASSIGNMENTS" -> Column(Modifier.fillMaxSize()) {
-            TextButton(onClick = { currentView = "MENU" }) { Text("← Back to Provider") }
+            BackNavButton(label = "Back to Provider", onClick = { currentView = "MENU" })
             ProviderAssignmentsContent(api, accessToken, userEmail, onRefresh)
         }
         "PROFILE" -> Column(Modifier.fillMaxSize()) {
-            TextButton(onClick = { currentView = "MENU" }) { Text("← Back to Provider") }
+            BackNavButton(label = "Back to Provider", onClick = { currentView = "MENU" })
             ProviderProfileContent(api, accessToken)
         }
     }

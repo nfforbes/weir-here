@@ -383,9 +383,10 @@ private fun JobListUi(
     val selectedJob = jobs.find { (it.id ?: it.slug) == selectedJobId }
     if (selectedJobId != null && selectedJob != null) {
         Column(Modifier.fillMaxSize()) {
-            TextButton(onClick = { selectedJobId = null }) {
-                Text("â† Back to Jobs")
-            }
+            BackNavButton(
+                label = "Back to Jobs",
+                onClick = { selectedJobId = null },
+            )
             JobDetailsUi(selectedJob, accessToken, onLoginRequest, onApplyRequest)
         }
         return
@@ -484,9 +485,11 @@ private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
         }
     } else {
         Column(Modifier.fillMaxSize()) {
-            TextButton(onClick = { currentView = "MENU" }, modifier = Modifier.padding(bottom = 8.dp)) {
-                Text("â† Back to Menu")
-            }
+            BackNavButton(
+                label = "Back to Menu",
+                onClick = { currentView = "MENU" },
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
             when (currentView) {
                 "JOBS" -> AdminJobsUi(api = api, accessToken = accessToken)
                 "POST_JOB" -> PostJobUi(api = api, accessToken = accessToken)
@@ -1287,9 +1290,11 @@ private fun AdminJobsUi(api: WeirHereApi, accessToken: String?) {
 
     if (selectedJob != null) {
         Column(Modifier.fillMaxSize()) {
-            TextButton(onClick = { selectedJob = null }, modifier = Modifier.padding(bottom = 8.dp)) {
-                Text("â† Back to Jobs")
-            }
+            BackNavButton(
+                label = "Back to Jobs",
+                onClick = { selectedJob = null },
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
             AdminJobDetailUi(api = api, accessToken = tok, job = selectedJob!!)
         }
         return
