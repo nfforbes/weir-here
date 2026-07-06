@@ -17,6 +17,14 @@ find_simulator() {
     sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/'
 }
 
+find_first_simulator_name() {
+  local pattern="$1"
+  xcrun simctl list devices available |
+    grep -E "${pattern}" |
+    head -1 |
+    sed -E 's/^[[:space:]]+(.+) \([0-9A-F-]{36}\).*/\1/'
+}
+
 prepare_status_bar() {
   local udid="$1"
   xcrun simctl status_bar "$udid" override \
@@ -69,17 +77,59 @@ capture_for_device() {
   xcrun simctl shutdown "$udid" 2>/dev/null || true
 }
 
+capture_for_first_available() {
+  local prefix="$1"
+  shift
+  local device_name
+
+  for device_name in "$@"; do
+    capture_for_device "$device_name" "$prefix"
+    if compgen -G "${OUT_DIR}/${prefix}-*.png" > /dev/null; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 # 6.7" display (App Store primary iPhone slot)
-capture_for_device "iPhone 16 Pro Max" "iphone-67" || true
+capture_for_first_available "iphone-67" \
+  "iPhone 17 Pro Max" \
+  "iPhone 16 Pro Max" \
+  "iPhone 15 Pro Max" \
+  || true
+
 if ! compgen -G "${OUT_DIR}/iphone-67-*.png" > /dev/null; then
-  capture_for_device "iPhone 15 Pro Max" "iphone-67"
+  fallback_name="$(find_first_simulator_name 'iPhone .+ Pro Max \(')"
+  if [ -n "$fallback_name" ]; then
+    echo "Falling back to first available Pro Max simulator: ${fallback_name}"
+    capture_for_device "$fallback_name" "iphone-67"
+  fi
 fi
 
 # 6.5" display (secondary iPhone slot)
-capture_for_device "iPhone 11 Pro Max" "iphone-65" || true
+capture_for_first_available "iphone-65" \
+  "iPhone 11 Pro Max" \
+  "iPhone 14 Plus" \
+  "iPhone 13 Pro Max" \
+  "iPhone XS Max" \
+  || true
+
+if ! compgen -G "${OUT_DIR}/iphone-65-*.png" > /dev/null; then
+  fallback_name="$(find_first_simulator_name 'iPhone .+ Plus \(')"
+  if [ -z "$fallback_name" ]; then
+    fallback_name="$(find_first_simulator_name 'iPhone Air \(')"
+  fi
+  if [ -n "$fallback_name" ]; then
+    echo "Falling back to secondary-size simulator: ${fallback_name}"
+    capture_for_device "$fallback_name" "iphone-65"
+  fi
+fi
 
 if ! compgen -G "${OUT_DIR}/*.png" > /dev/null; then
   echo "No screenshots were captured"
+  echo "Available iPhone simulators on this runner:"
+  xcrun simctl list devices available | grep -E 'iPhone|iOS' || true
   exit 1
 fi
 
