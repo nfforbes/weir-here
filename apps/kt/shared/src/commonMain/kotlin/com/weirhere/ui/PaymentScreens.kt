@@ -1,7 +1,6 @@
 package com.weirhere.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,12 +20,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -47,86 +39,10 @@ private val BannerGradient = Brush.linearGradient(
     colors = listOf(Color(0xFF1565C0), Color(0xFF0D47A1), Color(0xFF1B5E20)),
 )
 
-private val PaymentGold = Color(0xFFCFAF5B)
-private val PaymentCardBg = Color(0xFF1A1A1A)
-
-private data class BankAccountInfo(
-    val currencyLabel: String,
-    val accountNumber: String,
-)
-
-private val sharedBankDetails = mapOf(
-    "Account Holder" to "Weirhere Staffing Solutions",
-    "Bank Name" to "Scotiabank",
-    "Branch" to "Junction branch",
-    "Branch Transit" to "22475",
-    "Account Type" to "Savings",
-)
-
-private val bankAccounts = listOf(
-    BankAccountInfo("Jamaican Dollars (JMD)", "426371"),
-    BankAccountInfo("US Dollars (USD)", "426372"),
-)
-
 @Composable
-fun PaymentUi(
-    modifier: Modifier = Modifier,
-    initialView: String = "MENU",
-) {
-    var currentView by remember(initialView) { mutableStateOf(initialView) }
-
+fun PaymentUi(modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize()) {
-        when (currentView) {
-            "MENU" -> PaymentMenu(
-                onPayNow = { currentView = "PAY_NOW" },
-                onBankingInfo = { currentView = "BANKING" },
-            )
-            "PAY_NOW" -> Column(Modifier.weight(1f).fillMaxWidth()) {
-                BackNavButton(
-                    label = "Back to Payment",
-                    onClick = { currentView = "MENU" },
-                    modifier = Modifier.padding(bottom = 4.dp),
-                )
-                PayNowContent(Modifier.weight(1f).fillMaxWidth())
-            }
-            "BANKING" -> Column(Modifier.weight(1f).fillMaxWidth()) {
-                BackNavButton(
-                    label = "Back to Payment",
-                    onClick = { currentView = "MENU" },
-                    modifier = Modifier.padding(bottom = 4.dp),
-                )
-                BankingInformationContent(Modifier.weight(1f).fillMaxWidth())
-            }
-        }
-    }
-}
-
-@Composable
-private fun PaymentMenu(onPayNow: () -> Unit, onBankingInfo: () -> Unit) {
-    LazyColumn(Modifier.fillMaxSize()) {
-        item {
-            Text(
-                "Payment",
-                style = MaterialTheme.typography.h5,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp),
-            )
-        }
-        items(
-            listOf(
-                "Pay Now" to onPayNow,
-                "Banking Information" to onBankingInfo,
-            ),
-        ) { (label, onClick) ->
-            Card(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clickable(onClick = onClick),
-            ) {
-                Text(label, Modifier.padding(16.dp), style = MaterialTheme.typography.subtitle1)
-            }
-        }
+        PayNowContent(Modifier.weight(1f).fillMaxWidth())
     }
 }
 
@@ -276,101 +192,6 @@ private fun PayNowContent(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun BankingInformationContent(modifier: Modifier = Modifier) {
-    Column(
-        modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-    ) {
-        Text(
-            "Banking Information",
-            style = MaterialTheme.typography.h5,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-        )
-        bankAccounts.forEach { account ->
-            BankTransferCard(account)
-            Spacer(Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-private fun BankTransferCard(account: BankAccountInfo) {
-    Card(
-        Modifier.fillMaxWidth(),
-        backgroundColor = PaymentCardBg,
-        elevation = 0.dp,
-        shape = RoundedCornerShape(0.dp),
-    ) {
-        Column(Modifier.padding(20.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text("\uD83D\uDCB3", fontSize = 24.sp)
-                Text(
-                    "Payment Details",
-                    color = PaymentGold,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                )
-            }
-
-            Divider(
-                color = PaymentGold,
-                modifier = Modifier.padding(vertical = 12.dp),
-            )
-
-            Text(
-                "Accepted Payment Methods",
-                color = PaymentGold,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.subtitle1,
-                modifier = Modifier.padding(bottom = 12.dp),
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    "\u2713",
-                    color = PaymentGold,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
-                Column {
-                    Text(
-                        "Bank Transfer",
-                        color = PaymentGold,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.subtitle1,
-                    )
-                    Text(
-                        account.currencyLabel,
-                        color = PaymentGold.copy(alpha = 0.9f),
-                        style = MaterialTheme.typography.body2,
-                        modifier = Modifier.padding(bottom = 8.dp),
-                    )
-                    sharedBankDetails.forEach { (label, value) ->
-                        BankDetailLine(label, value)
-                    }
-                    BankDetailLine("Account Number", account.accountNumber)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun BankDetailLine(label: String, value: String) {
-    Text(
-        text = "$label: $value",
-        color = PaymentGold,
-        style = MaterialTheme.typography.body2,
-        lineHeight = 22.sp,
-    )
-}
 
 @Composable
 private fun PaymentStep(number: String, title: String, detail: String) {

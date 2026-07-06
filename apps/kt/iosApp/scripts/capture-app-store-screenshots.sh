@@ -71,9 +71,8 @@ capture_for_device() {
   prepare_status_bar "$udid"
 
   capture_screen "$udid" "jobs" "${OUT_DIR}/${prefix}-01-browse-jobs.png"
-  capture_screen "$udid" "payment" "${OUT_DIR}/${prefix}-02-payment.png"
-  capture_screen "$udid" "payment-banking" "${OUT_DIR}/${prefix}-03-banking.png"
-  capture_screen "$udid" "profile" "${OUT_DIR}/${prefix}-04-profile.png"
+  capture_screen "$udid" "payment" "${OUT_DIR}/${prefix}-02-pay-now.png"
+  capture_screen "$udid" "profile" "${OUT_DIR}/${prefix}-03-profile.png"
 
   xcrun simctl shutdown "$udid" 2>/dev/null || true
 }

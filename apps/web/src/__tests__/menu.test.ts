@@ -54,17 +54,11 @@ describe('Menu definitions', () => {
     expect(careers!.children!.find((c) => c.label === 'Job Board')?.path).toBe('/jobs');
   });
 
-  it('Payment menu has Pay Now and Banking Information children', () => {
-    const payment = PUBLIC_MENU.find((i) => i.label === 'Payment');
-    expect(payment).toBeDefined();
-    expect(payment!.children).toBeDefined();
-    const childLabels = payment!.children!.map((c) => c.label);
-    expect(childLabels).toContain('Pay Now');
-    expect(childLabels).toContain('Banking Information');
-    expect(payment!.children!.find((c) => c.label === 'Pay Now')?.path).toBe('/payment');
-    expect(payment!.children!.find((c) => c.label === 'Banking Information')?.path).toBe(
-      '/payment/banking-information',
-    );
+  it('public menu includes Pay Now', () => {
+    const payNow = PUBLIC_MENU.find((i) => i.label === 'Pay Now');
+    expect(payNow).toBeDefined();
+    expect(payNow!.path).toBe('/payment');
+    expect(payNow!.children).toBeUndefined();
   });
 
   it('authenticated menu items require auth', () => {

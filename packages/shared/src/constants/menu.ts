@@ -31,15 +31,7 @@ export const PUBLIC_MENU: IMenuItem[] = [
     ],
   },
   { label: 'About Us', path: '/about', icon: 'Info' },
-  {
-    label: 'Payment',
-    path: '/payment',
-    icon: 'Payment',
-    children: [
-      { label: 'Pay Now', path: '/payment', icon: 'Payment' },
-      { label: 'Banking Information', path: '/payment/banking-information', icon: 'AccountBalance' },
-    ],
-  },
+  { label: 'Pay Now', path: '/payment', icon: 'Payment' },
   { label: 'Testimonials', path: '/testimonials', icon: 'FormatQuote' },
   { label: 'Contact Us', path: '/contact', icon: 'ContactMail' },
 ];

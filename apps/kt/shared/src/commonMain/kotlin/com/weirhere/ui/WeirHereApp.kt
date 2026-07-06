@@ -104,7 +104,7 @@ fun WeirHereApp() {
     var tab by remember {
         mutableStateOf(
             when (screenshotTab) {
-                "payment", "payment-banking" -> Tab.PAYMENT
+                "payment" -> Tab.PAYMENT
                 "profile" -> Tab.PROFILE
                 else -> Tab.JOBS
             },
@@ -317,12 +317,6 @@ fun WeirHereApp() {
                     Tab.PAYMENT ->
                         PaymentUi(
                             modifier = Modifier.weight(1f).fillMaxWidth(),
-                            initialView =
-                                if (screenshotTab == "payment-banking") {
-                                    "BANKING"
-                                } else {
-                                    "MENU"
-                                },
                         )
 
                     Tab.ADMIN ->
