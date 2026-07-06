@@ -69,8 +69,11 @@ private val bankAccounts = listOf(
 )
 
 @Composable
-fun PaymentUi(modifier: Modifier = Modifier) {
-    var currentView by remember { mutableStateOf("MENU") }
+fun PaymentUi(
+    modifier: Modifier = Modifier,
+    initialView: String = "MENU",
+) {
+    var currentView by remember(initialView) { mutableStateOf(initialView) }
 
     Column(modifier.fillMaxSize()) {
         when (currentView) {

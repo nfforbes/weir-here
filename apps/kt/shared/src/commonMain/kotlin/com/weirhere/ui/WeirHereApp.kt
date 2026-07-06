@@ -71,6 +71,8 @@ import com.weirhere.model.ScreeningQuestionDto
 import com.weirhere.model.SalaryRangeDto
 import com.weirhere.network.WeirHereApi
 import com.weirhere.network.ApiUnauthorizedException
+import com.weirhere.platform.isScreenshotMode
+import com.weirhere.platform.screenshotLaunchTab
 import com.weirhere.rbac.hasAdministrator
 import com.weirhere.rbac.canAccessProviderPortal
 import kotlinx.coroutines.delay
@@ -90,6 +92,8 @@ private fun jobRouteId(job: JobJson): String? {
 @Composable
 fun WeirHereApp() {
     val scope = rememberCoroutineScope()
+    val screenshotMode = remember { isScreenshotMode() }
+    val screenshotTab = remember { screenshotLaunchTab() }
     DisposableEffect(Unit) {
         SessionStore.initWith(Settings())
         onDispose {}
@@ -97,8 +101,18 @@ fun WeirHereApp() {
 
     val api = remember { WeirHereApi() }
 
-    var tab by remember { mutableStateOf(Tab.JOBS) }
-    var jobs by remember { mutableStateOf<List<JobJson>>(emptyList()) }
+    var tab by remember {
+        mutableStateOf(
+            when (screenshotTab) {
+                "payment", "payment-banking" -> Tab.PAYMENT
+                "profile" -> Tab.PROFILE
+                else -> Tab.JOBS
+            },
+        )
+    }
+    var jobs by remember {
+        mutableStateOf(if (screenshotMode) screenshotMockJobs else emptyList())
+    }
     var loadingJobs by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var personas by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -106,7 +120,7 @@ fun WeirHereApp() {
     var bootEmail by remember { mutableStateOf<String?>(null) }
     var bootName by remember { mutableStateOf<String?>(null) }
     var bootUpdatedAt by remember { mutableStateOf<String?>(null) }
-    var showSplash by remember { mutableStateOf(true) }
+    var showSplash by remember { mutableStateOf(!screenshotMode) }
     var publicJobsPage by remember { mutableStateOf(1) }
     var applyJob by remember { mutableStateOf<JobJson?>(null) }
     var showAlreadyApplied by remember { mutableStateOf(false) }
@@ -174,12 +188,16 @@ fun WeirHereApp() {
     }
 
     LaunchedEffect(publicJobsPage) {
-        reloadPublic()
+        if (!screenshotMode) {
+            reloadPublic()
+        }
     }
 
     LaunchedEffect(Unit) {
-        delay(2500)
-        showSplash = false
+        if (!screenshotMode) {
+            delay(2500)
+            showSplash = false
+        }
     }
 
     LaunchedEffect(personas, tab) {
@@ -296,7 +314,16 @@ fun WeirHereApp() {
                             )
                         }
 
-                    Tab.PAYMENT -> PaymentUi(Modifier.weight(1f).fillMaxWidth())
+                    Tab.PAYMENT ->
+                        PaymentUi(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            initialView =
+                                if (screenshotTab == "payment-banking") {
+                                    "BANKING"
+                                } else {
+                                    "MENU"
+                                },
+                        )
 
                     Tab.ADMIN ->
                         Box(Modifier.weight(1f).fillMaxWidth()) {

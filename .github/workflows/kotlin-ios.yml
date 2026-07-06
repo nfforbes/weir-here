@@ -110,6 +110,22 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Capture App Store screenshots
+        run: |
+          set -euo pipefail
+          chmod +x iosApp/scripts/capture-app-store-screenshots.sh
+          iosApp/scripts/capture-app-store-screenshots.sh \
+            "${{ steps.app.outputs.path }}" \
+            iosApp/build/screenshots
+
+      - name: Upload App Store screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: weir-here-ios-screenshots-${{ github.sha }}
+          path: iosApp/build/screenshots/*.png
+          if-no-files-found: error
+          retention-days: 30
+
   build-ios-release:
     name: Build & upload to App Store Connect
     if: github.event_name == 'workflow_dispatch'
