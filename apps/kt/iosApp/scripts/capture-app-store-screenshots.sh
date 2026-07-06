@@ -20,9 +20,10 @@ find_simulator() {
 find_first_simulator_name() {
   local pattern="$1"
   xcrun simctl list devices available |
-    grep -E "${pattern}" |
+    grep -E "${pattern}" 2>/dev/null |
     head -1 |
-    sed -E 's/^[[:space:]]+(.+) \([0-9A-F-]{36}\).*/\1/'
+    sed -E 's/^[[:space:]]+(.+) \([0-9A-F-]{36}\).*/\1/' ||
+    true
 }
 
 prepare_status_bar() {
@@ -100,29 +101,36 @@ capture_for_first_available "iphone-67" \
   || true
 
 if ! compgen -G "${OUT_DIR}/iphone-67-*.png" > /dev/null; then
-  fallback_name="$(find_first_simulator_name 'iPhone .+ Pro Max \(')"
+  fallback_name="$(find_first_simulator_name 'iPhone .+ Pro Max \(' || true)"
   if [ -n "$fallback_name" ]; then
     echo "Falling back to first available Pro Max simulator: ${fallback_name}"
-    capture_for_device "$fallback_name" "iphone-67"
+    capture_for_device "$fallback_name" "iphone-67" || true
   fi
 fi
 
-# 6.5" display (secondary iPhone slot)
+# 6.5" display (secondary iPhone slot; optional when runner has no legacy simulators)
 capture_for_first_available "iphone-65" \
   "iPhone 11 Pro Max" \
   "iPhone 14 Plus" \
   "iPhone 13 Pro Max" \
   "iPhone XS Max" \
+  "iPhone Air" \
+  "iPhone 17 Pro" \
   || true
 
 if ! compgen -G "${OUT_DIR}/iphone-65-*.png" > /dev/null; then
-  fallback_name="$(find_first_simulator_name 'iPhone .+ Plus \(')"
+  fallback_name="$(find_first_simulator_name 'iPhone .+ Plus \(' || true)"
   if [ -z "$fallback_name" ]; then
-    fallback_name="$(find_first_simulator_name 'iPhone Air \(')"
+    fallback_name="$(find_first_simulator_name 'iPhone Air \(' || true)"
+  fi
+  if [ -z "$fallback_name" ]; then
+    fallback_name="$(find_first_simulator_name 'iPhone 17 Pro \(' || true)"
   fi
   if [ -n "$fallback_name" ]; then
     echo "Falling back to secondary-size simulator: ${fallback_name}"
-    capture_for_device "$fallback_name" "iphone-65"
+    capture_for_device "$fallback_name" "iphone-65" || true
+  else
+    echo "Skipping 6.5\" screenshots: no compatible simulator on this runner"
   fi
 fi
 
