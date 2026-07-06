@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
 import { uploadToSharePoint } from '@/lib/ms365';
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth0.getSession();
@@ -12,6 +14,9 @@ export async function POST(request: NextRequest) {
     const type = formData.get('type') as string | null;
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: 'File exceeds 10 MB limit' }, { status: 413 });
+    }
 
     const validTypes = ['resume', 'logo', 'jobAttachment'] as const;
     if (!type || !validTypes.includes(type as (typeof validTypes)[number])) {

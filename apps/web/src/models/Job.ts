@@ -20,7 +20,7 @@ export interface JobDocument extends Document {
   salaryRange: { min: number; max: number; currency: string };
   categories: string[];
   tags: string[];
-  expiresAt: Date;
+  expiresAt: Date | null;
   screeningQuestions: ScreeningQuestionDoc[];
   skills: string[];
   benefits: string[];
@@ -62,7 +62,7 @@ const JobSchema = new Schema<JobDocument>(
     },
     categories: { type: [String], default: [], index: true },
     tags: { type: [String], default: [], index: true },
-    expiresAt: { type: Date, required: true, index: true },
+    expiresAt: { type: Date, default: null, index: true },
     screeningQuestions: { type: [ScreeningQuestionSchema], default: [] },
     skills: { type: [String], default: [] },
     benefits: { type: [String], default: [] },

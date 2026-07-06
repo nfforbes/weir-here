@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { name, email, address, addressDetails, phoneNumbers } = body;
+  const { name, email, address, addressDetails, phoneNumbers, rateServices, patientName } = body;
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   if (!hasAddress({ address, addressDetails })) {
     return NextResponse.json({ error: 'Address is required' }, { status: 400 });
@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
     name: name.trim(),
     email: email?.trim().toLowerCase() ?? '',
     phoneNumbers: phoneNumbers || [],
+    rateServices: rateServices?.trim() ?? '',
+    patientName: patientName?.trim() ?? '',
     ...addressPayload,
   });
   return NextResponse.json(client, { status: 201 });
@@ -49,7 +51,7 @@ export async function PUT(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { id, name, email, address, addressDetails, phoneNumbers } = body;
+  const { id, name, email, address, addressDetails, phoneNumbers, rateServices, patientName } = body;
   if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
   await connectDB();
@@ -57,6 +59,8 @@ export async function PUT(req: NextRequest) {
   if (name !== undefined) updateData.name = name.trim();
   if (email !== undefined) updateData.email = email.trim().toLowerCase();
   if (phoneNumbers !== undefined) updateData.phoneNumbers = phoneNumbers;
+  if (rateServices !== undefined) updateData.rateServices = rateServices.trim();
+  if (patientName !== undefined) updateData.patientName = patientName.trim();
   if (address !== undefined || addressDetails !== undefined) {
     const existingClient = await Client.findById(id).lean<{
       address?: string;

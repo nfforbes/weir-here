@@ -63,7 +63,12 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     ] as const;
     const body: Record<string, unknown> = {};
     for (const key of allowed) {
-      if (key in raw && raw[key] !== undefined) body[key] = raw[key];
+      if (!(key in raw)) continue;
+      if (key === 'expiresAt') {
+        body.expiresAt = raw.expiresAt === '' || raw.expiresAt === null ? null : raw.expiresAt;
+        continue;
+      }
+      if (raw[key] !== undefined) body[key] = raw[key];
     }
 
     Object.assign(job, body);

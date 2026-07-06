@@ -6,14 +6,11 @@ import Provider from '@/models/Provider';
 import type { UserDocument } from '@/models/User';
 import type { ProviderDocument } from '@/models/Provider';
 import { getApiAuthUser } from '@/lib/apiAuth';
+import { escapeRegex } from '@/lib/escapeRegex';
 
 type ProviderAuthResult =
   | { ok: true; user: UserDocument; provider: ProviderDocument }
   | { ok: false; status: 401 | 403 | 404; error: string };
-
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 async function findUserByEmail(email: string) {
   const trimmed = email.trim();

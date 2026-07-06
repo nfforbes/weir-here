@@ -20,6 +20,8 @@ export interface ClientListItem {
     postalCode?: string;
   };
   phoneNumbers?: PhoneNumber[];
+  rateServices?: string;
+  patientName?: string;
 }
 
 export interface ProviderListItem {
@@ -55,6 +57,8 @@ export function filterClients<T extends ClientListItem>(clients: T[], search: st
       containsQuery(c.addressDetails?.city, query) ||
       containsQuery(c.addressDetails?.parish, query) ||
       containsQuery(c.addressDetails?.postalCode, query) ||
+      containsQuery(c.rateServices, query) ||
+      containsQuery(c.patientName, query) ||
       (c.phoneNumbers?.some((p) => containsQuery(p.number, query)) ?? false),
   );
 }

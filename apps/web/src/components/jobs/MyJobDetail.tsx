@@ -193,13 +193,15 @@ export default function MyJobDetail() {
           {salaryLabel && (
             <Chip label={salaryLabel} variant="outlined" size="small" />
           )}
-          {job.expiresAt && (
+          {job.expiresAt ? (
             <Chip
               label={`Expires ${new Date(job.expiresAt).toLocaleDateString()}`}
               variant="outlined"
               size="small"
               color={new Date(job.expiresAt) > new Date() ? 'default' : 'error'}
             />
+          ) : (
+            <Chip label="Active indefinitely" variant="outlined" size="small" color="success" />
           )}
         </Box>
 

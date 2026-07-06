@@ -167,7 +167,7 @@ data class JobUpsertPayload(
     val salaryRange: SalaryRangeDto = SalaryRangeDto(),
     val categories: List<String>,
     val tags: List<String> = emptyList(),
-    val expiresAt: String,
+    val expiresAt: String? = null,
     val screeningQuestions: List<ScreeningQuestionDto> = emptyList(),
     val skills: List<String> = emptyList(),
     val benefits: List<String> = emptyList(),
@@ -329,7 +329,9 @@ data class ClientDto(
     val email: String = "",
     val address: String = "",
     val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
-    val phoneNumbers: List<PhoneNumberDto> = emptyList()
+    val phoneNumbers: List<PhoneNumberDto> = emptyList(),
+    val rateServices: String = "",
+    val patientName: String = "",
 )
 
 @Serializable
@@ -339,7 +341,9 @@ data class ClientUpsertPayload(
     val email: String = "",
     val address: String = "",
     val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
-    val phoneNumbers: List<PhoneNumberDto> = emptyList()
+    val phoneNumbers: List<PhoneNumberDto> = emptyList(),
+    val rateServices: String = "",
+    val patientName: String = "",
 )
 
 @Serializable

@@ -82,6 +82,7 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
+  const [activeIndefinitely, setActiveIndefinitely] = useState(false);
   const [screeningQuestions, setScreeningQuestions] = useState<IScreeningQuestion[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState('');
@@ -119,7 +120,9 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
     setCategories(j.categories?.length ? [...j.categories] : []);
     setTags(j.tags?.length ? [...j.tags] : []);
     const exp = j.expiresAt ? new Date(j.expiresAt) : null;
-    setExpiresAt(exp && !Number.isNaN(exp.getTime()) ? exp.toISOString().slice(0, 10) : '');
+    const hasExpiry = exp && !Number.isNaN(exp.getTime());
+    setActiveIndefinitely(!hasExpiry);
+    setExpiresAt(hasExpiry ? exp!.toISOString().slice(0, 10) : '');
     setScreeningQuestions(
       (j.screeningQuestions ?? []).map((q) =>
         q.id ? q : { ...q, id: crypto.randomUUID() },
@@ -190,12 +193,12 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
       errs.salaryMax = 'Max salary must be ≥ min salary';
     }
     if (categories.length === 0) errs.categories = 'At least one category is required';
-    if (!expiresAt) errs.expiresAt = 'Expiration date is required';
+    if (!activeIndefinitely && !expiresAt) errs.expiresAt = 'Expiration date is required';
     setValidationErrors(errs);
     return Object.keys(errs).length === 0;
   }, [
     title, location, description, responsibilities, requirements,
-    howToApply, salaryMin, salaryMax, categories, expiresAt,
+    howToApply, salaryMin, salaryMax, categories, expiresAt, activeIndefinitely,
   ]);
 
   const handleSubmit = useCallback(
@@ -225,7 +228,7 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
         },
         categories,
         tags,
-        expiresAt,
+        expiresAt: activeIndefinitely ? null : expiresAt,
         screeningQuestions,
         skills,
         benefits,
@@ -245,7 +248,7 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
     [
       validate, dispatch, title, location, employmentType, description,
       responsibilities, requirements, howToApply, salaryMin, salaryMax,
-      currency, categories, tags, expiresAt, screeningQuestions, skills,
+      currency, categories, tags, expiresAt, activeIndefinitely, screeningQuestions, skills,
       benefits, reviewerEmails, router, basePath, isEdit, existingJob?._id,
     ],
   );
@@ -469,16 +472,37 @@ export default function JobPostForm({ job: existingJob }: JobPostFormProps) {
             </Stack>
           </Box>
 
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={activeIndefinitely}
+                onChange={(e) => {
+                  setActiveIndefinitely(e.target.checked);
+                  if (e.target.checked) {
+                    setExpiresAt('');
+                    setValidationErrors((errs) => {
+                      const next = { ...errs };
+                      delete next.expiresAt;
+                      return next;
+                    });
+                  }
+                }}
+              />
+            }
+            label="Active indefinitely"
+          />
+
           <TextField
             label="Expiration Date"
-            required
+            required={!activeIndefinitely}
             type="date"
             fullWidth
+            disabled={activeIndefinitely}
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}
             slotProps={{ inputLabel: { shrink: true } }}
             error={!!validationErrors.expiresAt}
-            helperText={validationErrors.expiresAt}
+            helperText={activeIndefinitely ? 'This posting will stay active until you change it.' : validationErrors.expiresAt}
           />
         </Stack>
 

@@ -26,9 +26,7 @@ function bearerAudiences(): string[] {
     MOBILE_CLIENT_ID_FALLBACK,
     process.env.AUTH0_CLIENT_ID,
   ].map((x) => (typeof x === 'string' ? x.trim() : ''));
-  const audiences = [...new Set(a.filter(Boolean))];
-  console.log('[apiAuth] bearerAudiences:', audiences);
-  return audiences;
+  return [...new Set(a.filter(Boolean))];
 }
 
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
@@ -52,27 +50,23 @@ async function verifyAuth0Jwt(authHeader: string | null): Promise<JWTPayload | n
   if (!token) return null;
   const issuer = getIssuer();
   const JWKS = getJwks();
-  console.log('[apiAuth] issuer:', issuer, 'JWKS ready:', !!JWKS);
   if (!issuer || !JWKS) return null;
 
   const audiences = bearerAudiences();
   if (audiences.length === 0) return null;
 
-  // Log first 20 chars of token so we can verify it's being sent
-  console.log('[apiAuth] verifying token prefix:', token.substring(0, 20) + '...');
-
   let lastErr: unknown;
   for (const audience of audiences) {
     try {
       const { payload } = await jwtVerify(token, JWKS, { issuer, audience });
-      console.log('[apiAuth] JWT verified with audience:', audience);
       return payload;
     } catch (e) {
-      console.warn('[apiAuth] audience failed:', audience, (e as Error)?.message);
       lastErr = e;
     }
   }
-  console.warn('[apiAuth] JWT verify failed for all audiences. Last error:', lastErr);
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('[apiAuth] JWT verify failed for all audiences:', lastErr);
+  }
   return null;
 }
 
@@ -158,12 +152,8 @@ export async function getApiAuthUser(request: Request): Promise<ApiAuthUser | nu
   const token = authHeader.slice('bearer '.length).trim();
   const payload = await verifyAuth0Jwt(authHeader);
   if (!payload) {
-    (request as any).authError = 'JWT verify failed';
     return null;
   }
   const user = await jwtPayloadToUser(payload, token);
-  if (!user) {
-    (request as any).authError = 'jwtPayloadToUser failed';
-  }
   return user;
 }

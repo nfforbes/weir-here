@@ -30,6 +30,12 @@ export async function POST(request: NextRequest) {
     if (!invite) return NextResponse.json({ error: 'Invite not found' }, { status: 404 });
     if (invite.accepted) return NextResponse.json({ error: 'Invite already accepted' }, { status: 409 });
 
+    const sessionEmail = session.user.email?.trim().toLowerCase();
+    const inviteEmail = invite.email?.trim().toLowerCase();
+    if (!sessionEmail || !inviteEmail || sessionEmail !== inviteEmail) {
+      return NextResponse.json({ error: 'This invite was issued to a different email address' }, { status: 403 });
+    }
+
     invite.accepted = true;
     await invite.save();
     return NextResponse.json({ invite });

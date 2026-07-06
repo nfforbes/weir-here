@@ -18,6 +18,8 @@ export interface ClientDocument extends Document {
   address: string;
   addressDetails: AddressDetails;
   phoneNumbers: PhoneNumber[];
+  rateServices: string;
+  patientName: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,6 +47,8 @@ const ClientSchema = new Schema<ClientDocument>(
         isBest: { type: Boolean, default: false },
       },
     ],
+    rateServices: { type: String, default: '', trim: true },
+    patientName: { type: String, default: '', trim: true },
   },
   { timestamps: true },
 );

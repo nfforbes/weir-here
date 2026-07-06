@@ -732,6 +732,8 @@ private fun ClientFormScreen(
         )
     }
     var phones by remember(initial) { mutableStateOf(initial?.phoneNumbers ?: emptyList()) }
+    var rateServices by remember(initial) { mutableStateOf(initial?.rateServices ?: "") }
+    var patientName by remember(initial) { mutableStateOf(initial?.patientName ?: "") }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -739,6 +741,8 @@ private fun ClientFormScreen(
         Text(if (initial == null) "Add Client" else "Edit Client", style = MaterialTheme.typography.h6)
         OutlinedTextField(name, { name = it }, label = { Text("Name *") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(rateServices, { rateServices = it }, label = { Text("Rate Services (optional)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(patientName, { patientName = it }, label = { Text("Patient Name (optional)") }, modifier = Modifier.fillMaxWidth())
         Text("Address *", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
         ProviderAddressFields(
             value = addressDetails,
@@ -758,6 +762,8 @@ private fun ClientFormScreen(
                             email = email.trim(),
                             addressDetails = addressDetails,
                             phoneNumbers = phones,
+                            rateServices = rateServices.trim(),
+                            patientName = patientName.trim(),
                         )
                         runCatching {
                             if (initial == null) api.createClient(tok, payload) else api.updateClient(tok, payload)

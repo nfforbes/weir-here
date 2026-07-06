@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getApiAuthUser } from '@/lib/apiAuth';
+import { escapeRegex } from '@/lib/escapeRegex';
 import crypto from 'crypto';
 import { connectDB } from '@/lib/mongodb';
 import Job from '@/models/Job';
@@ -28,12 +29,15 @@ export async function GET(request: NextRequest) {
       }
       filter.postedBy = authUser.sub;
     } else {
-      filter.expiresAt = { $gt: new Date() };
+      filter.$or = [
+        { expiresAt: null },
+        { expiresAt: { $gt: new Date() } },
+      ];
     }
 
     if (q) filter.$text = { $search: q };
     if (category) filter.categories = category;
-    if (location) filter.location = { $regex: location, $options: 'i' };
+    if (location) filter.location = { $regex: escapeRegex(location), $options: 'i' };
     if (tags) {
       const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean);
       if (tagList.length) filter.tags = { $in: tagList };
@@ -69,10 +73,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Only administrators can create job postings.' }, { status: 403 });
     }
 
-    const body = await request.json();
-    body.postedBy = authUser.sub;
+    const raw = await request.json() as Record<string, unknown>;
+    const allowed = [
+      'title',
+      'location',
+      'employmentType',
+      'description',
+      'responsibilities',
+      'requirements',
+      'howToApply',
+      'salaryRange',
+      'categories',
+      'tags',
+      'expiresAt',
+      'screeningQuestions',
+      'skills',
+      'benefits',
+      'reviewerEmails',
+      'attachmentPaths',
+    ] as const;
+    const body: Record<string, unknown> = { postedBy: authUser.sub };
+    for (const key of allowed) {
+      if (key in raw) {
+        if (key === 'expiresAt') {
+          body.expiresAt = raw.expiresAt === '' || raw.expiresAt === null || raw.expiresAt === undefined
+            ? null
+            : raw.expiresAt;
+        } else if (raw[key] !== undefined) {
+          body[key] = raw[key];
+        }
+      }
+    }
 
-    const reviewerEmails: string[] = body.reviewerEmails || [];
+    const reviewerEmails: string[] = Array.isArray(body.reviewerEmails)
+      ? (body.reviewerEmails as string[])
+      : [];
     const job = await Job.create(body);
 
     for (const email of reviewerEmails) {

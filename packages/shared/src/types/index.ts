@@ -57,7 +57,7 @@ export interface IJob {
   salaryRange: ISalaryRange;
   categories: string[];
   tags: string[];
-  expiresAt: string;
+  expiresAt?: string | null;
   screeningQuestions: IScreeningQuestion[];
   skills: string[];
   benefits: string[];

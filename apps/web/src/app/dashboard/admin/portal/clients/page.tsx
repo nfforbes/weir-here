@@ -50,6 +50,8 @@ interface Client {
   address: string;
   addressDetails?: AddressDetails;
   phoneNumbers?: { number: string; isBest: boolean }[];
+  rateServices?: string;
+  patientName?: string;
 }
 
 type ClientFormState = {
@@ -57,6 +59,8 @@ type ClientFormState = {
   email: string;
   addressDetails: AddressDetails;
   phoneNumbers: { number: string; isBest: boolean }[];
+  rateServices: string;
+  patientName: string;
 };
 
 const emptyForm = (): ClientFormState => ({
@@ -64,6 +68,8 @@ const emptyForm = (): ClientFormState => ({
   email: '',
   addressDetails: { ...EMPTY_ADDRESS_DETAILS },
   phoneNumbers: [],
+  rateServices: '',
+  patientName: '',
 });
 
 const hasClientAddress = (form: ClientFormState) =>
@@ -112,6 +118,8 @@ export default function ClientsPage() {
         email: client.email || '',
         addressDetails: hydrateAddressDetails(client.addressDetails, client.address),
         phoneNumbers: client.phoneNumbers || [],
+        rateServices: client.rateServices || '',
+        patientName: client.patientName || '',
       });
     } else {
       setEditing(null);
@@ -133,6 +141,8 @@ export default function ClientsPage() {
           email: form.email,
           addressDetails: form.addressDetails,
           phoneNumbers: form.phoneNumbers,
+          rateServices: form.rateServices,
+          patientName: form.patientName,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -193,6 +203,22 @@ export default function ClientsPage() {
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Rate Services (optional)"
+                value={form.rateServices}
+                onChange={(e) => setForm((f) => ({ ...f, rateServices: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Patient Name (optional)"
+                value={form.patientName}
+                onChange={(e) => setForm((f) => ({ ...f, patientName: e.target.value }))}
               />
             </Grid>
             <Grid item xs={12}>

@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Card
+import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
@@ -713,10 +714,10 @@ internal fun JobUpsertForm(
         mutableStateOf(initial?.howToApply ?: "")
     }
     var expires by remember(initial) {
-        mutableStateOf(
-            initial?.expiresAt?.takeIf { it.isNotBlank() }
-                ?: "2099-12-31T00:00:00.000Z",
-        )
+        mutableStateOf(initial?.expiresAt?.takeIf { it.isNotBlank() } ?: "")
+    }
+    var activeIndefinitely by remember(initial) {
+        mutableStateOf(initial?.expiresAt.isNullOrBlank())
     }
     var salMin by remember(initial) {
         mutableStateOf((initial?.salaryRange?.min ?: 0.0).toString())
@@ -741,7 +742,22 @@ internal fun JobUpsertForm(
         OutlinedTextField(resp, { resp = it }, label = { Text("Responsibilities") }, minLines = 2)
         OutlinedTextField(req, { req = it }, label = { Text("Requirements") }, minLines = 2)
         OutlinedTextField(how, { how = it }, label = { Text("How to apply") }, minLines = 2)
-        OutlinedTextField(expires, { expires = it }, label = { Text("Expires at (ISO)") })
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Checkbox(
+                checked = activeIndefinitely,
+                onCheckedChange = {
+                    activeIndefinitely = it
+                    if (it) expires = ""
+                },
+            )
+            Text("Active indefinitely")
+        }
+        OutlinedTextField(
+            expires,
+            { expires = it },
+            enabled = !activeIndefinitely,
+            label = { Text("Expires at (YYYY-MM-DD)") },
+        )
         Row(Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 salMin,
@@ -796,7 +812,7 @@ internal fun JobUpsertForm(
                                         .map { s -> s.trim() }
                                         .filter { x -> x.isNotEmpty() },
                                 tags = initial?.tags ?: emptyList(),
-                                expiresAt = expires.trim(),
+                                expiresAt = if (activeIndefinitely) null else expires.trim().ifBlank { null },
                                 screeningQuestions =
                                     initial?.screeningQuestions ?: emptyList<ScreeningQuestionDto>(),
                                 skills = initial?.skills ?: emptyList(),

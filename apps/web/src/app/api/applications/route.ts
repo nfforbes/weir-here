@@ -143,11 +143,10 @@ export async function POST(request: NextRequest) {
       const body = (await request.json()) as {
         jobId?: string;
         answers?: unknown;
-        resumePath?: string;
       };
       jobId = body.jobId ?? '';
       answers = body.answers ?? [];
-      resumePath = body.resumePath ?? '';
+      resumePath = '';
     }
 
     if (!jobId) return NextResponse.json({ error: 'jobId is required' }, { status: 400 });

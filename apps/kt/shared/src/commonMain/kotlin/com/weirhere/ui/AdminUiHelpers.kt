@@ -140,6 +140,8 @@ fun filterClients(clients: List<ClientDto>, search: String): List<ClientDto> {
             containsQuery(cli.addressDetails.city, query) ||
             containsQuery(cli.addressDetails.parish, query) ||
             containsQuery(cli.addressDetails.postalCode, query) ||
+            containsQuery(cli.rateServices, query) ||
+            containsQuery(cli.patientName, query) ||
             cli.phoneNumbers.any { containsQuery(it.number, query) }
     }
 }
