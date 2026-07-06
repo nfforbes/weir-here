@@ -56,7 +56,7 @@ private data class BankAccountInfo(
 )
 
 private val sharedBankDetails = mapOf(
-    "Account Holder" to "LuKaria Professional Group Limited",
+    "Account Holder" to "Weirhere Staffing Solutions",
     "Bank Name" to "Scotiabank",
     "Branch" to "Junction branch",
     "Branch Transit" to "22475",

@@ -19,7 +19,7 @@ interface BankAccountDetails {
 }
 
 const SHARED_DETAILS = {
-  accountHolder: 'LuKaria Professional Group Limited',
+  accountHolder: 'Weirhere Staffing Solutions',
   bankName: 'Scotiabank',
   branch: 'Junction branch',
   branchTransit: '22475',
