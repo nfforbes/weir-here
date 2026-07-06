@@ -14,7 +14,7 @@ internal val screenshotMockJobs =
             description = "Join our healthcare team supporting critical care units across the Kingston metropolitan area.",
             categories = listOf("Healthcare"),
             tags = listOf("Nursing", "ICU"),
-            salaryRange = SalaryRangeDto(min = 850000, max = 1200000, currency = "JMD"),
+            salaryRange = SalaryRangeDto(min = 850_000.0, max = 1_200_000.0, currency = "JMD"),
             skills = listOf("Patient care", "Critical care", "BLS certified"),
         ),
         JobJson(
@@ -26,7 +26,7 @@ internal val screenshotMockJobs =
             description = "Support executive operations for a growing professional services firm in Manchester.",
             categories = listOf("Administration"),
             tags = listOf("Office", "Executive support"),
-            salaryRange = SalaryRangeDto(min = 450000, max = 650000, currency = "JMD"),
+            salaryRange = SalaryRangeDto(min = 450_000.0, max = 650_000.0, currency = "JMD"),
             skills = listOf("Microsoft Office", "Scheduling", "Customer service"),
         ),
         JobJson(
@@ -38,7 +38,7 @@ internal val screenshotMockJobs =
             description = "Install and maintain commercial HVAC systems for hospitality and retail clients.",
             categories = listOf("Trades"),
             tags = listOf("HVAC", "Maintenance"),
-            salaryRange = SalaryRangeDto(min = 600000, max = 900000, currency = "JMD"),
+            salaryRange = SalaryRangeDto(min = 600_000.0, max = 900_000.0, currency = "JMD"),
             skills = listOf("HVAC repair", "Diagnostics", "Safety compliance"),
         ),
     )
