@@ -103,7 +103,7 @@ jobs:
           echo "Staged: $STAGED_APP"
 
       - name: Upload Simulator app artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: weir-here-ios-simulator-${{ github.sha }}
           path: ${{ steps.app.outputs.path }}
@@ -119,10 +119,10 @@ jobs:
             iosApp/build/screenshots
 
       - name: Upload App Store screenshots
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: weir-here-ios-screenshots-${{ github.sha }}
-          path: iosApp/build/screenshots/*.png
+          path: apps/kt/iosApp/build/screenshots/*.png
           if-no-files-found: error
           retention-days: 30
 
@@ -277,7 +277,7 @@ jobs:
           APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
 
       - name: Upload release IPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: weir-here-ios-release-${{ github.sha }}
           path: ${{ env.IPA_PATH }}
