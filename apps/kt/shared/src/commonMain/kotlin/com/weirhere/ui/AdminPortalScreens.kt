@@ -54,7 +54,11 @@ import com.weirhere.model.ClientUpsertPayload
 import com.weirhere.model.JobJson
 import com.weirhere.model.PhoneNumberDto
 import com.weirhere.model.PickedFilePayload
+import com.weirhere.data.ClientServiceRow
+import com.weirhere.data.ClientServices
 import com.weirhere.data.JamaicaParishes
+import com.weirhere.data.rowsToServices
+import com.weirhere.data.servicesToRows
 import com.weirhere.model.ProviderAddressDetailsDto
 import com.weirhere.model.ProviderDto
 import com.weirhere.model.ProviderUpsertPayload
@@ -732,17 +736,33 @@ private fun ClientFormScreen(
         )
     }
     var phones by remember(initial) { mutableStateOf(initial?.phoneNumbers ?: emptyList()) }
-    var rateServices by remember(initial) { mutableStateOf(initial?.rateServices ?: "") }
+    var rate by remember(initial) { mutableStateOf(initial?.rate ?: "") }
+    var serviceRows by remember(initial) { mutableStateOf(emptyList<ClientServiceRow>()) }
+    var serviceOptions by remember { mutableStateOf<List<String>>(emptyList()) }
     var patientName by remember(initial) { mutableStateOf(initial?.patientName ?: "") }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(tok, initial) {
+        if (tok.isEmpty()) return@LaunchedEffect
+        runCatching { api.getAdminSettings(tok) }
+            .onSuccess { response ->
+                val options = ClientServices.parseOptions(response.settings[ClientServices.OPTIONS_KEY])
+                serviceOptions = options
+                serviceRows = servicesToRows(initial?.services.orEmpty(), options)
+            }
+            .onFailure {
+                serviceRows = servicesToRows(initial?.services.orEmpty(), emptyList())
+            }
+    }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(8.dp)) {
         Text(if (initial == null) "Add Client" else "Edit Client", style = MaterialTheme.typography.h6)
         OutlinedTextField(name, { name = it }, label = { Text("Name *") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(rateServices, { rateServices = it }, label = { Text("Rate Services (optional)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(rate, { rate = it }, label = { Text("Rate (optional)") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(patientName, { patientName = it }, label = { Text("Patient Name (optional)") }, modifier = Modifier.fillMaxWidth())
+        ClientServicesEditor(serviceRows, serviceOptions) { serviceRows = it }
         Text("Address *", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
         ProviderAddressFields(
             value = addressDetails,
@@ -762,7 +782,8 @@ private fun ClientFormScreen(
                             email = email.trim(),
                             addressDetails = addressDetails,
                             phoneNumbers = phones,
-                            rateServices = rateServices.trim(),
+                            rate = rate.trim(),
+                            services = rowsToServices(serviceRows),
                             patientName = patientName.trim(),
                         )
                         runCatching {
@@ -1114,6 +1135,7 @@ fun AdminSettingsUi(api: WeirHereApi, accessToken: String?) {
     val scope = rememberCoroutineScope()
     val tok = accessToken?.trim().orEmpty()
     var settings by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var clientServiceOptions by remember { mutableStateOf<List<String>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -1123,7 +1145,10 @@ fun AdminSettingsUi(api: WeirHereApi, accessToken: String?) {
         if (tok.isEmpty()) return@LaunchedEffect
         loading = true
         runCatching { api.getAdminSettings(tok) }
-            .onSuccess { settings = it.settings }
+            .onSuccess { response ->
+                settings = response.settings
+                clientServiceOptions = ClientServices.parseOptions(response.settings[ClientServices.OPTIONS_KEY])
+            }
             .onFailure {
                 if (it !is kotlinx.coroutines.CancellationException) error = it.message ?: it.toString()
             }
@@ -1136,6 +1161,11 @@ fun AdminSettingsUi(api: WeirHereApi, accessToken: String?) {
         success?.let { Text(it, color = MaterialTheme.colors.primary) }
         if (loading) CircularProgressIndicator()
         else {
+            ClientServiceOptionsEditor(
+                options = clientServiceOptions,
+                onChange = { clientServiceOptions = it },
+            )
+            Spacer(Modifier.height(16.dp))
             MS365_SETTING_KEYS.forEach { key ->
                 val isSecret = key == "MS365_CLIENT_SECRET"
                 OutlinedTextField(
@@ -1156,7 +1186,9 @@ fun AdminSettingsUi(api: WeirHereApi, accessToken: String?) {
                         val toSave =
                             settings.filter { (k, v) ->
                                 v.isNotBlank() && !(k == "MS365_CLIENT_SECRET" && v == MASKED_SECRET)
-                            }
+                            } + mapOf(
+                                ClientServices.OPTIONS_KEY to ClientServices.serializeOptions(clientServiceOptions),
+                            )
                         runCatching { api.updateAdminSettings(tok, toSave) }
                             .onSuccess { success = "Settings saved" }
                             .onFailure {
