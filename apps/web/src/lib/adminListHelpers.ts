@@ -20,7 +20,8 @@ export interface ClientListItem {
     postalCode?: string;
   };
   phoneNumbers?: PhoneNumber[];
-  rateServices?: string;
+  rate?: string;
+  services?: string[];
   patientName?: string;
 }
 
@@ -57,8 +58,9 @@ export function filterClients<T extends ClientListItem>(clients: T[], search: st
       containsQuery(c.addressDetails?.city, query) ||
       containsQuery(c.addressDetails?.parish, query) ||
       containsQuery(c.addressDetails?.postalCode, query) ||
-      containsQuery(c.rateServices, query) ||
+      containsQuery(c.rate, query) ||
       containsQuery(c.patientName, query) ||
+      (c.services?.some((s) => containsQuery(s, query)) ?? false) ||
       (c.phoneNumbers?.some((p) => containsQuery(p.number, query)) ?? false),
   );
 }

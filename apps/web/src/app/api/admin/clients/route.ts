@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import Client, { buildClientAddressPayload, type AddressDetails } from '@/models/Client';
+import Client, { buildClientAddressPayload, normalizeClientPayload, type AddressDetails } from '@/models/Client';
 import { formatAddress } from '@weir-here/shared';
 import { requireAdministrator } from '@/lib/adminAuth';
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { name, email, address, addressDetails, phoneNumbers, rateServices, patientName } = body;
+  const { name, email, address, addressDetails, phoneNumbers } = body;
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   if (!hasAddress({ address, addressDetails })) {
     return NextResponse.json({ error: 'Address is required' }, { status: 400 });
@@ -35,12 +35,14 @@ export async function POST(req: NextRequest) {
 
   await connectDB();
   const addressPayload = buildClientAddressPayload({ address, addressDetails });
+  const { rate, services, patientName } = normalizeClientPayload(body);
   const client = await Client.create({
     name: name.trim(),
     email: email?.trim().toLowerCase() ?? '',
     phoneNumbers: phoneNumbers || [],
-    rateServices: rateServices?.trim() ?? '',
-    patientName: patientName?.trim() ?? '',
+    rate,
+    services,
+    patientName,
     ...addressPayload,
   });
   return NextResponse.json(client, { status: 201 });
@@ -51,7 +53,7 @@ export async function PUT(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { id, name, email, address, addressDetails, phoneNumbers, rateServices, patientName } = body;
+  const { id, name, email, address, addressDetails, phoneNumbers } = body;
   if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
   await connectDB();
@@ -59,8 +61,12 @@ export async function PUT(req: NextRequest) {
   if (name !== undefined) updateData.name = name.trim();
   if (email !== undefined) updateData.email = email.trim().toLowerCase();
   if (phoneNumbers !== undefined) updateData.phoneNumbers = phoneNumbers;
-  if (rateServices !== undefined) updateData.rateServices = rateServices.trim();
-  if (patientName !== undefined) updateData.patientName = patientName.trim();
+  if ('rate' in body || 'services' in body || 'patientName' in body) {
+    const normalized = normalizeClientPayload(body);
+    if ('rate' in body) updateData.rate = normalized.rate;
+    if ('services' in body) updateData.services = normalized.services;
+    if ('patientName' in body) updateData.patientName = normalized.patientName;
+  }
   if (address !== undefined || addressDetails !== undefined) {
     const existingClient = await Client.findById(id).lean<{
       address?: string;

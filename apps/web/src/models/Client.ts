@@ -18,7 +18,8 @@ export interface ClientDocument extends Document {
   address: string;
   addressDetails: AddressDetails;
   phoneNumbers: PhoneNumber[];
-  rateServices: string;
+  rate: string;
+  services: string[];
   patientName: string;
   createdAt: Date;
   updatedAt: Date;
@@ -47,7 +48,8 @@ const ClientSchema = new Schema<ClientDocument>(
         isBest: { type: Boolean, default: false },
       },
     ],
-    rateServices: { type: String, default: '', trim: true },
+    rate: { type: String, default: '', trim: true },
+    services: { type: [String], default: [] },
     patientName: { type: String, default: '', trim: true },
   },
   { timestamps: true },
@@ -63,6 +65,18 @@ export function buildClientAddressPayload(input: {
   };
   const address = formatAddress(addressDetails, input.address);
   return { addressDetails, address };
+}
+
+function normalizeServices(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.map((item) => String(item).trim()).filter(Boolean))];
+}
+
+export function normalizeClientPayload(body: Record<string, unknown>) {
+  const services = normalizeServices(body.services);
+  const rate = typeof body.rate === 'string' ? body.rate.trim() : '';
+  const patientName = typeof body.patientName === 'string' ? body.patientName.trim() : '';
+  return { rate, services, patientName };
 }
 
 export default mongoose.models.Client ||

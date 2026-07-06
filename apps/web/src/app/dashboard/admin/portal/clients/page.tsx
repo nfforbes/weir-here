@@ -42,6 +42,15 @@ import {
   type AddressDetails,
 } from '@weir-here/shared';
 import ProviderAddressFields from '@/components/providers/ProviderAddressFields';
+import ClientServicesFields, {
+  rowsToServices,
+  servicesToRows,
+  type ClientServiceRow,
+} from '@/components/admin/ClientServicesFields';
+import {
+  CLIENT_SERVICE_OPTIONS_KEY,
+  parseClientServiceOptions,
+} from '@weir-here/shared';
 
 interface Client {
   _id: string;
@@ -50,7 +59,8 @@ interface Client {
   address: string;
   addressDetails?: AddressDetails;
   phoneNumbers?: { number: string; isBest: boolean }[];
-  rateServices?: string;
+  rate?: string;
+  services?: string[];
   patientName?: string;
 }
 
@@ -59,7 +69,8 @@ type ClientFormState = {
   email: string;
   addressDetails: AddressDetails;
   phoneNumbers: { number: string; isBest: boolean }[];
-  rateServices: string;
+  rate: string;
+  serviceRows: ClientServiceRow[];
   patientName: string;
 };
 
@@ -68,7 +79,8 @@ const emptyForm = (): ClientFormState => ({
   email: '',
   addressDetails: { ...EMPTY_ADDRESS_DETAILS },
   phoneNumbers: [],
-  rateServices: '',
+  rate: '',
+  serviceRows: [],
   patientName: '',
 });
 
@@ -85,7 +97,20 @@ export default function ClientsPage() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [serviceOptions, setServiceOptions] = useState<string[]>([]);
   const rowsPerPage = 25;
+
+  const fetchServiceOptions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const data = await res.json();
+      if (res.ok) {
+        setServiceOptions(parseClientServiceOptions(data.settings?.[CLIENT_SERVICE_OPTIONS_KEY]));
+      }
+    } catch {
+      setServiceOptions([]);
+    }
+  }, []);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -101,6 +126,7 @@ export default function ClientsPage() {
   }, []);
 
   useEffect(() => { fetchClients(); }, [fetchClients]);
+  useEffect(() => { fetchServiceOptions(); }, [fetchServiceOptions]);
 
   useEffect(() => { setPage(0); }, [search]);
 
@@ -118,7 +144,8 @@ export default function ClientsPage() {
         email: client.email || '',
         addressDetails: hydrateAddressDetails(client.addressDetails, client.address),
         phoneNumbers: client.phoneNumbers || [],
-        rateServices: client.rateServices || '',
+        rate: client.rate || '',
+        serviceRows: servicesToRows(client.services || [], serviceOptions),
         patientName: client.patientName || '',
       });
     } else {
@@ -141,7 +168,8 @@ export default function ClientsPage() {
           email: form.email,
           addressDetails: form.addressDetails,
           phoneNumbers: form.phoneNumbers,
-          rateServices: form.rateServices,
+          rate: form.rate,
+          services: rowsToServices(form.serviceRows),
           patientName: form.patientName,
         }),
       });
@@ -208,9 +236,10 @@ export default function ClientsPage() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Rate Services (optional)"
-                value={form.rateServices}
-                onChange={(e) => setForm((f) => ({ ...f, rateServices: e.target.value }))}
+                label="Rate (optional)"
+                value={form.rate}
+                onChange={(e) => setForm((f) => ({ ...f, rate: e.target.value }))}
+                placeholder="e.g. $50/hr"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -219,6 +248,13 @@ export default function ClientsPage() {
                 label="Patient Name (optional)"
                 value={form.patientName}
                 onChange={(e) => setForm((f) => ({ ...f, patientName: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <ClientServicesFields
+                rows={form.serviceRows}
+                options={serviceOptions}
+                onChange={(serviceRows) => setForm((f) => ({ ...f, serviceRows }))}
               />
             </Grid>
             <Grid item xs={12}>

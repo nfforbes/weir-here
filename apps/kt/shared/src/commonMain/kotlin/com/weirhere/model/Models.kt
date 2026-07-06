@@ -330,7 +330,8 @@ data class ClientDto(
     val address: String = "",
     val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList(),
-    val rateServices: String = "",
+    val rate: String = "",
+    val services: List<String> = emptyList(),
     val patientName: String = "",
 )
 
@@ -342,7 +343,8 @@ data class ClientUpsertPayload(
     val address: String = "",
     val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList(),
-    val rateServices: String = "",
+    val rate: String = "",
+    val services: List<String> = emptyList(),
     val patientName: String = "",
 )
 

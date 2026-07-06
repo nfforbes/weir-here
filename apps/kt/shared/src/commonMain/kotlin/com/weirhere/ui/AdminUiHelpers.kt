@@ -1,7 +1,9 @@
 package com.weirhere.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +20,8 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.Checkbox
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.weirhere.data.ClientServiceRow
+import com.weirhere.data.ClientServices
 import com.weirhere.model.ClientDto
 import com.weirhere.model.PhoneNumberDto
 import com.weirhere.model.ProviderDto
@@ -140,8 +146,9 @@ fun filterClients(clients: List<ClientDto>, search: String): List<ClientDto> {
             containsQuery(cli.addressDetails.city, query) ||
             containsQuery(cli.addressDetails.parish, query) ||
             containsQuery(cli.addressDetails.postalCode, query) ||
-            containsQuery(cli.rateServices, query) ||
+            containsQuery(cli.rate, query) ||
             containsQuery(cli.patientName, query) ||
+            cli.services.any { containsQuery(it, query) } ||
             cli.phoneNumbers.any { containsQuery(it.number, query) }
     }
 }
@@ -205,6 +212,112 @@ fun PhoneNumberEditor(
                 }
             },
         ) { Text("Add") }
+    }
+}
+
+@Composable
+fun ClientServicesEditor(
+    rows: List<ClientServiceRow>,
+    options: List<String>,
+    onChange: (List<ClientServiceRow>) -> Unit,
+) {
+    Text("Services (optional)", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
+    rows.forEachIndexed { idx, row ->
+        var menuOpen by remember(idx, row.selection) { mutableStateOf(false) }
+        val label =
+            if (row.selection == ClientServices.OTHER_VALUE) "Other"
+            else row.selection.ifBlank { "Select service" }
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Service") },
+                    modifier = Modifier.fillMaxWidth().clickable { menuOpen = true },
+                )
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    options.forEach { option ->
+                        DropdownMenuItem(onClick = {
+                            onChange(rows.mapIndexed { i, r -> if (i == idx) r.copy(selection = option) else r })
+                            menuOpen = false
+                        }) { Text(option) }
+                    }
+                    DropdownMenuItem(onClick = {
+                        onChange(rows.mapIndexed { i, r -> if (i == idx) r.copy(selection = ClientServices.OTHER_VALUE) else r })
+                        menuOpen = false
+                    }) { Text("Other") }
+                }
+            }
+            if (row.selection == ClientServices.OTHER_VALUE) {
+                OutlinedTextField(
+                    value = row.customValue,
+                    onValueChange = { value ->
+                        onChange(rows.mapIndexed { i, r -> if (i == idx) r.copy(customValue = value) else r })
+                    },
+                    label = { Text("Custom service") },
+                    modifier = Modifier.weight(1f).padding(start = 8.dp),
+                )
+            }
+            TextButton(onClick = { onChange(rows.filterIndexed { i, _ -> i != idx }) }) {
+                Text("Remove", color = MaterialTheme.colors.error)
+            }
+        }
+    }
+    TextButton(
+        onClick = {
+            val defaultSelection = options.firstOrNull() ?: ClientServices.OTHER_VALUE
+            onChange(rows + ClientServiceRow(selection = defaultSelection))
+        },
+    ) { Text("Add service") }
+}
+
+@Composable
+fun ClientServiceOptionsEditor(
+    options: List<String>,
+    onChange: (List<String>) -> Unit,
+) {
+    var input by remember { mutableStateOf("") }
+    Text("Client Services", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6)
+    Text(
+        "Services appear in the client form dropdown. Choose Other on a client to enter a custom service.",
+        style = MaterialTheme.typography.body2,
+        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
+        modifier = Modifier.padding(bottom = 8.dp),
+    )
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = input,
+            onValueChange = { input = it },
+            label = { Text("Service name") },
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(
+            onClick = {
+                val trimmed = input.trim()
+                if (trimmed.isNotEmpty() && options.none { it.equals(trimmed, ignoreCase = true) }) {
+                    onChange((options + trimmed).sorted())
+                    input = ""
+                }
+            },
+        ) { Text("Add") }
+    }
+    if (options.isEmpty()) {
+        Text("No services configured yet.", style = MaterialTheme.typography.body2, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
+    } else {
+        Column(Modifier.padding(vertical = 8.dp)) {
+            options.forEach { option ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(option)
+                    TextButton(onClick = { onChange(options.filter { it != option }) }) {
+                        Text("Remove", color = MaterialTheme.colors.error)
+                    }
+                }
+            }
+        }
     }
 }
 
