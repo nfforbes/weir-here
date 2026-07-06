@@ -23,7 +23,7 @@ import { useAppSelector } from '@/store';
 import { hasPermission, IJob, PERMISSIONS } from '@weir-here/shared';
 import { toUserErrorMessage } from '@/lib/errorMessage';
 
-function jobStatus(expiresAt?: string): 'active' | 'expired' {
+function jobStatus(expiresAt?: string | null): 'active' | 'expired' {
   if (!expiresAt) return 'active';
   return new Date(expiresAt) > new Date() ? 'active' : 'expired';
 }
