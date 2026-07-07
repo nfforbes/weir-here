@@ -221,11 +221,14 @@ jobs:
           APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
           APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
 
-      - name: Archive iOS app (Release)
+      - name: Archive iOS app (Release, unsigned)
         run: |
           set -euo pipefail
           ARCHIVE_PATH="$PWD/iosApp/build/WeirHere.xcarchive"
           rm -rf "$ARCHIVE_PATH"
+          # Archive without signing; distribution signing is applied during export
+          # via the App Store Connect API key. This avoids xcodebuild trying to
+          # create a Development provisioning profile (which requires registered devices).
           xcodebuild \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
@@ -233,12 +236,10 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$ARCHIVE_PATH" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$APP_STORE_CONNECT_API_KEY_KEY" \
-            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY_KEY_ID" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_API_KEY_ISSUER_ID" \
             DEVELOPMENT_TEAM="$IOS_DEVELOPMENT_TEAM" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
             archive
         env:
           IOS_DEVELOPMENT_TEAM: ${{ secrets.IOS_DEVELOPMENT_TEAM }}
