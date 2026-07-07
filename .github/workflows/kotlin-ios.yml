@@ -11,6 +11,12 @@ on:
       - 'apps/kt/**'
       - '.github/workflows/kotlin-ios.yml'
   workflow_dispatch:
+    inputs:
+      upload_to_app_store:
+        description: Upload IPA to App Store Connect
+        required: false
+        default: true
+        type: boolean
 
 concurrency:
   group: kotlin-ios-${{ github.ref }}
@@ -128,7 +134,12 @@ jobs:
 
   build-ios-release:
     name: Build & upload to App Store Connect
-    if: github.event_name == 'workflow_dispatch'
+    needs: build-ios-simulator
+    if: >
+      (github.event_name == 'push' &&
+       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) ||
+      (github.event_name == 'workflow_dispatch' &&
+       inputs.upload_to_app_store != false)
     runs-on: macos-latest
     defaults:
       run:
@@ -272,9 +283,32 @@ jobs:
             --file "$IPA_PATH" \
             --apiKey "$APPLE_KEY_ID" \
             --apiIssuer "$APPLE_ISSUER_ID"
+          echo "Uploaded to App Store Connect. Processing usually takes 5–15 minutes before the build appears in TestFlight / App Store Connect."
         env:
           APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
           APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
+
+      - name: Download App Store screenshots
+        uses: actions/download-artifact@v5
+        with:
+          name: weir-here-ios-screenshots-${{ github.sha }}
+          path: apps/kt/iosApp/build/screenshots
+
+      - name: Upload screenshots to App Store Connect
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet PyJWT cryptography
+          python3 iosApp/scripts/upload-app-store-screenshots.py \
+            --screenshots-dir iosApp/build/screenshots \
+            --bundle-id com.weirhere.mobile \
+            --locale "${ASC_SCREENSHOT_LOCALE:-en-US}" \
+            --key-id "$APPLE_KEY_ID" \
+            --issuer-id "$APPLE_ISSUER_ID" \
+            --private-key-path "$HOME/private_keys/AuthKey_${APPLE_KEY_ID}.p8"
+        env:
+          APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
+          APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
+          ASC_SCREENSHOT_LOCALE: ${{ vars.ASC_SCREENSHOT_LOCALE }}
 
       - name: Upload release IPA artifact
         uses: actions/upload-artifact@v5
@@ -282,4 +316,12 @@ jobs:
           name: weir-here-ios-release-${{ github.sha }}
           path: ${{ env.IPA_PATH }}
           if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload App Store screenshots (release artifact)
+        uses: actions/upload-artifact@v5
+        with:
+          name: weir-here-ios-screenshots-release-${{ github.sha }}
+          path: apps/kt/iosApp/build/screenshots/*.png
+          if-no-files-found: warn
           retention-days: 30
