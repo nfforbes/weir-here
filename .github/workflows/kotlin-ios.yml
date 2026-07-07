@@ -117,6 +117,8 @@ jobs:
           retention-days: 14
 
       - name: Capture App Store screenshots
+        continue-on-error: true
+        timeout-minutes: 25
         run: |
           set -euo pipefail
           chmod +x iosApp/scripts/capture-app-store-screenshots.sh
@@ -125,11 +127,12 @@ jobs:
             iosApp/build/screenshots
 
       - name: Upload App Store screenshots
+        continue-on-error: true
         uses: actions/upload-artifact@v5
         with:
           name: weir-here-ios-screenshots-${{ github.sha }}
           path: apps/kt/iosApp/build/screenshots/*.png
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
 
   build-ios-release:
@@ -296,14 +299,20 @@ jobs:
           APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
 
       - name: Download App Store screenshots
+        continue-on-error: true
         uses: actions/download-artifact@v5
         with:
           name: weir-here-ios-screenshots-${{ github.sha }}
           path: apps/kt/iosApp/build/screenshots
 
       - name: Upload screenshots to App Store Connect
+        continue-on-error: true
         run: |
           set -euo pipefail
+          if ! compgen -G "iosApp/build/screenshots/*.png" > /dev/null; then
+            echo "No screenshots available to upload; skipping."
+            exit 0
+          fi
           python3 -m pip install --quiet PyJWT cryptography
           python3 iosApp/scripts/upload-app-store-screenshots.py \
             --screenshots-dir iosApp/build/screenshots \
@@ -326,6 +335,7 @@ jobs:
           retention-days: 30
 
       - name: Upload App Store screenshots (release artifact)
+        continue-on-error: true
         uses: actions/upload-artifact@v5
         with:
           name: weir-here-ios-screenshots-release-${{ github.sha }}

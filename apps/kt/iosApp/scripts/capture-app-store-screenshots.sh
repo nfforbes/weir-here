@@ -17,6 +17,34 @@ BUNDLE_ID="${BUNDLE_ID:-com.weirhere.mobile}"
 
 mkdir -p "$OUT_DIR"
 
+# Run a command with a hard timeout so a stuck simulator can never hang the job.
+# Prefers coreutils timeout/gtimeout; falls back to a bash watchdog.
+run_with_timeout() {
+  local seconds="$1"
+  shift
+  if command -v gtimeout >/dev/null 2>&1; then
+    gtimeout --signal=KILL "$seconds" "$@"
+    return $?
+  fi
+  if command -v timeout >/dev/null 2>&1; then
+    timeout --signal=KILL "$seconds" "$@"
+    return $?
+  fi
+
+  "$@" &
+  local cmd_pid=$!
+  (
+    sleep "$seconds"
+    kill -KILL "$cmd_pid" 2>/dev/null || true
+  ) &
+  local watcher_pid=$!
+  local status=0
+  wait "$cmd_pid" 2>/dev/null || status=$?
+  kill "$watcher_pid" 2>/dev/null || true
+  wait "$watcher_pid" 2>/dev/null || true
+  return "$status"
+}
+
 find_simulator() {
   local device_name="$1"
   xcrun simctl list devices available |
@@ -109,9 +137,15 @@ capture_screen() {
   local target_h="$5"
 
   xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
-  xcrun simctl launch "$udid" "$BUNDLE_ID" -ScreenshotMode "-ScreenshotTab=${tab}"
+  run_with_timeout 60 xcrun simctl launch "$udid" "$BUNDLE_ID" -ScreenshotMode "-ScreenshotTab=${tab}" || {
+    echo "  WARN: launch timed out for tab ${tab}"
+    return 1
+  }
   sleep 2
-  xcrun simctl io "$udid" screenshot "$output_file"
+  run_with_timeout 60 xcrun simctl io "$udid" screenshot "$output_file" || {
+    echo "  WARN: screenshot capture timed out for tab ${tab}"
+    return 1
+  }
   normalize_screenshot "$output_file" "$target_w" "$target_h"
   echo "Captured ${output_file}"
 }
@@ -132,16 +166,24 @@ capture_for_device() {
   echo "Using ${device_name} (${udid}) -> ${target_w}×${target_h}"
 
   xcrun simctl shutdown all 2>/dev/null || true
-  xcrun simctl boot "$udid" 2>/dev/null || true
-  xcrun simctl bootstatus "$udid" -b
+  run_with_timeout 60 xcrun simctl boot "$udid" 2>/dev/null || true
+  if ! run_with_timeout 180 xcrun simctl bootstatus "$udid" -b; then
+    echo "Skipping ${device_name}: simulator failed to boot within timeout"
+    xcrun simctl shutdown "$udid" 2>/dev/null || true
+    return 0
+  fi
 
   xcrun simctl uninstall "$udid" "$BUNDLE_ID" 2>/dev/null || true
-  xcrun simctl install "$udid" "$APP_PATH"
+  if ! run_with_timeout 120 xcrun simctl install "$udid" "$APP_PATH"; then
+    echo "Skipping ${device_name}: app install failed or timed out"
+    xcrun simctl shutdown "$udid" 2>/dev/null || true
+    return 0
+  fi
   prepare_status_bar "$udid"
 
-  capture_screen "$udid" "jobs" "${OUT_DIR}/${prefix}-01-browse-jobs.png" "$target_w" "$target_h"
-  capture_screen "$udid" "payment" "${OUT_DIR}/${prefix}-02-pay-now.png" "$target_w" "$target_h"
-  capture_screen "$udid" "profile" "${OUT_DIR}/${prefix}-03-profile.png" "$target_w" "$target_h"
+  capture_screen "$udid" "jobs" "${OUT_DIR}/${prefix}-01-browse-jobs.png" "$target_w" "$target_h" || true
+  capture_screen "$udid" "payment" "${OUT_DIR}/${prefix}-02-pay-now.png" "$target_w" "$target_h" || true
+  capture_screen "$udid" "profile" "${OUT_DIR}/${prefix}-03-profile.png" "$target_w" "$target_h" || true
 
   xcrun simctl shutdown "$udid" 2>/dev/null || true
 }
