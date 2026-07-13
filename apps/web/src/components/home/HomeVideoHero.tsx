@@ -85,7 +85,9 @@ export default function HomeVideoHero() {
             fontSize: { xs: '1.5rem', sm: '1.85rem', md: '2.125rem' },
           }}
         >
-          Healthcare &amp; care staffing—grounded in trust, reach, and reliability.
+          Healthcare &amp; care staffing
+          <br />
+          grounded in trust, reach, and reliability.
         </Typography>
       </Box>
     </Box>
