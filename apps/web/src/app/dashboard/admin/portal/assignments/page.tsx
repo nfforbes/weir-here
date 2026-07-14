@@ -29,6 +29,7 @@ import {
   Grid,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -42,10 +43,12 @@ interface Assignment {
   clientId: { _id: string; name: string; address: string };
   providerId: { _id: string; name: string };
   clientChargeCents: number;
+  providerHourlyRateCents: number;
   providerPayCents: number;
   description: string;
   serviceDate: string;
   invoiced: boolean;
+  status: 'assigned' | 'arrived' | 'completed';
 }
 
 export default function AssignmentsPage() {
@@ -57,6 +60,7 @@ export default function AssignmentsPage() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     clientId: '',
     providerId: '',
@@ -65,6 +69,7 @@ export default function AssignmentsPage() {
     providerPay: '',
     description: '',
     serviceDate: new Date().toISOString().split('T')[0],
+    status: 'assigned',
   });
 
   const fetchAll = useCallback(async () => {
@@ -91,28 +96,58 @@ export default function AssignmentsPage() {
     if (!form.clientId || !form.providerId || !form.clientCharge) return;
     setSaving(true);
     try {
-        const res = await fetch('/api/admin/assignments', {
-        method: 'POST',
+      const url = '/api/admin/assignments';
+      const method = editingId ? 'PUT' : 'POST';
+      const body = {
+        clientId: form.clientId,
+        providerId: form.providerId,
+        clientChargeCents: Math.round(parseFloat(form.clientCharge) * 100),
+        providerHourlyRateCents: Math.round(parseFloat(form.providerHourlyRate || '0') * 100),
+        providerPayCents: form.providerPay ? Math.round(parseFloat(form.providerPay) * 100) : 0,
+        description: form.description,
+        serviceDate: form.serviceDate,
+        ...(editingId ? { id: editingId, status: form.status } : {}),
+      };
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId: form.clientId,
-          providerId: form.providerId,
-          clientChargeCents: Math.round(parseFloat(form.clientCharge) * 100),
-          providerHourlyRateCents: Math.round(parseFloat(form.providerHourlyRate || '0') * 100),
-          providerPayCents: form.providerPay ? Math.round(parseFloat(form.providerPay) * 100) : 0,
-          description: form.description,
-          serviceDate: form.serviceDate,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(await res.text());
       await fetchAll();
       setOpen(false);
-      setForm({ clientId: '', providerId: '', clientCharge: '', providerHourlyRate: '', providerPay: '', description: '', serviceDate: new Date().toISOString().split('T')[0] });
+      setEditingId(null);
+      setForm({
+        clientId: '',
+        providerId: '',
+        clientCharge: '',
+        providerHourlyRate: '',
+        providerPay: '',
+        description: '',
+        serviceDate: new Date().toISOString().split('T')[0],
+        status: 'assigned',
+      });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Save failed');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEditClick = (a: Assignment) => {
+    setEditingId(a._id);
+    setForm({
+      clientId: a.clientId?._id || '',
+      providerId: a.providerId?._id || '',
+      clientCharge: ((a.clientChargeCents || 0) / 100).toString(),
+      providerHourlyRate: ((a.providerHourlyRateCents || 0) / 100).toString(),
+      providerPay: ((a.providerPayCents || 0) / 100).toString(),
+      description: a.description || '',
+      serviceDate: a.serviceDate ? new Date(a.serviceDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      status: a.status || 'assigned',
+    });
+    setOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -155,7 +190,20 @@ export default function AssignmentsPage() {
           <Typography variant="h5" fontWeight={700}>Assignments</Typography>
         </Box>
         {!open && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => {
+            setEditingId(null);
+            setForm({
+              clientId: '',
+              providerId: '',
+              clientCharge: '',
+              providerHourlyRate: '',
+              providerPay: '',
+              description: '',
+              serviceDate: new Date().toISOString().split('T')[0],
+              status: 'assigned',
+            });
+            setOpen(true);
+          }}>
             New Assignment
           </Button>
         )}
@@ -167,7 +215,7 @@ export default function AssignmentsPage() {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
       ) : open ? (
         <Paper sx={{ p: 4 }}>
-          <Typography variant="h6" mb={3}>New Assignment</Typography>
+          <Typography variant="h6" mb={3}>{editingId ? 'Edit Assignment' : 'New Assignment'}</Typography>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
@@ -245,14 +293,44 @@ export default function AssignmentsPage() {
               />
             </Grid>
 
+            {editingId && (
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Status *</InputLabel>
+                  <Select
+                    value={form.status}
+                    label="Status *"
+                    onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+                  >
+                    <MenuItem value="assigned">Assigned</MenuItem>
+                    <MenuItem value="arrived">Arrived</MenuItem>
+                    <MenuItem value="completed">Completed</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+
             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
-              <Button onClick={() => setOpen(false)}>Cancel</Button>
+              <Button onClick={() => {
+                setOpen(false);
+                setEditingId(null);
+                setForm({
+                  clientId: '',
+                  providerId: '',
+                  clientCharge: '',
+                  providerHourlyRate: '',
+                  providerPay: '',
+                  description: '',
+                  serviceDate: new Date().toISOString().split('T')[0],
+                  status: 'assigned',
+                });
+              }}>Cancel</Button>
               <Button
                 variant="contained"
                 onClick={handleSave}
                 disabled={saving || !form.clientId || !form.providerId || !form.clientCharge}
               >
-                {saving ? <CircularProgress size={20} /> : 'Create'}
+                {saving ? <CircularProgress size={20} /> : (editingId ? 'Save Changes' : 'Create')}
               </Button>
             </Grid>
           </Grid>
@@ -291,18 +369,40 @@ export default function AssignmentsPage() {
                     <Typography variant="body2" color="text.secondary" noWrap>{a.description || '—'}</Typography>
                   </TableCell>
                   <TableCell>
-                    {a.invoiced
-                      ? <Chip icon={<CheckCircleIcon />} label="Invoiced" size="small" color="success" variant="outlined" />
-                      : <Chip label="Pending" size="small" variant="outlined" />
-                    }
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {a.invoiced
+                        ? <Chip icon={<CheckCircleIcon />} label="Invoiced" size="small" color="success" variant="outlined" />
+                        : <Chip label="Pending" size="small" variant="outlined" />
+                      }
+                      <Chip 
+                        label={(a.status || 'assigned').toUpperCase()} 
+                        size="small" 
+                        color={
+                          a.status === 'completed' ? 'success' : 
+                          a.status === 'arrived' ? 'warning' : 'default'
+                        } 
+                        variant="outlined"
+                      />
+                    </Box>
                   </TableCell>
                   <TableCell align="right">
+                    <Tooltip title="Edit">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleEditClick(a)}
+                        sx={{ mr: 0.5 }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Download Invoice PDF">
                       <IconButton
                         size="small"
                         color="primary"
                         onClick={() => handleInvoice(a._id)}
                         disabled={generatingInvoice === a._id}
+                        sx={{ mr: 0.5 }}
                       >
                         {generatingInvoice === a._id ? <CircularProgress size={16} /> : <ReceiptIcon fontSize="small" />}
                       </IconButton>

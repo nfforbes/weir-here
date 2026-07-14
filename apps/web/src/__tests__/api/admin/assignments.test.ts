@@ -17,6 +17,7 @@ const mockAssignmentFind = jest.fn();
 const mockAssignmentCreate = jest.fn();
 const mockAssignmentFindById = jest.fn();
 const mockAssignmentFindByIdAndDelete = jest.fn();
+const mockAssignmentFindByIdAndUpdate = jest.fn();
 
 jest.mock('@/models/Assignment', () => ({
   __esModule: true,
@@ -25,6 +26,7 @@ jest.mock('@/models/Assignment', () => ({
     create: (...a: unknown[]) => mockAssignmentCreate(...a),
     findById: (...a: unknown[]) => mockAssignmentFindById(...a),
     findByIdAndDelete: (...a: unknown[]) => mockAssignmentFindByIdAndDelete(...a),
+    findByIdAndUpdate: (...a: unknown[]) => mockAssignmentFindByIdAndUpdate(...a),
   },
 }));
 
@@ -171,6 +173,7 @@ describe('POST /api/admin/assignments', () => {
       clientId: 'c1',
       providerId: 'p1',
       clientChargeCents: 10000,
+      providerHourlyRateCents: 5000,
       providerPayCents: 7500,
       description: 'Daily care',
       serviceDate: '2025-01-15',
@@ -183,6 +186,7 @@ describe('POST /api/admin/assignments', () => {
       clientId: 'c1',
       providerId: 'p1',
       clientChargeCents: 10000,
+      providerHourlyRateCents: 5000,
       providerPayCents: 7500,
     }));
   });
@@ -206,5 +210,79 @@ describe('DELETE /api/admin/assignments', () => {
     expect(res.status).toBe(200);
     expect((await res.json()).success).toBe(true);
     expect(mockAssignmentFindByIdAndDelete).toHaveBeenCalledWith('a1');
+  });
+});
+
+describe('PUT /api/admin/assignments', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns 400 when id is missing', async () => {
+    adminOk();
+    const { PUT } = await import('@/app/api/admin/assignments/route');
+    const req = makeRequest('PUT', BASE, { clientId: 'c1', providerId: 'p1', clientChargeCents: 1000, providerHourlyRateCents: 500 });
+    const res = await PUT(req);
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('id is required');
+  });
+
+  it('returns 400 when clientId is missing', async () => {
+    adminOk();
+    const { PUT } = await import('@/app/api/admin/assignments/route');
+    const req = makeRequest('PUT', BASE, { id: 'a1', providerId: 'p1', clientChargeCents: 1000, providerHourlyRateCents: 500 });
+    const res = await PUT(req);
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('clientId is required');
+  });
+
+  it('returns 400 when providerHourlyRateCents is negative', async () => {
+    adminOk();
+    const { PUT } = await import('@/app/api/admin/assignments/route');
+    const req = makeRequest('PUT', BASE, { id: 'a1', clientId: 'c1', providerId: 'p1', clientChargeCents: 1000, providerHourlyRateCents: -500 });
+    const res = await PUT(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when status is invalid', async () => {
+    adminOk();
+    const { PUT } = await import('@/app/api/admin/assignments/route');
+    const req = makeRequest('PUT', BASE, { id: 'a1', clientId: 'c1', providerId: 'p1', clientChargeCents: 1000, providerHourlyRateCents: 500, status: 'invalid-status' });
+    const res = await PUT(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('updates assignment and returns populated data on success', async () => {
+    adminOk();
+    mockAssignmentFindByIdAndUpdate.mockResolvedValue({ _id: 'a1' });
+
+    const populateChain = {
+      populate: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue(POPULATED_ASSIGNMENT),
+    };
+    mockAssignmentFindById.mockReturnValue(populateChain);
+
+    const { PUT } = await import('@/app/api/admin/assignments/route');
+    const req = makeRequest('PUT', BASE, {
+      id: 'a1',
+      clientId: 'c1',
+      providerId: 'p1',
+      clientChargeCents: 10000,
+      providerHourlyRateCents: 5000,
+      providerPayCents: 7500,
+      description: 'Updated Daily care',
+      serviceDate: '2025-01-15',
+      status: 'completed',
+    });
+    const res = await PUT(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.clientChargeCents).toBe(10000);
+    expect(mockAssignmentFindByIdAndUpdate).toHaveBeenCalledWith('a1', expect.objectContaining({
+      clientId: 'c1',
+      providerId: 'p1',
+      clientChargeCents: 10000,
+      providerHourlyRateCents: 5000,
+      providerPayCents: 7500,
+      status: 'completed',
+    }), { new: true });
   });
 });

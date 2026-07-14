@@ -1,5 +1,9 @@
 import mongoose from 'mongoose';
+import dns from 'dns';
 import Application from '@/models/Application';
+
+// Workaround for querySrv ECONNREFUSED lookup issues on Windows/local network resolvers
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 interface MongooseCache {
   conn: typeof mongoose | null;

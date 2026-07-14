@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
       }),
     });
   } catch (err: unknown) {
+    console.error('[bootstrap error]', err);
     const message = err instanceof Error ? err.message : 'Internal server error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
