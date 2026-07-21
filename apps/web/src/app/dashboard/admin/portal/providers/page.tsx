@@ -5,11 +5,6 @@ import {
   Box,
   Typography,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TablePagination,
   Paper,
   Dialog,
@@ -26,11 +21,20 @@ import {
   Grid,
   Radio,
   FormControlLabel,
+  Card,
+  CardContent,
+  Stack,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import MapIcon from '@mui/icons-material/Map';
+import SchoolIcon from '@mui/icons-material/School';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { ELECTRIC_BLUE } from '@/theme/theme';
@@ -40,10 +44,17 @@ import {
   formatProviderAddress,
   hydrateProviderAddressDetails,
   normalizePreferredParishes,
+  PROVIDER_SPECIALTY_OPTIONS_KEY,
+  parseProviderSpecialtyOptions,
   type ProviderAddressDetails,
 } from '@weir-here/shared';
 import ProviderAddressFields from '@/components/providers/ProviderAddressFields';
 import PreferredParishesField from '@/components/providers/PreferredParishesField';
+import ProviderSpecialtiesFields, {
+  rowsToSpecialties,
+  specialtiesToRows,
+  type ProviderSpecialtyRow,
+} from '@/components/providers/ProviderSpecialtiesFields';
 
 interface Qualification {
   _id: string;
@@ -60,6 +71,7 @@ interface Provider {
   address: string;
   addressDetails?: ProviderAddressDetails;
   preferredParishes?: string[];
+  specialties?: string[];
   phoneNumbers?: { number: string; isBest: boolean }[];
   qualifications: Qualification[];
 }
@@ -69,6 +81,7 @@ type ProviderFormState = {
   email: string;
   addressDetails: ProviderAddressDetails;
   preferredParishes: string[];
+  specialtyRows: ProviderSpecialtyRow[];
   phoneNumbers: { number: string; isBest: boolean }[];
 };
 
@@ -77,6 +90,7 @@ const emptyForm = (): ProviderFormState => ({
   email: '',
   addressDetails: { ...EMPTY_PROVIDER_ADDRESS },
   preferredParishes: [],
+  specialtyRows: [],
   phoneNumbers: [],
 });
 
@@ -96,7 +110,22 @@ export default function ProvidersPage() {
   const [qualificationsToDelete, setQualificationsToDelete] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [specialtyOptions, setSpecialtyOptions] = useState<string[]>([]);
   const rowsPerPage = 25;
+
+  const fetchSpecialtyOptions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const data = await res.json();
+      if (res.ok) {
+        setSpecialtyOptions(
+          parseProviderSpecialtyOptions(data.settings?.[PROVIDER_SPECIALTY_OPTIONS_KEY]),
+        );
+      }
+    } catch {
+      setSpecialtyOptions([]);
+    }
+  }, []);
 
   const fetchProviders = useCallback(async () => {
     setLoading(true);
@@ -112,6 +141,7 @@ export default function ProvidersPage() {
   }, []);
 
   useEffect(() => { fetchProviders(); }, [fetchProviders]);
+  useEffect(() => { fetchSpecialtyOptions(); }, [fetchSpecialtyOptions]);
 
   useEffect(() => { setPage(0); }, [search]);
 
@@ -136,6 +166,7 @@ export default function ProvidersPage() {
           addressDetails.parish,
           provider.preferredParishes,
         ),
+        specialtyRows: specialtiesToRows(provider.specialties || [], specialtyOptions),
         phoneNumbers: provider.phoneNumbers || [],
       });
       setEditingQualifications([...provider.qualifications]);
@@ -165,6 +196,7 @@ export default function ProvidersPage() {
             form.addressDetails.parish,
             form.preferredParishes,
           ),
+          specialties: rowsToSpecialties(form.specialtyRows),
           phoneNumbers: form.phoneNumbers,
         }),
       });
@@ -336,6 +368,13 @@ export default function ProvidersPage() {
               />
             </Grid>
             <Grid item xs={12}>
+              <ProviderSpecialtiesFields
+                rows={form.specialtyRows}
+                options={specialtyOptions}
+                onChange={(specialtyRows) => setForm((f) => ({ ...f, specialtyRows }))}
+              />
+            </Grid>
+            <Grid item xs={12}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>Phone Numbers</Typography>
               {form.phoneNumbers.map((phone, index) => (
                 <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
@@ -463,143 +502,204 @@ export default function ProvidersPage() {
           </Grid>
         </Paper>
       ) : (
-        <Paper>
-          <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box>
+          <Paper sx={{ p: 2, mb: 2 }}>
             <TextField
               size="small"
               fullWidth
-              label="Search name, email, address, phone, or qualification"
+              label="Search name, email, address, phone, specialty, or qualification"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-          </Box>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#f5f7fa' } }}>
-                <TableCell>Name</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Address</TableCell>
-                <TableCell>Preferred Parishes</TableCell>
-                <TableCell>Qualifications</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {providers.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                    No providers yet. Click &quot;Add Provider&quot; to get started.
-                  </TableCell>
-                </TableRow>
-              )}
-              {providers.length > 0 && filteredProviders.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                    No providers match your search.
-                  </TableCell>
-                </TableRow>
-              )}
-              {paginatedProviders.map((p) => (
-                <TableRow key={p._id} hover>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Chip label={p.name.charAt(0).toUpperCase()} size="small" sx={{ bgcolor: ELECTRIC_BLUE, color: 'white', fontWeight: 700 }} />
-                      <Typography fontWeight={600}>{p.name}</Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      {p.phoneNumbers?.map((ph, i) => (
-                        <Typography
-                          key={i}
-                          variant="body2"
-                          component="div"
-                          sx={{ fontWeight: ph.isBest ? 600 : 400, color: ph.isBest ? 'text.primary' : 'text.secondary' }}
-                        >
-                          {ph.number} {ph.isBest && <Chip label="Best" size="small" sx={{ height: 16, fontSize: '0.65rem', ml: 1 }} />}
-                        </Typography>
-                      ))}
-                      {(!p.phoneNumbers || p.phoneNumbers.length === 0) && <Typography variant="body2" color="text.disabled">—</Typography>}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    {p.email ? (
-                      <Typography variant="body2" color="text.secondary">{p.email}</Typography>
-                    ) : (
-                      <Typography variant="body2" color="text.disabled">—</Typography>
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ maxWidth: 220 }}>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      {formatProviderAddress(p.addressDetails, p.address) || '—'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell sx={{ maxWidth: 180 }}>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {(p.preferredParishes ?? []).length === 0 && (
-                        <Typography variant="body2" color="text.disabled">—</Typography>
-                      )}
-                      {(p.preferredParishes ?? []).map((parish) => (
-                        <Chip key={parish} label={parish} size="small" variant="outlined" />
-                      ))}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      {p.qualifications.length === 0 && (
-                        <Typography variant="caption" color="text.disabled">None</Typography>
-                      )}
-                      {p.qualifications.map((q) => (
-                        <Box key={q._id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Chip
-                            label={q.description ? `${q.description} (${q.fileName})` : q.fileName}
-                            size="small"
-                            variant="outlined"
-                            clickable
-                            component="a"
-                            href={q.driveWebViewLink}
-                            target="_blank"
-                            icon={<OpenInNewIcon style={{ fontSize: 12 }} />}
-                            onDelete={() => handleDeleteQual(q._id)}
-                          />
-                        </Box>
-                      ))}
-                      <Button
-                        size="small"
-                        startIcon={<UploadFileIcon />}
-                        onClick={() => handleGridUploadClick(p._id)}
-                        sx={{ mt: 0.5, width: 'fit-content' }}
-                        disabled={uploadProgress}
-                      >
-                        Upload
-                      </Button>
-                    </Box>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Edit">
-                      <IconButton size="small" onClick={() => handleOpen(p)}><EditIcon fontSize="small" /></IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton size="small" color="error" onClick={() => handleDelete(p._id)}><DeleteIcon fontSize="small" /></IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {filteredProviders.length > 0 && (
-            <TablePagination
-              component="div"
-              count={filteredProviders.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              rowsPerPageOptions={[25]}
-              onPageChange={(_event, newPage) => setPage(newPage)}
-              onRowsPerPageChange={() => {}}
-            />
+          </Paper>
+
+          {providers.length === 0 && (
+            <Paper sx={{ py: 6, textAlign: 'center' }}>
+              <Typography color="text.secondary">
+                No providers yet. Click &quot;Add Provider&quot; to get started.
+              </Typography>
+            </Paper>
           )}
-        </Paper>
+
+          {providers.length > 0 && filteredProviders.length === 0 && (
+            <Paper sx={{ py: 6, textAlign: 'center' }}>
+              <Typography color="text.secondary">No providers match your search.</Typography>
+            </Paper>
+          )}
+
+          <Grid container spacing={2}>
+            {paginatedProviders.map((p) => {
+              const address = formatProviderAddress(p.addressDetails, p.address);
+              const specialties = p.specialties ?? [];
+              const parishes = p.preferredParishes ?? [];
+              return (
+                <Grid item xs={12} key={p._id}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      borderColor: 'divider',
+                      '&:hover': { borderColor: ELECTRIC_BLUE, boxShadow: 1 },
+                    }}
+                  >
+                    <CardContent
+                      sx={{
+                        py: 1.25,
+                        px: 2,
+                        '&:last-child': { pb: 1.25 },
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.75,
+                      }}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={1.5}
+                        alignItems="center"
+                        useFlexGap
+                        flexWrap="wrap"
+                      >
+                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
+                          <PersonIcon sx={{ fontSize: 16, color: 'text.secondary', flexShrink: 0 }} />
+                          <Typography fontWeight={700} noWrap title={p.name}>
+                            {p.name}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
+                          <EmailIcon sx={{ fontSize: 16, color: 'text.secondary', flexShrink: 0 }} />
+                          <Typography variant="body2" color="text.secondary" noWrap title={p.email || undefined}>
+                            {p.email || 'No email'}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
+                          <PhoneIcon sx={{ fontSize: 16, color: 'text.secondary', flexShrink: 0 }} />
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {p.phoneNumbers?.length
+                              ? p.phoneNumbers
+                                  .map((ph) => (ph.isBest ? `${ph.number} (Best)` : ph.number))
+                                  .join(' · ')
+                              : 'No phone'}
+                          </Typography>
+                        </Stack>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          alignItems="center"
+                          sx={{ flex: '1 1 160px', minWidth: 0 }}
+                        >
+                          <LocationOnIcon sx={{ fontSize: 16, color: 'text.secondary', flexShrink: 0 }} />
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            noWrap
+                            title={address || undefined}
+                          >
+                            {address || 'No address'}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ ml: 'auto' }}>
+                          <Button
+                            size="small"
+                            startIcon={<UploadFileIcon />}
+                            onClick={() => handleGridUploadClick(p._id)}
+                            disabled={uploadProgress}
+                          >
+                            Upload
+                          </Button>
+                          <Tooltip title="Edit">
+                            <IconButton size="small" onClick={() => handleOpen(p)}>
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton size="small" color="error" onClick={() => handleDelete(p._id)}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      </Stack>
+
+                      <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" alignItems="center">
+                        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" alignItems="center">
+                          <Tooltip title="Specialties">
+                            <MedicalServicesIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                          </Tooltip>
+                          {specialties.length === 0 ? (
+                            <Typography variant="caption" color="text.disabled">
+                              —
+                            </Typography>
+                          ) : (
+                            specialties.map((specialty) => (
+                              <Chip
+                                key={`s-${specialty}`}
+                                label={specialty}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                              />
+                            ))
+                          )}
+                        </Stack>
+                        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" alignItems="center">
+                          <Tooltip title="Preferred parishes">
+                            <MapIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                          </Tooltip>
+                          {parishes.length === 0 ? (
+                            <Typography variant="caption" color="text.disabled">
+                              —
+                            </Typography>
+                          ) : (
+                            parishes.map((parish) => (
+                              <Chip key={`p-${parish}`} label={parish} size="small" variant="outlined" />
+                            ))
+                          )}
+                        </Stack>
+                        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" alignItems="center">
+                          <Tooltip title="Qualifications">
+                            <SchoolIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                          </Tooltip>
+                          {p.qualifications.length === 0 ? (
+                            <Typography variant="caption" color="text.disabled">
+                              —
+                            </Typography>
+                          ) : (
+                            p.qualifications.map((q) => (
+                              <Chip
+                                key={q._id}
+                                label={q.description ? `${q.description} (${q.fileName})` : q.fileName}
+                                size="small"
+                                variant="outlined"
+                                clickable
+                                component="a"
+                                href={q.driveWebViewLink}
+                                target="_blank"
+                                icon={<OpenInNewIcon style={{ fontSize: 12 }} />}
+                                onDelete={() => handleDeleteQual(q._id)}
+                              />
+                            ))
+                          )}
+                        </Stack>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+
+          {filteredProviders.length > 0 && (
+            <Paper sx={{ mt: 2 }}>
+              <TablePagination
+                component="div"
+                count={filteredProviders.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                rowsPerPageOptions={[25]}
+                onPageChange={(_event, newPage) => setPage(newPage)}
+                onRowsPerPageChange={() => {}}
+              />
+            </Paper>
+          )}
+        </Box>
       )}
 
       {gridUploadState && (

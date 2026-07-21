@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import Provider, { buildProviderAddressPayload, type ProviderAddressDetails } from '@/models/Provider';
+import Provider, {
+  buildProviderAddressPayload,
+  normalizeProviderSpecialties,
+  type ProviderAddressDetails,
+} from '@/models/Provider';
 import Qualification from '@/models/Qualification';
 import { requireAdministrator } from '@/lib/adminAuth';
 import User from '@/models/User';
@@ -124,7 +128,7 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { name, address, addressDetails, preferredParishes, email, phoneNumbers } = body;
+  const { name, address, addressDetails, preferredParishes, email, phoneNumbers, specialties } = body;
   if (!name?.trim()) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   }
@@ -146,6 +150,7 @@ export async function POST(req: NextRequest) {
     name: name.trim(), 
     email: email.trim().toLowerCase(),
     phoneNumbers: phoneNumbers || [],
+    specialties: normalizeProviderSpecialties({ specialties }),
     ...addressPayload,
   });
 
@@ -159,7 +164,7 @@ export async function PUT(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
 
   const body = await req.json();
-  const { id, name, address, addressDetails, preferredParishes, email, phoneNumbers } = body;
+  const { id, name, address, addressDetails, preferredParishes, email, phoneNumbers, specialties } = body;
   if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
   await connectDB();
@@ -177,6 +182,7 @@ export async function PUT(req: NextRequest) {
   if (name !== undefined) updateData.name = name.trim();
   if (email !== undefined) updateData.email = email.trim().toLowerCase();
   if (phoneNumbers !== undefined) updateData.phoneNumbers = phoneNumbers;
+  if (specialties !== undefined) updateData.specialties = normalizeProviderSpecialties({ specialties });
   if (address !== undefined || addressDetails !== undefined || preferredParishes !== undefined) {
     const existingProvider = await Provider.findById(id).lean<{
       address?: string;

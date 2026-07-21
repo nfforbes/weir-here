@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -24,6 +27,7 @@ import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Slider
@@ -31,6 +35,13 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,8 +52,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.weirhere.data.currentMonthYyyyMm
 import com.weirhere.files.rememberDocumentPicker
 import com.weirhere.files.rememberFileSaver
@@ -57,8 +71,12 @@ import com.weirhere.model.PickedFilePayload
 import com.weirhere.data.ClientServiceRow
 import com.weirhere.data.ClientServices
 import com.weirhere.data.JamaicaParishes
+import com.weirhere.data.ProviderSpecialties
+import com.weirhere.data.ProviderSpecialtyRow
 import com.weirhere.data.rowsToServices
+import com.weirhere.data.rowsToSpecialties
 import com.weirhere.data.servicesToRows
+import com.weirhere.data.specialtiesToRows
 import com.weirhere.model.ProviderAddressDetailsDto
 import com.weirhere.model.ProviderDto
 import com.weirhere.model.ProviderUpsertPayload
@@ -416,7 +434,7 @@ fun AdminProvidersUi(api: WeirHereApi, accessToken: String?) {
         AdminListSearchField(
             value = search,
             onValueChange = { search = it },
-            label = "Search name, email, address, phone, or qualification",
+            label = "Search name, email, address, phone, specialty, or qualification",
         )
 
         if (loading) {
@@ -431,40 +449,133 @@ fun AdminProvidersUi(api: WeirHereApi, accessToken: String?) {
             val pageItems = paginatedSlice(filtered, page, PAGE_SIZE)
             LazyColumn(Modifier.weight(1f)) {
                 itemsIndexed(pageItems, key = { _, p -> p.id }) { index, prov ->
-                    Card(
-                        Modifier.fillMaxWidth().padding(vertical = 4.dp).background(cardBackground(index)),
-                    ) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(prov.name, fontWeight = FontWeight.Bold)
-                            prov.email?.let { Text(it, color = MaterialTheme.colors.primary, style = MaterialTheme.typography.body2) }
-                            val displayAddress = JamaicaParishes.formatAddress(prov.addressDetails, prov.address)
-                            if (displayAddress.isNotBlank()) Text(displayAddress, style = MaterialTheme.typography.body2)
-                            if (prov.preferredParishes.isNotEmpty()) {
-                                Text(
-                                    "Preferred: ${prov.preferredParishes.joinToString(", ")}",
-                                    style = MaterialTheme.typography.caption,
-                                )
-                            }
-                            prov.phoneNumbers.forEach { p ->
-                                Text(p.number + if (p.isBest) " (Best)" else "", style = MaterialTheme.typography.body2)
-                            }
-                            if (prov.qualifications.isNotEmpty()) {
-                                Spacer(Modifier.height(4.dp))
-                                Text("Qualifications", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.caption)
-                                prov.qualifications.forEach { q -> QualificationRow(q, api, tok, onChanged = { reload() }) }
-                            }
-                            Row {
-                                TextButton(onClick = { formTarget = prov }) { Text("Edit") }
-                                TextButton(onClick = { deleteTarget = prov }) {
-                                    Text("Delete", color = MaterialTheme.colors.error)
-                                }
+                    ProviderListCard(
+                        provider = prov,
+                        index = index,
+                        api = api,
+                        tok = tok,
+                        onEdit = { formTarget = prov },
+                        onDelete = { deleteTarget = prov },
+                        onChanged = { reload() },
+                    )
+                }
+            }
+            PaginatedListControls(page, filtered.size, PAGE_SIZE) { page = it }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ProviderListCard(
+    provider: ProviderDto,
+    index: Int,
+    api: WeirHereApi,
+    tok: String,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onChanged: () -> Unit,
+) {
+    val displayAddress = JamaicaParishes.formatAddress(provider.addressDetails, provider.address)
+    val phones = if (provider.phoneNumbers.isEmpty()) {
+        "No phone"
+    } else {
+        provider.phoneNumbers.joinToString(" · ") { p ->
+            p.number + if (p.isBest) " (Best)" else ""
+        }
+    }
+    val specialties = provider.specialties.joinToString(", ").ifBlank { "—" }
+    val parishes = provider.preferredParishes.joinToString(", ").ifBlank { "—" }
+
+    Card(
+        Modifier.fillMaxWidth().padding(vertical = 4.dp).background(cardBackground(index)),
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                ProviderInfoItem(
+                    icon = Icons.Filled.Person,
+                    text = provider.name,
+                    bold = true,
+                )
+                ProviderInfoItem(
+                    icon = Icons.Filled.Email,
+                    text = provider.email?.ifBlank { null } ?: "No email",
+                )
+                ProviderInfoItem(
+                    icon = Icons.Filled.Phone,
+                    text = phones,
+                )
+                ProviderInfoItem(
+                    icon = Icons.Filled.LocationOn,
+                    text = displayAddress.ifBlank { "No address" },
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = onEdit) { Text("Edit") }
+                    TextButton(onClick = onDelete) {
+                        Text("Delete", color = MaterialTheme.colors.error)
+                    }
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                ProviderInfoItem(icon = Icons.Filled.Star, text = specialties)
+                ProviderInfoItem(icon = Icons.Filled.Place, text = parishes)
+                if (provider.qualifications.isEmpty()) {
+                    ProviderInfoItem(icon = Icons.Filled.Info, text = "—")
+                } else {
+                    Row(verticalAlignment = Alignment.Top) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = "Qualifications",
+                            modifier = Modifier.size(16.dp).padding(top = 2.dp),
+                            tint = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Column {
+                            provider.qualifications.forEach { q ->
+                                QualificationRow(q, api, tok, onChanged = onChanged)
                             }
                         }
                     }
                 }
             }
-            PaginatedListControls(page, filtered.size, PAGE_SIZE) { page = it }
         }
+    }
+}
+
+@Composable
+private fun ProviderInfoItem(
+    icon: ImageVector,
+    text: String,
+    bold: Boolean = false,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 1.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = text,
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
+            style = if (bold) MaterialTheme.typography.body1 else MaterialTheme.typography.body2,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            fontSize = if (bold) 14.sp else 13.sp,
+        )
     }
 }
 
@@ -534,6 +645,8 @@ private fun ProviderFormScreen(
             ),
         )
     }
+    var specialtyRows by remember(initial) { mutableStateOf(emptyList<ProviderSpecialtyRow>()) }
+    var specialtyOptions by remember { mutableStateOf<List<String>>(emptyList()) }
     var phones by remember(initial) { mutableStateOf(initial?.phoneNumbers ?: emptyList()) }
     var staged by remember { mutableStateOf<List<StagedQualification>>(emptyList()) }
     var pendingFile by remember { mutableStateOf<PickedFilePayload?>(null) }
@@ -542,6 +655,19 @@ private fun ProviderFormScreen(
     var error by remember { mutableStateOf<String?>(null) }
 
     val pickDocument = rememberDocumentPicker(onPicked = { pendingFile = it }, onError = { error = it })
+
+    LaunchedEffect(tok, initial) {
+        if (tok.isEmpty()) return@LaunchedEffect
+        runCatching { api.getAdminSettings(tok) }
+            .onSuccess { response ->
+                val options = ProviderSpecialties.parseOptions(response.settings[ProviderSpecialties.OPTIONS_KEY])
+                specialtyOptions = options
+                specialtyRows = specialtiesToRows(initial?.specialties.orEmpty(), options)
+            }
+            .onFailure {
+                specialtyRows = specialtiesToRows(initial?.specialties.orEmpty(), emptyList())
+            }
+    }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(8.dp)) {
         Text(if (initial == null) "Add Provider" else "Edit Provider", style = MaterialTheme.typography.h6)
@@ -561,6 +687,7 @@ private fun ProviderFormScreen(
             onChange = { preferredParishes = it },
             modifier = Modifier.padding(top = 8.dp),
         )
+        ProviderSpecialtiesEditor(specialtyRows, specialtyOptions) { specialtyRows = it }
         PhoneNumberEditor(phones, { phones = it })
         Spacer(Modifier.height(8.dp))
         Text("New qualifications", fontWeight = FontWeight.SemiBold)
@@ -592,6 +719,7 @@ private fun ProviderFormScreen(
                             email = email.trim(),
                             addressDetails = addressDetails,
                             preferredParishes = normalizedParishes,
+                            specialties = rowsToSpecialties(specialtyRows),
                             phoneNumbers = phones,
                         )
                         runCatching {
@@ -1136,6 +1264,7 @@ fun AdminSettingsUi(api: WeirHereApi, accessToken: String?) {
     val tok = accessToken?.trim().orEmpty()
     var settings by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var clientServiceOptions by remember { mutableStateOf<List<String>>(emptyList()) }
+    var providerSpecialtyOptions by remember { mutableStateOf<List<String>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -1148,6 +1277,8 @@ fun AdminSettingsUi(api: WeirHereApi, accessToken: String?) {
             .onSuccess { response ->
                 settings = response.settings
                 clientServiceOptions = ClientServices.parseOptions(response.settings[ClientServices.OPTIONS_KEY])
+                providerSpecialtyOptions =
+                    ProviderSpecialties.parseOptions(response.settings[ProviderSpecialties.OPTIONS_KEY])
             }
             .onFailure {
                 if (it !is kotlinx.coroutines.CancellationException) error = it.message ?: it.toString()
@@ -1164,6 +1295,11 @@ fun AdminSettingsUi(api: WeirHereApi, accessToken: String?) {
             ClientServiceOptionsEditor(
                 options = clientServiceOptions,
                 onChange = { clientServiceOptions = it },
+            )
+            Spacer(Modifier.height(16.dp))
+            ProviderSpecialtyOptionsEditor(
+                options = providerSpecialtyOptions,
+                onChange = { providerSpecialtyOptions = it },
             )
             Spacer(Modifier.height(16.dp))
             MS365_SETTING_KEYS.forEach { key ->
@@ -1188,6 +1324,8 @@ fun AdminSettingsUi(api: WeirHereApi, accessToken: String?) {
                                 v.isNotBlank() && !(k == "MS365_CLIENT_SECRET" && v == MASKED_SECRET)
                             } + mapOf(
                                 ClientServices.OPTIONS_KEY to ClientServices.serializeOptions(clientServiceOptions),
+                                ProviderSpecialties.OPTIONS_KEY to
+                                    ProviderSpecialties.serializeOptions(providerSpecialtyOptions),
                             )
                         runCatching { api.updateAdminSettings(tok, toSave) }
                             .onSuccess { success = "Settings saved" }

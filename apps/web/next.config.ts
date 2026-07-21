@@ -1,6 +1,10 @@
 import type { NextConfig } from 'next';
 import path from 'path';
+import dns from 'dns';
 import { loadEnvConfig } from '@next/env';
+
+// Set DNS before env/Mongo usage so Atlas SRV resolution works on Windows Node.
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 
 // Monorepo: Next.js only loads `.env*` from `apps/web` by default. If you keep
 // `.env.local` at the repo root, load it here so Auth0 and `next.config` `env`

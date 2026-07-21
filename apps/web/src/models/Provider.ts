@@ -3,6 +3,7 @@ import {
   EMPTY_PROVIDER_ADDRESS,
   formatProviderAddress,
   normalizePreferredParishes,
+  normalizeSpecialties,
   type ProviderAddressDetails,
 } from '@weir-here/shared';
 
@@ -19,6 +20,7 @@ export interface ProviderDocument extends Document {
   address: string;
   addressDetails: ProviderAddressDetails;
   preferredParishes: string[];
+  specialties: string[];
   phoneNumbers: PhoneNumber[];
   createdAt: Date;
   updatedAt: Date;
@@ -42,6 +44,7 @@ const ProviderSchema = new Schema<ProviderDocument>(
     address: { type: String, default: '' },
     addressDetails: { type: AddressDetailsSchema, default: () => ({ ...EMPTY_PROVIDER_ADDRESS }) },
     preferredParishes: [{ type: String }],
+    specialties: [{ type: String }],
     phoneNumbers: [
       {
         number: { type: String, required: true },
@@ -67,6 +70,10 @@ export function buildProviderAddressPayload(input: {
   );
   const address = formatProviderAddress(addressDetails, input.address);
   return { addressDetails, preferredParishes, address };
+}
+
+export function normalizeProviderSpecialties(body: Record<string, unknown>) {
+  return normalizeSpecialties(body.specialties);
 }
 
 export default mongoose.models.Provider ||

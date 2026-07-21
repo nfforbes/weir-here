@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.weirhere.data.ClientServiceRow
 import com.weirhere.data.ClientServices
+import com.weirhere.data.ProviderSpecialties
+import com.weirhere.data.ProviderSpecialtyRow
 import com.weirhere.model.ClientDto
 import com.weirhere.model.PhoneNumberDto
 import com.weirhere.model.ProviderDto
@@ -127,6 +129,7 @@ fun filterProviders(providers: List<ProviderDto>, search: String): List<Provider
             containsQuery(prov.addressDetails.parish, query) ||
             containsQuery(prov.addressDetails.postalCode, query) ||
             prov.preferredParishes.any { containsQuery(it, query) } ||
+            prov.specialties.any { containsQuery(it, query) } ||
             prov.phoneNumbers.any { containsQuery(it.number, query) } ||
             prov.qualifications.any {
                 containsQuery(it.description, query) || containsQuery(it.fileName, query)
@@ -273,6 +276,112 @@ fun ClientServicesEditor(
             onChange(rows + ClientServiceRow(selection = defaultSelection))
         },
     ) { Text("Add service") }
+}
+
+@Composable
+fun ProviderSpecialtiesEditor(
+    rows: List<ProviderSpecialtyRow>,
+    options: List<String>,
+    onChange: (List<ProviderSpecialtyRow>) -> Unit,
+) {
+    Text("Specialties (optional)", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
+    rows.forEachIndexed { idx, row ->
+        var menuOpen by remember(idx, row.selection) { mutableStateOf(false) }
+        val label =
+            if (row.selection == ProviderSpecialties.OTHER_VALUE) "Other"
+            else row.selection.ifBlank { "Select specialty" }
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Specialty") },
+                    modifier = Modifier.fillMaxWidth().clickable { menuOpen = true },
+                )
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    options.forEach { option ->
+                        DropdownMenuItem(onClick = {
+                            onChange(rows.mapIndexed { i, r -> if (i == idx) r.copy(selection = option) else r })
+                            menuOpen = false
+                        }) { Text(option) }
+                    }
+                    DropdownMenuItem(onClick = {
+                        onChange(rows.mapIndexed { i, r -> if (i == idx) r.copy(selection = ProviderSpecialties.OTHER_VALUE) else r })
+                        menuOpen = false
+                    }) { Text("Other") }
+                }
+            }
+            if (row.selection == ProviderSpecialties.OTHER_VALUE) {
+                OutlinedTextField(
+                    value = row.customValue,
+                    onValueChange = { value ->
+                        onChange(rows.mapIndexed { i, r -> if (i == idx) r.copy(customValue = value) else r })
+                    },
+                    label = { Text("Custom specialty") },
+                    modifier = Modifier.weight(1f).padding(start = 8.dp),
+                )
+            }
+            TextButton(onClick = { onChange(rows.filterIndexed { i, _ -> i != idx }) }) {
+                Text("Remove", color = MaterialTheme.colors.error)
+            }
+        }
+    }
+    TextButton(
+        onClick = {
+            val defaultSelection = options.firstOrNull() ?: ProviderSpecialties.OTHER_VALUE
+            onChange(rows + ProviderSpecialtyRow(selection = defaultSelection))
+        },
+    ) { Text("Add specialty") }
+}
+
+@Composable
+fun ProviderSpecialtyOptionsEditor(
+    options: List<String>,
+    onChange: (List<String>) -> Unit,
+) {
+    var input by remember { mutableStateOf("") }
+    Text("Provider Specialties", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6)
+    Text(
+        "Specialties appear in the provider form dropdown. Choose Other on a provider to enter a custom specialty.",
+        style = MaterialTheme.typography.body2,
+        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
+        modifier = Modifier.padding(bottom = 8.dp),
+    )
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = input,
+            onValueChange = { input = it },
+            label = { Text("Specialty name") },
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(
+            onClick = {
+                val trimmed = input.trim()
+                if (trimmed.isNotEmpty() && options.none { it.equals(trimmed, ignoreCase = true) }) {
+                    onChange((options + trimmed).sorted())
+                    input = ""
+                }
+            },
+        ) { Text("Add") }
+    }
+    if (options.isEmpty()) {
+        Text("No specialties configured yet.", style = MaterialTheme.typography.body2, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
+    } else {
+        Column(Modifier.padding(vertical = 8.dp)) {
+            options.forEach { option ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(option)
+                    TextButton(onClick = { onChange(options.filter { it != option }) }) {
+                        Text("Remove", color = MaterialTheme.colors.error)
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

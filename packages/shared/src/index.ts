@@ -5,3 +5,4 @@ export * from './constants/menu';
 export * from './constants/jamaicaParishes';
 export * from './providerAddress';
 export * from './clientServices';
+export * from './providerSpecialties';

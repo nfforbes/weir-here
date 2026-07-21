@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveProviderForRequest } from '@/lib/providerAuth';
-import Provider, { buildProviderAddressPayload } from '@/models/Provider';
+import Provider, {
+  buildProviderAddressPayload,
+  normalizeProviderSpecialties,
+} from '@/models/Provider';
 import { hydrateProviderAddressDetails } from '@weir-here/shared';
 
 function serializeProviderProfile(provider: {
@@ -10,6 +13,7 @@ function serializeProviderProfile(provider: {
   address: string;
   addressDetails?: Parameters<typeof hydrateProviderAddressDetails>[0];
   preferredParishes?: string[];
+  specialties?: string[];
   phoneNumbers?: { number: string; isBest: boolean }[];
 }) {
   const addressDetails = hydrateProviderAddressDetails(provider.addressDetails, provider.address);
@@ -20,6 +24,7 @@ function serializeProviderProfile(provider: {
     address: provider.address,
     addressDetails,
     preferredParishes: provider.preferredParishes ?? [],
+    specialties: provider.specialties ?? [],
     phoneNumbers: provider.phoneNumbers ?? [],
   };
 }
@@ -46,11 +51,12 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, address, addressDetails, preferredParishes, phoneNumbers } = body;
+    const { name, address, addressDetails, preferredParishes, phoneNumbers, specialties } = body;
 
     const updateData: Record<string, unknown> = {};
     if (name !== undefined) updateData.name = String(name).trim();
     if (phoneNumbers !== undefined) updateData.phoneNumbers = phoneNumbers;
+    if (specialties !== undefined) updateData.specialties = normalizeProviderSpecialties({ specialties });
     if (address !== undefined || addressDetails !== undefined || preferredParishes !== undefined) {
       const addressPayload = buildProviderAddressPayload({
         address: address ?? auth.provider.address,

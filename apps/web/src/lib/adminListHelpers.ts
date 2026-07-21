@@ -37,6 +37,7 @@ export interface ProviderListItem {
     postalCode?: string;
   };
   preferredParishes?: string[];
+  specialties?: string[];
   phoneNumbers?: PhoneNumber[];
   qualifications: QualificationLike[];
 }
@@ -79,6 +80,7 @@ export function filterProviders<T extends ProviderListItem>(providers: T[], sear
       containsQuery(p.addressDetails?.parish, query) ||
       containsQuery(p.addressDetails?.postalCode, query) ||
       (p.preferredParishes?.some((parish) => containsQuery(parish, query)) ?? false) ||
+      (p.specialties?.some((specialty) => containsQuery(specialty, query)) ?? false) ||
       (p.phoneNumbers?.some((ph) => containsQuery(ph.number, query)) ?? false) ||
       p.qualifications.some(
         (q) => containsQuery(q.description, query) || containsQuery(q.fileName, query),

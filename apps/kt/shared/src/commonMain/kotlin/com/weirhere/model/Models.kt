@@ -288,6 +288,7 @@ data class ProviderDto(
     val address: String,
     val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
     val preferredParishes: List<String> = emptyList(),
+    val specialties: List<String> = emptyList(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList(),
     val qualifications: List<QualificationDto> = emptyList()
 )
@@ -300,6 +301,7 @@ data class ProviderUpsertPayload(
     val address: String = "",
     val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
     val preferredParishes: List<String> = emptyList(),
+    val specialties: List<String> = emptyList(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList()
 )
 
@@ -311,6 +313,7 @@ data class ProviderProfileDto(
     val address: String = "",
     val addressDetails: ProviderAddressDetailsDto = ProviderAddressDetailsDto(),
     val preferredParishes: List<String> = emptyList(),
+    val specialties: List<String> = emptyList(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList(),
 )
 
@@ -319,6 +322,7 @@ data class ProviderProfileUpdatePayload(
     val name: String,
     val addressDetails: ProviderAddressDetailsDto,
     val preferredParishes: List<String> = emptyList(),
+    val specialties: List<String> = emptyList(),
     val phoneNumbers: List<PhoneNumberDto> = emptyList(),
 )
 

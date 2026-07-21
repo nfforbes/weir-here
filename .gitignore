@@ -3,8 +3,7 @@ node_modules/
 out/
 dist/
 .env
-.env.local
-.env.*.local
+.env.*
 *.tsbuildinfo
 .turbo
 .expo/
