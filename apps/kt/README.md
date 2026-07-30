@@ -17,7 +17,20 @@ The Next.js backend under `apps/web` accepts **cookies** from the browser and **
    - **`weir_here.auth0.clientId`** — **Native Application** client id from Auth0 (PKCE-enabled).
    - **`weir_here.auth0.audience`** — same API identifier as **`AUTH0_AUDIENCE`** in `.env`.
 
-2. In the **Auth0 Dashboard** → your Native application → **Allowed Callback URLs**, add the callback URIs expected by Auth0.Android for **`weirhere`** (scheme is registered in `AndroidManifest.xml`). Consult [Auth0 Android docs](https://auth0.com/docs/quickstart/native/android) for the exact pattern used by SDK 2.x.
+2. In the **Auth0 Dashboard** → your **Native** application (mobile client id):
+   - **Allowed Callback URLs** — include:
+     ```
+     weirhere://callback
+     ```
+   - **Allowed Logout URLs** — include the same value (required for logout redirect back into the app):
+     ```
+     weirhere://callback
+     ```
+   - Optionally also add the Android SDK default form:
+     ```
+     weirhere://n4consulting.us.auth0.com/android/com.weirhere.mobile/callback
+     ```
+   - **Allowed Origins (CORS)** is not required for the native custom-scheme flow.
 
 3. Build from `apps/kt`:
    ```bash

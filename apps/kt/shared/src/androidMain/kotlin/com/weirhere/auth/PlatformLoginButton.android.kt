@@ -2,9 +2,15 @@ package com.weirhere.auth
 
 import android.app.Activity
 import androidx.compose.material.Button
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.auth0.android.Auth0
 import com.auth0.android.authentication.AuthenticationException
@@ -44,6 +50,34 @@ actual fun PlatformLoginButton(
         }
     }) {
         Text(label)
+    }
+}
+
+@Composable
+actual fun PlatformLoginEffect(
+    start: Boolean,
+    onConsumed: () -> Unit,
+    onAccessToken: (String) -> Unit,
+    onError: (String) -> Unit,
+) {
+    val ctx = LocalContext.current
+    val activity = rememberActivity(ctx)
+    val scope = rememberCoroutineScope()
+    androidx.compose.runtime.LaunchedEffect(start) {
+        if (!start) return@LaunchedEffect
+        val act = activity
+        if (act == null) {
+            onConsumed()
+            onError("Could not find Activity for Auth0 login.")
+            return@LaunchedEffect
+        }
+        // Launch on rememberCoroutineScope first so resetting [start] does not cancel Auth0.
+        scope.launch(Dispatchers.Main) {
+            runCatching { login(act) }
+                .onSuccess(onAccessToken)
+                .onFailure { e -> onError(e.message ?: e.toString()) }
+        }
+        onConsumed()
     }
 }
 
@@ -133,8 +167,10 @@ private suspend fun login(activity: Activity): String =
 
 suspend fun logoutAuth0(activity: Activity) =
     suspendCancellableCoroutine<Unit> { cont ->
+        // Must match login redirect + Auth0 "Allowed Logout URLs" (weirhere://callback).
+        // withScheme alone builds weirhere://{domain}/android/{package}/callback, which fails logout.
         WebAuthProvider.logout(buildAuth0())
-            .withScheme(SCHEME)
+            .withReturnToUrl(REDIRECT_URI)
             .start(
                 activity,
                 object : Callback<Void?, AuthenticationException> {
@@ -150,18 +186,34 @@ suspend fun logoutAuth0(activity: Activity) =
     }
 
 @Composable
-actual fun PlatformLogoutButton(label: String, onLogout: () -> Unit) {
+actual fun PlatformLogoutButton(
+    label: String,
+    onLogout: () -> Unit,
+    iconOnly: Boolean,
+) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val activity = rememberActivity(ctx)
-    androidx.compose.material.TextButton(onClick = {
+    val onClick: () -> Unit = {
         scope.launch(Dispatchers.Main) {
+            // Clear local session first so UI returns home even if Auth0 browser fails.
+            onLogout()
             if (activity != null) {
                 runCatching { logoutAuth0(activity) }
             }
-            onLogout()
         }
-    }) {
-        Text(label)
+    }
+    if (iconOnly) {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = Icons.Filled.ExitToApp,
+                contentDescription = label,
+                tint = Color(0xFF1A237E),
+            )
+        }
+    } else {
+        TextButton(onClick = onClick) {
+            Text(label)
+        }
     }
 }

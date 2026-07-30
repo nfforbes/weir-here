@@ -2,6 +2,8 @@
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,13 +29,19 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
@@ -63,6 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.Settings
 import com.weirhere.auth.PlatformLoginButton
+import com.weirhere.auth.PlatformLoginEffect
 import com.weirhere.auth.PlatformLogoutButton
 import com.weirhere.data.SessionStore
 import com.weirhere.model.AdminUserDto
@@ -81,7 +90,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
-private enum class Tab { JOBS, PAYMENT, ADMIN, PROVIDER, PROFILE }
+private enum class Tab { HOME, JOBS, PAYMENT, ADMIN, PROVIDER, PROFILE }
 
 private fun jobRouteId(job: JobJson): String? {
     val id = job.id?.trim().orEmpty()
@@ -107,10 +116,14 @@ fun WeirHereApp() {
             when (screenshotTab) {
                 "payment" -> Tab.PAYMENT
                 "profile" -> Tab.PROFILE
-                else -> Tab.JOBS
+                "jobs" -> Tab.JOBS
+                else -> if (screenshotMode) Tab.JOBS else Tab.HOME
             },
         )
     }
+    var selectedSolution by remember { mutableStateOf<LandingSolution?>(null) }
+    var startAuth0Login by remember { mutableStateOf(false) }
+    var fromLanding by remember { mutableStateOf(false) }
     var jobs by remember {
         mutableStateOf(if (screenshotMode) screenshotMockJobs else emptyList())
     }
@@ -203,7 +216,7 @@ fun WeirHereApp() {
 
     LaunchedEffect(personas, tab) {
         if (tab == Tab.PROVIDER && !canAccessProviderPortal(personas)) {
-            tab = Tab.JOBS
+            tab = Tab.HOME
         }
     }
 
@@ -223,6 +236,170 @@ fun WeirHereApp() {
         onPrimary = androidx.compose.ui.graphics.Color(0xFFCFAF5B) // Custom Gold text/icons
     )
     MaterialTheme(colors = customColors) {
+        PlatformLoginEffect(
+            start = startAuth0Login,
+            onConsumed = { startAuth0Login = false },
+            onAccessToken = { SessionStore.setAccess(it) },
+            onError = { message = it },
+        )
+
+        val solution = selectedSolution
+        if (solution != null) {
+            SolutionPageScreen(
+                solution = solution,
+                onBack = { selectedSolution = null },
+            )
+            return@MaterialTheme
+        }
+
+        if (tab == Tab.HOME) {
+            LandingScreen(
+                userName = bootName,
+                isLoggedIn = !accessToken.isNullOrBlank() && bootEmail != null,
+                showAdminPortal = hasAdministrator(personas),
+                showProviderPortal = canAccessProviderPortal(personas),
+                onJobs = {
+                    fromLanding = true
+                    tab = Tab.JOBS
+                    reloadPublic()
+                },
+                onPayNow = {
+                    fromLanding = true
+                    tab = Tab.PAYMENT
+                },
+                onLogin = { startAuth0Login = true },
+                onLogout = {
+                    scope.launch {
+                        SessionStore.setAccess(null)
+                        message = null
+                        tab = Tab.HOME
+                    }
+                },
+                onAdminPortal = {
+                    fromLanding = true
+                    tab = Tab.ADMIN
+                },
+                onProviderPortal = {
+                    fromLanding = true
+                    tab = Tab.PROVIDER
+                },
+                onSolution = { selectedSolution = it },
+            )
+            message?.let { msg ->
+                androidx.compose.material.AlertDialog(
+                    onDismissRequest = { message = null },
+                    title = { Text("Login") },
+                    text = { Text(msg) },
+                    confirmButton = {
+                        TextButton(onClick = { message = null }) { Text("OK") }
+                    },
+                )
+            }
+            return@MaterialTheme
+        }
+
+        // Jobs / Pay / Portals from landing: full-screen with back, no header/footer
+        if (fromLanding && (tab == Tab.JOBS || tab == Tab.PAYMENT || tab == Tab.ADMIN || tab == Tab.PROVIDER)) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(12.dp),
+            ) {
+                if (tab == Tab.JOBS || tab == Tab.PAYMENT) {
+                    BackNavButton(
+                        label = "Back",
+                        onClick = {
+                            fromLanding = false
+                            tab = Tab.HOME
+                        },
+                    )
+                }
+                message?.let {
+                    Card(Modifier.padding(bottom = 8.dp)) {
+                        Text(it, Modifier.padding(8.dp))
+                    }
+                    TextButton(onClick = { message = null }) {
+                        Text("Dismiss")
+                    }
+                }
+                when (tab) {
+                    Tab.JOBS ->
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            JobListUi(
+                                loading = loadingJobs,
+                                jobs = jobs,
+                                page = publicJobsPage,
+                                onPageChange = { publicJobsPage = it },
+                                accessToken = accessToken,
+                                onLoginRequest = {
+                                    returnToJobsAfterLogin = true
+                                    startAuth0Login = true
+                                },
+                                onApplyRequest = { job -> applyJob = job },
+                            )
+                        }
+                    Tab.PAYMENT ->
+                        PaymentUi(modifier = Modifier.weight(1f).fillMaxWidth())
+                    Tab.ADMIN ->
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            if (hasAdministrator(personas)) {
+                                AdminDashboardUi(
+                                    api = api,
+                                    accessToken = accessToken,
+                                    onBackToHome = {
+                                        fromLanding = false
+                                        tab = Tab.HOME
+                                    },
+                                )
+                            } else {
+                                Text("Only administrators can access the admin dashboard.")
+                            }
+                        }
+                    Tab.PROVIDER ->
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            if (canAccessProviderPortal(personas)) {
+                                ProviderUi(
+                                    api = api,
+                                    accessToken = accessToken,
+                                    userEmail = bootEmail,
+                                    onRefresh = {},
+                                    onBackToHome = {
+                                        fromLanding = false
+                                        tab = Tab.HOME
+                                    },
+                                )
+                            } else {
+                                Text("Only providers can access the provider portal.")
+                            }
+                        }
+                    else -> Unit
+                }
+                applyJob?.let { job ->
+                    ApplyJobDialog(
+                        job = job,
+                        api = api,
+                        accessToken = accessToken?.trim().orEmpty(),
+                        onDismiss = { applyJob = null },
+                        onSuccess = { message = "Application submitted successfully!" },
+                        onAlreadyApplied = { showAlreadyApplied = true },
+                        onError = { message = it },
+                    )
+                }
+                if (showAlreadyApplied) {
+                    androidx.compose.material.AlertDialog(
+                        onDismissRequest = { showAlreadyApplied = false },
+                        title = { Text("Already applied") },
+                        text = { Text("You have already applied for this job.") },
+                        confirmButton = {
+                            TextButton(onClick = { showAlreadyApplied = false }) { Text("OK") }
+                        },
+                    )
+                }
+            }
+            return@MaterialTheme
+        }
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -252,8 +429,18 @@ fun WeirHereApp() {
             bottomBar = {
                 BottomNavigation(Modifier.navigationBarsPadding()) {
                     BottomNavigationItem(
+                        selected = false,
+                        onClick = {
+                            fromLanding = false
+                            tab = Tab.HOME
+                        },
+                        label = { Text("Home") },
+                        icon = {},
+                    )
+                    BottomNavigationItem(
                         selected = tab == Tab.JOBS,
                         onClick = {
+                            fromLanding = false
                             tab = Tab.JOBS
                             reloadPublic()
                         },
@@ -262,20 +449,29 @@ fun WeirHereApp() {
                     )
                     BottomNavigationItem(
                         selected = tab == Tab.PAYMENT,
-                        onClick = { tab = Tab.PAYMENT },
+                        onClick = {
+                            fromLanding = false
+                            tab = Tab.PAYMENT
+                        },
                         label = { Text("Payment") },
                         icon = {},
                     )
                     BottomNavigationItem(
                         selected = tab == Tab.ADMIN,
-                        onClick = { tab = Tab.ADMIN },
+                        onClick = {
+                            fromLanding = false
+                            tab = Tab.ADMIN
+                        },
                         label = { Text("Admin") },
                         enabled = hasAdministrator(personas),
                         icon = {},
                     )
                     BottomNavigationItem(
                         selected = tab == Tab.PROVIDER,
-                        onClick = { tab = Tab.PROVIDER },
+                        onClick = {
+                            fromLanding = false
+                            tab = Tab.PROVIDER
+                        },
                         label = { Text("Provider") },
                         enabled = canAccessProviderPortal(personas),
                         icon = {},
@@ -299,6 +495,8 @@ fun WeirHereApp() {
                 }
 
                 when (tab) {
+                    Tab.HOME -> Unit
+
                     Tab.JOBS ->
                         Box(Modifier.weight(1f).fillMaxWidth()) {
                             JobListUi(
@@ -309,7 +507,7 @@ fun WeirHereApp() {
                                 accessToken = accessToken,
                                 onLoginRequest = {
                                     returnToJobsAfterLogin = true
-                                    tab = Tab.PROFILE
+                                    startAuth0Login = true
                                 },
                                 onApplyRequest = { job -> applyJob = job },
                             )
@@ -355,10 +553,10 @@ fun WeirHereApp() {
                                     scope.launch {
                                         SessionStore.setAccess(null)
                                         message = "Logged out"
-                                        tab = Tab.JOBS
+                                        tab = Tab.HOME
                                     }
                                 },
-                                onBack = { tab = Tab.JOBS },
+                                onBack = { tab = Tab.HOME },
                             )
                         }
                 }
@@ -469,8 +667,13 @@ private fun JobListUi(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
+private fun AdminDashboardUi(
+    api: WeirHereApi,
+    accessToken: String?,
+    onBackToHome: (() -> Unit)? = null,
+) {
     val bearer = accessToken?.trim().orEmpty()
     if (bearer.isEmpty()) {
         Text("Sign in using the profile icon before accessing the admin dashboard.")
@@ -480,28 +683,91 @@ private fun AdminDashboardUi(api: WeirHereApi, accessToken: String?) {
     var currentView by remember { mutableStateOf("MENU") }
 
     if (currentView == "MENU") {
-        LazyColumn(Modifier.fillMaxSize()) {
-            item {
-                Text("Admin Dashboard", style = MaterialTheme.typography.h5, modifier = Modifier.padding(bottom = 16.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (onBackToHome != null) {
+                BackNavButton(label = "Back", onClick = onBackToHome)
             }
-            val options = listOf(
-                "Jobs" to "JOBS",
-                "Providers" to "PROVIDERS",
-                "Clients" to "CLIENTS",
-                "Assignments" to "ASSIGNMENTS",
-                "Reports" to "REPORTS",
-                "Users" to "USERS",
-                "Settings" to "SETTINGS",
-                "Testimonials" to "TESTIMONIALS"
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Admin Dashboard",
+                style = MaterialTheme.typography.h5,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A237E),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
             )
-            items(options) { (label, viewId) ->
-                Card(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { currentView = viewId }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                backgroundColor = Color.White,
+                elevation = 4.dp,
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(label, Modifier.padding(16.dp), style = MaterialTheme.typography.subtitle1)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        maxItemsInEachRow = 4,
+                    ) {
+                        SquircleNavButton(
+                            label = "Jobs",
+                            icon = Icons.Filled.Build,
+                            gradient = listOf(Color(0xFF81C784), Color(0xFF2E7D32)),
+                            onClick = { currentView = "JOBS" },
+                        )
+                        SquircleNavButton(
+                            label = "Providers",
+                            icon = Icons.Filled.Person,
+                            gradient = listOf(Color(0xFF64B5F6), Color(0xFF1565C0)),
+                            onClick = { currentView = "PROVIDERS" },
+                        )
+                        SquircleNavButton(
+                            label = "Clients",
+                            icon = Icons.Filled.AccountBox,
+                            gradient = listOf(Color(0xFFFFB74D), Color(0xFFEF6C00)),
+                            onClick = { currentView = "CLIENTS" },
+                        )
+                        SquircleNavButton(
+                            label = "Assignments",
+                            icon = Icons.Filled.List,
+                            gradient = listOf(Color(0xFF4FC3F7), Color(0xFF0277BD)),
+                            onClick = { currentView = "ASSIGNMENTS" },
+                        )
+                        SquircleNavButton(
+                            label = "Reports",
+                            icon = Icons.Filled.Info,
+                            gradient = listOf(Color(0xFF9575CD), Color(0xFF512DA8)),
+                            onClick = { currentView = "REPORTS" },
+                        )
+                        SquircleNavButton(
+                            label = "Users",
+                            icon = Icons.Filled.AccountCircle,
+                            gradient = listOf(Color(0xFF90A4AE), Color(0xFF455A64)),
+                            onClick = { currentView = "USERS" },
+                        )
+                        SquircleNavButton(
+                            label = "Settings",
+                            icon = Icons.Filled.Settings,
+                            gradient = listOf(Color(0xFFB0BEC5), Color(0xFF37474F)),
+                            onClick = { currentView = "SETTINGS" },
+                        )
+                        SquircleNavButton(
+                            label = "Testimonials",
+                            icon = Icons.Filled.Star,
+                            gradient = listOf(Color(0xFFFFD54F), Color(0xFFF9A825)),
+                            onClick = { currentView = "TESTIMONIALS" },
+                        )
+                    }
                 }
             }
         }
