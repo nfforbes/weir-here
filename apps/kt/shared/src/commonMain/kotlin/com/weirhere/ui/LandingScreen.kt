@@ -269,7 +269,10 @@ fun LandingScreen(
                         icon = Icons.Filled.Phone,
                         gradient = listOf(Color(0xFF69F0AE), Color(0xFF25D366)),
                         onClick = {
-                            uriHandler.openUri("https://wa.me/18765619970")
+                            uriHandler.openUri(
+                                "https://wa.me/18765619970?text=" +
+                                    "Hello%2C%20I%20would%20like%20to%20inquire%20about%20your%20staffing%20services.",
+                            )
                         },
                     )
                 }
