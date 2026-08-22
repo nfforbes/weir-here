@@ -18,11 +18,9 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import {
-  BUSINESS_ADDRESS_LINE,
-  BUSINESS_CITY,
-  BUSINESS_COUNTRY,
-  GOOGLE_BUSINESS_MAP_EMBED_URL,
-  GOOGLE_BUSINESS_MAPS_URL,
+  BUSINESS_LOCATIONS,
+  mapsEmbedUrl,
+  mapsSearchUrl,
   GOOGLE_REVIEW_QR_IMAGE,
   GOOGLE_REVIEW_URL,
 } from '@/lib/businessAddress';
@@ -39,55 +37,81 @@ export default function ContactPageContent() {
 
       <Grid container spacing={4}>
         <Grid size={{ xs: 12 }}>
-          <Paper elevation={2} sx={{ p: { xs: 3, sm: 4 }, overflow: 'hidden' }}>
-            <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <LocationOnIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h6" fontWeight={700} color="primary">
-                {BUSINESS_CITY} (Registered Office)
-              </Typography>
-              <Typography
-                component={Link}
-                href={GOOGLE_BUSINESS_MAPS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="body1"
-                underline="hover"
-                sx={{ display: 'inline-block', mt: 0.5 }}
-              >
-                {BUSINESS_ADDRESS_LINE}
-              </Typography>
-            </Box>
+          <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
+            Our Locations
+          </Typography>
+          <Grid container spacing={3}>
+            {BUSINESS_LOCATIONS.map((location) => {
+              const mapsUrl = mapsSearchUrl(location.mapsQuery);
+              const title = location.isRegisteredOffice
+                ? `${location.label} (Registered Office)`
+                : location.label;
+              return (
+                <Grid key={location.id} size={{ xs: 12 }}>
+                  <Paper elevation={2} sx={{ p: { xs: 3, sm: 4 }, overflow: 'hidden' }}>
+                    <Box sx={{ textAlign: 'center', mb: 2 }}>
+                      <LocationOnIcon color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                      <Typography variant="h6" fontWeight={700} color="primary">
+                        {title}
+                      </Typography>
+                      <Typography
+                        component={Link}
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="body1"
+                        underline="hover"
+                        sx={{ display: 'inline-block', mt: 0.5 }}
+                      >
+                        {location.addressLine}
+                      </Typography>
+                      {location.note ? (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 1, fontStyle: 'italic' }}
+                        >
+                          {location.note}
+                        </Typography>
+                      ) : null}
+                    </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1 }}>
-              <Button
-                component="a"
-                href={GOOGLE_BUSINESS_MAPS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                size="small"
-                variant="outlined"
-                startIcon={<OpenInNewIcon />}
-              >
-                Open in Maps
-              </Button>
-            </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1 }}>
+                      <Button
+                        component="a"
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="small"
+                        variant="outlined"
+                        startIcon={<OpenInNewIcon />}
+                      >
+                        Open in Maps
+                      </Button>
+                    </Box>
 
-            <Box
-              component="iframe"
-              src={GOOGLE_BUSINESS_MAP_EMBED_URL}
-              title="Weir Here Staffing Solutions on Google Maps"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              allowFullScreen
-              sx={{
-                width: '100%',
-                height: { xs: 260, sm: 320 },
-                border: 0,
-                borderRadius: 1,
-                display: 'block',
-              }}
-            />
-          </Paper>
+                    {location.isRegisteredOffice ? (
+                      <Box
+                        component="iframe"
+                        src={mapsEmbedUrl(location.mapsQuery)}
+                        title={`Weir Here Staffing Solutions — ${location.label}`}
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        allowFullScreen
+                        sx={{
+                          width: '100%',
+                          height: { xs: 260, sm: 320 },
+                          border: 0,
+                          borderRadius: 1,
+                          display: 'block',
+                        }}
+                      />
+                    ) : null}
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
         </Grid>
 
         <Grid size={{ xs: 12 }}>

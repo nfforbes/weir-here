@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   ...withCanonical('/contact'),
   title: `Contact Us | Weir Here Staffing Solutions, ${BUSINESS_CITY} Jamaica`,
   description:
-    `Get in touch with Weir Here Staffing Solutions. Located at ${BUSINESS_ADDRESS_LINE}. Call or WhatsApp: (876) 561-9970 / (876) 561-9856 or email info@weirheresolutions.com.`,
+    `Get in touch with Weir Here Staffing Solutions. Locations in ${BUSINESS_CITY}, Kingston, and Port Antonio, Portland. Registered office: ${BUSINESS_ADDRESS_LINE}. Call or WhatsApp: (876) 561-9970 / (876) 561-9856 or email info@weirheresolutions.com.`,
 };
 
 export default function ContactPage() {
