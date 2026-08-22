@@ -37,6 +37,36 @@ The Next.js backend under `apps/web` accepts **cookies** from the browser and **
    ./gradlew :androidApp:assembleDebug
    ```
 
+4. **Release / Play Store signing (local or CI):** set these env vars (or Gradle `-P` props) before `./gradlew :androidApp:bundleRelease`:
+   - `ANDROID_KEYSTORE_PATH` — path to the upload keystore
+   - `ANDROID_KEYSTORE_PASSWORD`
+   - `ANDROID_KEY_ALIAS`
+   - `ANDROID_KEY_PASSWORD`
+   - Optional: `VERSION_CODE`, `VERSION_NAME`
+
+## CI — Google Play deploy
+
+Workflow: [`.github/workflows/kotlin-android.yml`](../../.github/workflows/kotlin-android.yml)
+
+- **PRs:** debug APK build (no signing secrets required)
+- **Push to `main`/`master` (and manual dispatch):** signed release AAB + upload to Play Console (`internal` track by default)
+
+### Required GitHub secrets
+
+| Secret | Purpose |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | Base64 of the upload keystore (`base64 -w0 release.keystore`) |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
+| `ANDROID_KEY_ALIAS` | Key alias |
+| `ANDROID_KEY_PASSWORD` | Key password |
+| `PLAY_STORE_JSON_KEY` | Full JSON for a Play Console API service account with release access to `com.weirhere.mobile` |
+
+Shared with the iOS workflow (optional but recommended): `WEIR_HERE_AUTH0_DOMAIN`, `WEIR_HERE_AUTH0_CLIENT_ID`, `WEIR_HERE_AUTH0_AUDIENCE`, `WEIR_HERE_API_URL`.
+
+Play Console: create a service account in Google Cloud, grant it **Release manager** (or equivalent) in Play Console → Users and permissions, then paste the JSON key into `PLAY_STORE_JSON_KEY`. The app listing for package `com.weirhere.mobile` must already exist (at least a draft).
+
+Manual run: Actions → **Kotlin Android Build** → Run workflow (choose track: `internal`, `alpha`, `beta`, or `production`).
+
 ## iOS notes
 
 - **Env:** `Env.ios.kt` is generated from `apps/kt/local.properties` (same keys as Android) on each iOS Gradle build.
