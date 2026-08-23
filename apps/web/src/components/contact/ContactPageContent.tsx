@@ -42,7 +42,7 @@ export default function ContactPageContent() {
           </Typography>
           <Grid container spacing={3}>
             {BUSINESS_LOCATIONS.map((location) => {
-              const mapsUrl = mapsSearchUrl(location.mapsQuery);
+              const mapsUrl = location.mapsUrl ?? mapsSearchUrl(location.mapsQuery);
               const title = location.isRegisteredOffice
                 ? `${location.label} (Registered Office)`
                 : location.label;
@@ -90,23 +90,21 @@ export default function ContactPageContent() {
                       </Button>
                     </Box>
 
-                    {location.isRegisteredOffice ? (
-                      <Box
-                        component="iframe"
-                        src={mapsEmbedUrl(location.mapsQuery)}
-                        title={`Weir Here Staffing Solutions — ${location.label}`}
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                        allowFullScreen
-                        sx={{
-                          width: '100%',
-                          height: { xs: 260, sm: 320 },
-                          border: 0,
-                          borderRadius: 1,
-                          display: 'block',
-                        }}
-                      />
-                    ) : null}
+                    <Box
+                      component="iframe"
+                      src={mapsEmbedUrl(location.mapsEmbedQuery ?? location.mapsQuery)}
+                      title={`Weir Here Staffing Solutions — ${location.label}`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      allowFullScreen
+                      sx={{
+                        width: '100%',
+                        height: { xs: 260, sm: 320 },
+                        border: 0,
+                        borderRadius: 1,
+                        display: 'block',
+                      }}
+                    />
                   </Paper>
                 </Grid>
               );
