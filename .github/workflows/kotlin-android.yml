@@ -140,10 +140,13 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           # Keep above manually published versionCodes (currently 4).
-          VERSION_CODE: ${{ github.run_number + 1000 }}
-          VERSION_NAME: "4.${{ github.run_number }}"
+          # Actions expressions cannot add numbers; the script adds 1000.
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 4.${{ github.run_number }}
         run: |
           set -euo pipefail
+          VERSION_CODE=$((VERSION_CODE + 1000))
+          export VERSION_CODE
           missing=0
           for key in ANDROID_KEYSTORE_PATH ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
             if [ -z "${!key:-}" ]; then
