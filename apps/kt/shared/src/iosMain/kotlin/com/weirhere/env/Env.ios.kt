@@ -4,7 +4,7 @@ package com.weirhere.env
 
 actual object Env {
     actual fun apiBaseUrl(): String = "https://www.weirheresolutions.com".trimEnd('/')
-    actual fun auth0Domain(): String = "n4consulting.us.auth0.com".trim()
-    actual fun auth0ClientId(): String = "7gvIVgyZkkGlws8kMjhzS47mmoBnXaFb".trim()
+    actual fun auth0Domain(): String = "weirherestaffing.us.auth0.com".trim()
+    actual fun auth0ClientId(): String = "MgVv1zyXicCO02EOCG7YeM5OiDIsCxtE".trim()
     actual fun auth0Audience(): String = "".trim()
 }

@@ -17,7 +17,7 @@ function getIssuer(): string | null {
 
 // Hard-coded mobile client ID as a safety fallback so JWT validation works
 // even if the Vercel env var is temporarily missing or stale.
-const MOBILE_CLIENT_ID_FALLBACK = '7gvIVgyZkkGlws8kMjhzS47mmoBnXaFb';
+const MOBILE_CLIENT_ID_FALLBACK = 'MgVv1zyXicCO02EOCG7YeM5OiDIsCxtE';
 
 function bearerAudiences(): string[] {
   const a = [

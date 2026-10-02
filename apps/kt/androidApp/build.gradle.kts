@@ -10,7 +10,8 @@ val localProps = Properties().apply {
     val f = rootProject.rootDir.resolve("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
-val auth0Domain = (localProps["weir_here.auth0.domain"] as String?) ?: "example.auth0.com"
+val auth0Domain = (localProps["weir_here.auth0.domain"] as String?)?.takeIf { it.isNotBlank() }
+    ?: "weirherestaffing.us.auth0.com"
 
 fun propOrEnv(name: String): String? =
     (findProperty(name) as String?)?.takeIf { it.isNotBlank() }
@@ -56,7 +57,7 @@ android {
         targetSdk = (findProperty("android.targetSdk") as String).toInt()
         versionCode = releaseVersionCode
         versionName = releaseVersionName
-        manifestPlaceholders["auth0Domain"] = "n4consulting.us.auth0.com"
+        manifestPlaceholders["auth0Domain"] = auth0Domain
         manifestPlaceholders["auth0Scheme"] = "weirhere"
     }
 

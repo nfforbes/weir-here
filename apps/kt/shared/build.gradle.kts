@@ -32,7 +32,12 @@ fun loadDotEnv(file: java.io.File): Map<String, String> {
 }
 
 val repoRoot = rootProject.rootDir.parentFile?.parentFile
-val dotEnv = if (repoRoot != null) loadDotEnv(repoRoot.resolve(".env")) else emptyMap()
+val dotEnv =
+    if (repoRoot == null) {
+        emptyMap()
+    } else {
+        loadDotEnv(repoRoot.resolve(".env")) + loadDotEnv(repoRoot.resolve(".env.local"))
+    }
 
 fun configValue(
     propertyKey: String,

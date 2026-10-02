@@ -28,7 +28,7 @@ The Next.js backend under `apps/web` accepts **cookies** from the browser and **
      ```
    - Optionally also add the Android SDK default form:
      ```
-     weirhere://n4consulting.us.auth0.com/android/com.weirhere.mobile/callback
+     weirhere://weirherestaffing.us.auth0.com/android/com.weirhere.mobile/callback
      ```
    - **Allowed Origins (CORS)** is not required for the native custom-scheme flow.
 
