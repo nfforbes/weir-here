@@ -117,7 +117,7 @@ fun WeirHereApp() {
                 "payment" -> Tab.PAYMENT
                 "profile" -> Tab.PROFILE
                 "jobs" -> Tab.JOBS
-                else -> if (screenshotMode) Tab.JOBS else Tab.HOME
+                else -> Tab.JOBS
             },
         )
     }
@@ -553,10 +553,26 @@ fun WeirHereApp() {
                                     scope.launch {
                                         SessionStore.setAccess(null)
                                         message = "Logged out"
-                                        tab = Tab.HOME
+                                        tab = Tab.JOBS
                                     }
                                 },
-                                onBack = { tab = Tab.HOME },
+                                onDeleteAccount = { done ->
+                                    val token = accessToken?.trim().orEmpty()
+                                    if (token.isEmpty()) {
+                                        done(Result.failure(IllegalStateException("Sign in before deleting your account.")))
+                                    } else {
+                                        scope.launch {
+                                            val result = runCatching { api.deleteMyAccount(token) }
+                                            result.onSuccess {
+                                                SessionStore.setAccess(null)
+                                                message = "Account deleted"
+                                                tab = Tab.JOBS
+                                            }
+                                            done(result)
+                                        }
+                                    }
+                                },
+                                onBack = { tab = Tab.JOBS },
                             )
                         }
                 }
@@ -619,6 +635,25 @@ private fun JobListUi(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 16.dp),
     ) {
+        item {
+            Text(
+                "Open roles",
+                style = MaterialTheme.typography.h5,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
+            )
+            Text(
+                "Choose a role to read the details and apply.",
+                style = MaterialTheme.typography.body1,
+                modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 8.dp),
+            )
+            if (!loading && jobs.isEmpty()) {
+                Text(
+                    "No openings on this page. Try another page, or sign in from Profile to apply when roles are posted.",
+                    modifier = Modifier.padding(4.dp),
+                )
+            }
+        }
         itemsIndexed(jobs, key = { _, it -> "${it.slug}-${it.id}" }) { index, it ->
             val jobId = it.id ?: it.slug
             val isSelected = selectedJobId == jobId
@@ -865,6 +900,7 @@ private fun ProfileUi(
     lastLogin: String,
     onLoginError: (String) -> Unit,
     onLogout: () -> Unit,
+    onDeleteAccount: (onComplete: (Result<Unit>) -> Unit) -> Unit,
     onBack: () -> Unit,
 ) {
     val isLoggedIn = email != null
@@ -924,6 +960,64 @@ private fun ProfileUi(
 
         Spacer(Modifier.height(24.dp))
         PlatformLogoutButton(label = "Logout", onLogout = onLogout)
+        Spacer(Modifier.height(12.dp))
+        DeleteAccountButton(onDeleteAccount = onDeleteAccount)
+    }
+}
+
+@Composable
+private fun DeleteAccountButton(
+    onDeleteAccount: (onComplete: (Result<Unit>) -> Unit) -> Unit,
+) {
+    var confirm by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    TextButton(
+        onClick = { confirm = true },
+        enabled = !deleting,
+    ) {
+        Text(if (deleting) "Deleting account…" else "Delete account", color = Color(0xFFB00020))
+    }
+
+    if (confirm) {
+        androidx.compose.material.AlertDialog(
+            onDismissRequest = { if (!deleting) confirm = false },
+            title = { Text("Delete account?") },
+            text = {
+                Text(
+                    "This permanently deletes your Weir Here account, applications, and profile. You will be signed out and cannot undo this.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !deleting,
+                    onClick = {
+                        deleting = true
+                        error = null
+                        onDeleteAccount { result ->
+                            deleting = false
+                            result.onSuccess { confirm = false }
+                            result.onFailure { error = it.message ?: "Could not delete account" }
+                        }
+                    },
+                ) { Text("Delete account", color = Color(0xFFB00020)) }
+            },
+            dismissButton = {
+                TextButton(enabled = !deleting, onClick = { confirm = false }) { Text("Cancel") }
+            },
+        )
+    }
+
+    error?.let { msg ->
+        androidx.compose.material.AlertDialog(
+            onDismissRequest = { error = null },
+            title = { Text("Could not delete account") },
+            text = { Text(msg) },
+            confirmButton = {
+                TextButton(onClick = { error = null }) { Text("OK") }
+            },
+        )
     }
 }
 

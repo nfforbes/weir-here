@@ -92,6 +92,20 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
         }
     }
 
+    suspend fun deleteMyAccount(accessToken: String) {
+        try {
+            client.delete("api/users/me") {
+                header(HttpHeaders.Authorization, bearer(accessToken))
+            }
+        } catch (e: ClientRequestException) {
+            if (e.response.status.value == 401) {
+                throw ApiUnauthorizedException("Not authenticated")
+            }
+            val message = runCatching { e.response.body<ApiErrorDto>().error }.getOrNull()
+            throw IllegalStateException(message?.takeIf { it.isNotBlank() } ?: "Could not delete account")
+        }
+    }
+
     suspend fun listJobs(
         page: Int = 1,
         limit: Int = 20,

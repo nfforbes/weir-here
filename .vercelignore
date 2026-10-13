@@ -1,0 +1,11 @@
+.env
+.env.*
+node_modules
+.git
+.next
+apps/kt
+apps/maui
+apps/mobile
+apps/kt_cmp_src
+**/*.ipa
+**/build

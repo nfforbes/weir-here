@@ -26,3 +26,4 @@ apps/mobile/shared/build/
 apps/mobile/.kotlin/
 
 .vercel
+.env*

@@ -10,8 +10,16 @@ export type ApiAuthUser = {
   name?: string | undefined;
 };
 
+/** Mobile builds still authenticate on the tenant domain. */
+const CANONICAL_AUTH0_DOMAIN = 'weirherestaffing.us.auth0.com';
+
+function auth0Domains(): string[] {
+  const configured = process.env.AUTH0_DOMAIN?.trim() ?? '';
+  return [...new Set([configured, CANONICAL_AUTH0_DOMAIN].filter((domain) => domain.length > 0))];
+}
+
 function getIssuer(): string | null {
-  const domain = process.env.AUTH0_DOMAIN?.trim();
+  const domain = auth0Domains()[0];
   return domain ? `https://${domain}/` : null;
 }
 
@@ -48,20 +56,22 @@ async function verifyAuth0Jwt(authHeader: string | null): Promise<JWTPayload | n
   if (!authHeader?.toLowerCase().startsWith('bearer ')) return null;
   const token = authHeader.slice('bearer '.length).trim();
   if (!token) return null;
-  const issuer = getIssuer();
   const JWKS = getJwks();
-  if (!issuer || !JWKS) return null;
+  const issuers = auth0Domains().map((domain) => `https://${domain}/`);
+  if (issuers.length === 0 || !JWKS) return null;
 
   const audiences = bearerAudiences();
   if (audiences.length === 0) return null;
 
   let lastErr: unknown;
-  for (const audience of audiences) {
-    try {
-      const { payload } = await jwtVerify(token, JWKS, { issuer, audience });
-      return payload;
-    } catch (e) {
-      lastErr = e;
+  for (const issuer of issuers) {
+    for (const audience of audiences) {
+      try {
+        const { payload } = await jwtVerify(token, JWKS, { issuer, audience });
+        return payload;
+      } catch (e) {
+        lastErr = e;
+      }
     }
   }
   if (process.env.NODE_ENV === 'development') {
@@ -74,7 +84,18 @@ async function jwtPayloadToUser(
   payload: JWTPayload,
   rawBearerToken: string,
 ): Promise<ApiAuthUser | null> {
-  const domain = process.env.AUTH0_DOMAIN?.trim();
+  const issuerHost = (() => {
+    if (typeof payload.iss === 'string') {
+      try {
+        const host = new URL(payload.iss).host;
+        if (auth0Domains().includes(host)) return host;
+      } catch {
+        // Fall through to the configured domain.
+      }
+    }
+    return process.env.AUTH0_DOMAIN?.trim() || null;
+  })();
+  const domain = issuerHost;
   let sub =
     typeof payload.sub === 'string' && payload.sub.length > 0 ? payload.sub : null;
   if (!sub || !domain) return null;
