@@ -165,9 +165,7 @@ fun WeirHereApp() {
                     bootEmail = userBootstrap.email
                     bootName = userBootstrap.name
                     bootUpdatedAt = userBootstrap.updatedAt
-                    if (hasAdministrator(userBootstrap.personas) && tab == Tab.PROFILE) {
-                        tab = Tab.ADMIN
-                    } else if (returnToJobsAfterLogin && tab == Tab.PROFILE) {
+                    if (returnToJobsAfterLogin && tab == Tab.PROFILE) {
                         tab = Tab.JOBS
                         returnToJobsAfterLogin = false
                     }
@@ -268,6 +266,10 @@ fun WeirHereApp() {
                     tab = Tab.PAYMENT
                 },
                 onLogin = { startAuth0Login = true },
+                onProfile = {
+                    fromLanding = false
+                    tab = Tab.PROFILE
+                },
                 onLogout = {
                     scope.launch {
                         SessionStore.setAccess(null)
@@ -307,13 +309,25 @@ fun WeirHereApp() {
                     .padding(12.dp),
             ) {
                 if (tab == Tab.JOBS || tab == Tab.PAYMENT) {
-                    BackNavButton(
-                        label = "Back",
-                        onClick = {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        BackNavButton(
+                            label = "Back",
+                            onClick = {
+                                fromLanding = false
+                                tab = Tab.HOME
+                            },
+                        )
+                        TextButton(onClick = {
                             fromLanding = false
-                            tab = Tab.HOME
-                        },
-                    )
+                            tab = Tab.PROFILE
+                        }) {
+                            Text("Profile")
+                        }
+                    }
                 }
                 message?.let {
                     Card(Modifier.padding(bottom = 8.dp)) {
@@ -454,6 +468,15 @@ fun WeirHereApp() {
                             tab = Tab.PAYMENT
                         },
                         label = { Text("Payment") },
+                        icon = {},
+                    )
+                    BottomNavigationItem(
+                        selected = tab == Tab.PROFILE,
+                        onClick = {
+                            fromLanding = false
+                            tab = Tab.PROFILE
+                        },
+                        label = { Text("Profile") },
                         icon = {},
                     )
                     BottomNavigationItem(

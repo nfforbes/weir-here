@@ -170,6 +170,7 @@ fun LandingScreen(
     onPayNow: () -> Unit,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
+    onProfile: () -> Unit,
     onAdminPortal: () -> Unit,
     onProviderPortal: () -> Unit,
     onSolution: (LandingSolution) -> Unit,
@@ -263,6 +264,12 @@ fun LandingScreen(
                         icon = Icons.Filled.ShoppingCart,
                         gradient = listOf(Color(0xFFFFB74D), Color(0xFFEF6C00)),
                         onClick = onPayNow,
+                    )
+                    SquircleNavButton(
+                        label = "Profile",
+                        icon = Icons.Filled.AccountCircle,
+                        gradient = listOf(Color(0xFF4DD0E1), Color(0xFF00838F)),
+                        onClick = onProfile,
                     )
                     SquircleNavButton(
                         label = "WhatsApp",
