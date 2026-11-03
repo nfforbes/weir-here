@@ -61,6 +61,7 @@ data class UserBootstrap(
     val personas: List<String> = emptyList(),
     val emailVerified: Boolean = false,
     val updatedAt: String? = null,
+    val canChangePassword: Boolean = false,
 )
 
 @Serializable

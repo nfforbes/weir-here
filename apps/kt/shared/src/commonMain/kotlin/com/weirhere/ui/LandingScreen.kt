@@ -239,10 +239,18 @@ fun LandingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    "Quick Navigation",
+                    "Use the app",
                     style = MaterialTheme.typography.h6,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1A237E),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 6.dp),
+                )
+                Text(
+                    "Browse open roles, apply, manage your profile, or pay an invoice.",
+                    style = MaterialTheme.typography.body1,
+                    color = Color(0xFF455A64),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 14.dp),
@@ -346,10 +354,16 @@ fun LandingScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
             ) {
                 Text(
-                    "Solutions",
+                    "About our services",
                     style = MaterialTheme.typography.h6,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1A237E),
+                    modifier = Modifier.padding(bottom = 6.dp),
+                )
+                Text(
+                    "Optional background on staffing categories. Job applications start from Jobs.",
+                    style = MaterialTheme.typography.body1,
+                    color = Color(0xFF455A64),
                     modifier = Modifier.padding(bottom = 14.dp),
                 )
                 FlowRow(

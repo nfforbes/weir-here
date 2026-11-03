@@ -12,38 +12,10 @@ import Provider from '@/models/Provider';
 import Qualification from '@/models/Qualification';
 import Review from '@/models/Review';
 import User from '@/models/User';
-
-const AUTH0_TENANT_DOMAIN = 'weirherestaffing.us.auth0.com';
-
-async function managementToken(): Promise<string> {
-  const clientId = process.env.AUTH0_MGMT_CLIENT_ID?.trim();
-  const clientSecret = process.env.AUTH0_MGMT_CLIENT_SECRET?.trim();
-  if (!clientId || !clientSecret) {
-    throw new Error('Account deletion is not configured.');
-  }
-  const res = await fetch(`https://${AUTH0_TENANT_DOMAIN}/oauth/token`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      audience: `https://${AUTH0_TENANT_DOMAIN}/api/v2/`,
-      grant_type: 'client_credentials',
-    }),
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    throw new Error('Could not delete the sign-in account.');
-  }
-  const body = (await res.json()) as { access_token?: string };
-  if (!body.access_token) {
-    throw new Error('Could not delete the sign-in account.');
-  }
-  return body.access_token;
-}
+import { AUTH0_TENANT_DOMAIN, getAuth0ManagementToken } from '@/lib/auth0Management';
 
 async function deleteAuth0User(userId: string): Promise<void> {
-  const token = await managementToken();
+  const token = await getAuth0ManagementToken();
   const res = await fetch(
     `https://${AUTH0_TENANT_DOMAIN}/api/v2/users/${encodeURIComponent(userId)}`,
     {

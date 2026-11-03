@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import type { Persona } from '@weir-here/shared';
 import PlatformInvite from '@/models/PlatformInvite';
+import { getAuth0User, hasDatabasePasswordIdentity } from '@/lib/auth0Management';
 
 function parseAdminBootstrapEmails(): string[] {
   const raw = process.env.ADMIN_BOOTSTRAP_EMAILS?.trim();
@@ -20,14 +21,17 @@ function shouldGrantEnvAdmin(sessionEmail: string | undefined): boolean {
   return parseAdminBootstrapEmails().includes(lower);
 }
 
-function serializeUser(u: {
-  auth0Id: string;
-  email: string;
-  name: string;
-  personas: Persona[];
-  emailVerified: boolean;
-  updatedAt?: Date;
-}) {
+function serializeUser(
+  u: {
+    auth0Id: string;
+    email: string;
+    name: string;
+    personas: Persona[];
+    emailVerified: boolean;
+    updatedAt?: Date;
+  },
+  canChangePassword: boolean,
+) {
   return {
     auth0Id: u.auth0Id,
     email: u.email,
@@ -35,6 +39,7 @@ function serializeUser(u: {
     personas: [...u.personas],
     emailVerified: u.emailVerified,
     updatedAt: u.updatedAt ? u.updatedAt.toISOString() : undefined,
+    canChangePassword,
   };
 }
 
@@ -92,15 +97,26 @@ export async function POST(req: NextRequest) {
       await user.save();
     }
 
+    let canChangePassword = hasDatabasePasswordIdentity(undefined, sub);
+    try {
+      const auth0User = await getAuth0User(sub);
+      canChangePassword = hasDatabasePasswordIdentity(auth0User?.identities, sub);
+    } catch {
+      // Keep the issuer-based fallback when Auth0 management is unavailable.
+    }
+
     return NextResponse.json({
-      user: serializeUser({
-        auth0Id: user.auth0Id,
-        email: user.email,
-        name: user.name,
-        personas: user.personas as Persona[],
-        emailVerified: user.emailVerified,
-        updatedAt: user.updatedAt,
-      }),
+      user: serializeUser(
+        {
+          auth0Id: user.auth0Id,
+          email: user.email,
+          name: user.name,
+          personas: user.personas as Persona[],
+          emailVerified: user.emailVerified,
+          updatedAt: user.updatedAt,
+        },
+        canChangePassword,
+      ),
     });
   } catch (err: unknown) {
     console.error('[bootstrap error]', err);

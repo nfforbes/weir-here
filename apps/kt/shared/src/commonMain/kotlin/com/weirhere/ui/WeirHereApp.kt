@@ -68,6 +68,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.Settings
 import com.weirhere.auth.PlatformLoginButton
@@ -134,6 +135,7 @@ fun WeirHereApp() {
     var bootEmail by remember { mutableStateOf<String?>(null) }
     var bootName by remember { mutableStateOf<String?>(null) }
     var bootUpdatedAt by remember { mutableStateOf<String?>(null) }
+    var canChangePassword by remember { mutableStateOf(false) }
     var showSplash by remember { mutableStateOf(!screenshotMode) }
     var publicJobsPage by remember { mutableStateOf(1) }
     var applyJob by remember { mutableStateOf<JobJson?>(null) }
@@ -154,6 +156,7 @@ fun WeirHereApp() {
             bootEmail = null
             bootName = null
             bootUpdatedAt = null
+            canChangePassword = false
             returnToJobsAfterLogin = false
             return@LaunchedEffect
         }
@@ -165,9 +168,14 @@ fun WeirHereApp() {
                     bootEmail = userBootstrap.email
                     bootName = userBootstrap.name
                     bootUpdatedAt = userBootstrap.updatedAt
+                    canChangePassword = userBootstrap.canChangePassword
                     if (returnToJobsAfterLogin && tab == Tab.PROFILE) {
                         tab = Tab.JOBS
                         returnToJobsAfterLogin = false
+                    } else if (tab == Tab.HOME) {
+                        // After sign-in, open the job board so review lands on interactive work.
+                        fromLanding = false
+                        tab = Tab.JOBS
                     }
                 }
             }
@@ -179,6 +187,7 @@ fun WeirHereApp() {
                     bootEmail = null
                     bootName = null
                     bootUpdatedAt = null
+                    canChangePassword = false
                     message = "Session expired. Please sign in again."
                 } else {
                     message = "Bootstrap failed: ${it.message ?: it}"
@@ -571,6 +580,21 @@ fun WeirHereApp() {
                                 name = bootName,
                                 email = bootEmail,
                                 lastLogin = formatLastLogin(bootUpdatedAt, SessionStore.lastLoginAt()),
+                                canChangePassword = canChangePassword,
+                                onChangePassword = { currentPassword, newPassword, done ->
+                                    val token = accessToken?.trim().orEmpty()
+                                    if (token.isEmpty()) {
+                                        done(Result.failure(IllegalStateException("Sign in before changing your password.")))
+                                    } else {
+                                        scope.launch {
+                                            done(
+                                                runCatching {
+                                                    api.changeMyPassword(token, currentPassword, newPassword)
+                                                },
+                                            )
+                                        }
+                                    }
+                                },
                                 onLoginError = { message = it },
                                 onLogout = {
                                     scope.launch {
@@ -923,6 +947,8 @@ private fun ProfileUi(
     lastLogin: String,
     onLoginError: (String) -> Unit,
     onLogout: () -> Unit,
+    canChangePassword: Boolean,
+    onChangePassword: (currentPassword: String, newPassword: String, onComplete: (Result<Unit>) -> Unit) -> Unit,
     onDeleteAccount: (onComplete: (Result<Unit>) -> Unit) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -982,9 +1008,128 @@ private fun ProfileUi(
         ProfileField("Last login", lastLogin, enabled = true)
 
         Spacer(Modifier.height(24.dp))
+        if (canChangePassword) {
+            ChangePasswordButton(onChangePassword = onChangePassword)
+            Spacer(Modifier.height(12.dp))
+        }
         PlatformLogoutButton(label = "Logout", onLogout = onLogout)
         Spacer(Modifier.height(12.dp))
         DeleteAccountButton(onDeleteAccount = onDeleteAccount)
+    }
+}
+
+@Composable
+private fun ChangePasswordButton(
+    onChangePassword: (currentPassword: String, newPassword: String, onComplete: (Result<Unit>) -> Unit) -> Unit,
+) {
+    var showForm by remember { mutableStateOf(false) }
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var saving by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var success by remember { mutableStateOf(false) }
+
+    TextButton(
+        onClick = { showForm = true },
+        enabled = !saving,
+    ) {
+        Text(if (saving) "Updating password…" else "Change password")
+    }
+
+    if (showForm) {
+        androidx.compose.material.AlertDialog(
+            onDismissRequest = { if (!saving) showForm = false },
+            title = { Text("Change password") },
+            text = {
+                Column {
+                    Text("Enter your current password and a new password with at least 8 characters.")
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = currentPassword,
+                        onValueChange = { currentPassword = it },
+                        label = { Text("Current password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        enabled = !saving,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it },
+                        label = { Text("New password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        enabled = !saving,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirm new password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        enabled = !saving,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !saving,
+                    onClick = {
+                        when {
+                            currentPassword.isBlank() -> error = "Enter your current password."
+                            newPassword.length < 8 -> error = "The new password must be at least 8 characters."
+                            newPassword != confirmPassword -> error = "The new passwords do not match."
+                            newPassword == currentPassword -> error = "The new password must be different from the current password."
+                            else -> {
+                                saving = true
+                                error = null
+                                onChangePassword(currentPassword, newPassword) { result ->
+                                    saving = false
+                                    result.onSuccess {
+                                        currentPassword = ""
+                                        newPassword = ""
+                                        confirmPassword = ""
+                                        showForm = false
+                                        success = true
+                                    }
+                                    result.onFailure { error = it.message ?: "Could not change password" }
+                                }
+                            }
+                        }
+                    },
+                ) { Text("Save password") }
+            },
+            dismissButton = {
+                TextButton(enabled = !saving, onClick = { showForm = false }) { Text("Cancel") }
+            },
+        )
+    }
+
+    error?.let { msg ->
+        androidx.compose.material.AlertDialog(
+            onDismissRequest = { error = null },
+            title = { Text("Could not change password") },
+            text = { Text(msg) },
+            confirmButton = {
+                TextButton(onClick = { error = null }) { Text("OK") }
+            },
+        )
+    }
+
+    if (success) {
+        androidx.compose.material.AlertDialog(
+            onDismissRequest = { success = false },
+            title = { Text("Password updated") },
+            text = { Text("Your password has been changed.") },
+            confirmButton = {
+                TextButton(onClick = { success = false }) { Text("OK") }
+            },
+        )
     }
 }
 

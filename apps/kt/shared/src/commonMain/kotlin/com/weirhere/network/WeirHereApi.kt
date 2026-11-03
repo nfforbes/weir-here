@@ -44,6 +44,12 @@ data class SimpleMessageDto(val message: String)
 @kotlinx.serialization.Serializable
 private data class ApiErrorDto(val error: String? = null)
 
+@kotlinx.serialization.Serializable
+private data class ChangePasswordPayload(
+    val currentPassword: String,
+    val newPassword: String,
+)
+
 /** Thrown when the API returns HTTP 401 (invalid or expired Bearer token). */
 class ApiUnauthorizedException(message: String = "Not authenticated") : Exception(message)
 
@@ -89,6 +95,26 @@ class WeirHereApi(engine: io.ktor.client.engine.HttpClientEngine = ktorEngine())
                 )
             }
             throw e
+        }
+    }
+
+    suspend fun changeMyPassword(
+        accessToken: String,
+        currentPassword: String,
+        newPassword: String,
+    ) {
+        try {
+            client.post("api/users/me/password") {
+                header(HttpHeaders.Authorization, bearer(accessToken))
+                contentType(ContentType.Application.Json)
+                setBody(ChangePasswordPayload(currentPassword, newPassword))
+            }
+        } catch (e: ClientRequestException) {
+            if (e.response.status.value == 401) {
+                throw ApiUnauthorizedException("Not authenticated")
+            }
+            val message = runCatching { e.response.body<ApiErrorDto>().error }.getOrNull()
+            throw IllegalStateException(message?.takeIf { it.isNotBlank() } ?: "Could not change password")
         }
     }
 
