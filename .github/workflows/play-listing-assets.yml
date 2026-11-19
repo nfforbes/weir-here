@@ -1,0 +1,32 @@
+name: Play Listing Assets
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: play-listing-assets
+  cancel-in-progress: true
+
+jobs:
+  upload-listing-images:
+    name: Upload Play listing icon + feature graphic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Upload listing images
+        env:
+          PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet google-api-python-client google-auth
+          python apps/kt/scripts/upload_play_listing_icon.py \
+            --icon apps/kt/store-assets/play-icon-512.png \
+            --feature-graphic apps/kt/store-assets/play-feature-graphic-1024x500.png \
+            --language en-US
