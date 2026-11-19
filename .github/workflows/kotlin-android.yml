@@ -232,3 +232,22 @@ jobs:
           releaseFiles: ${{ env.AAB_PATH }}
           tracks: ${{ steps.track.outputs.value }}
           status: completed
+
+      - name: Checkout store listing assets
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            apps/kt/store-assets
+            apps/kt/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Upload Play Store listing icon
+        env:
+          PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet google-api-python-client google-auth
+          python3 apps/kt/scripts/upload_play_listing_icon.py \
+            --icon apps/kt/store-assets/play-icon-512.png \
+            --feature-graphic apps/kt/store-assets/play-feature-graphic-1024x500.png \
+            --language en-US
