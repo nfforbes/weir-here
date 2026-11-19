@@ -25,7 +25,8 @@ concurrency:
 jobs:
   build-ios-simulator:
     name: Build iPhone app (Simulator)
-    runs-on: macos-latest
+    # Xcode 27 image ships the iOS 27 SDK (clears ITMS-90725 ahead of April 2027).
+    runs-on: xcode-27
     defaults:
       run:
         working-directory: apps/kt
@@ -47,7 +48,12 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '27.2'
+
+      - name: Confirm iOS SDK
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
 
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
@@ -143,7 +149,7 @@ jobs:
        (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) ||
       (github.event_name == 'workflow_dispatch' &&
        inputs.upload_to_app_store != false)
-    runs-on: macos-latest
+    runs-on: xcode-27
     defaults:
       run:
         working-directory: apps/kt
@@ -164,7 +170,12 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '27.2'
+
+      - name: Confirm iOS SDK
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
 
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
