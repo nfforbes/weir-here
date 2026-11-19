@@ -26,13 +26,14 @@ val releaseVersionName =
 
 val keystorePath = propOrEnv("ANDROID_KEYSTORE_PATH")
 val keystorePassword = propOrEnv("ANDROID_KEYSTORE_PASSWORD")
-val keyAlias = propOrEnv("ANDROID_KEY_ALIAS")
-val keyPassword = propOrEnv("ANDROID_KEY_PASSWORD")
+// Use distinct names so Kotlin DSL receiver props (keyAlias/keyPassword) do not shadow these vals.
+val releaseKeyAlias = propOrEnv("ANDROID_KEY_ALIAS")
+val releaseKeyPassword = propOrEnv("ANDROID_KEY_PASSWORD")
 val hasReleaseSigning =
     !keystorePath.isNullOrBlank() &&
         !keystorePassword.isNullOrBlank() &&
-        !keyAlias.isNullOrBlank() &&
-        !keyPassword.isNullOrBlank()
+        !releaseKeyAlias.isNullOrBlank() &&
+        !releaseKeyPassword.isNullOrBlank()
 
 kotlin {
     androidTarget()
@@ -66,8 +67,8 @@ android {
             create("release") {
                 storeFile = file(keystorePath!!)
                 storePassword = keystorePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
             }
         }
     }
